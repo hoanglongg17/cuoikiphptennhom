@@ -1,5 +1,6 @@
 <?php
 /** @var yii\web\View $this */
+use yii\helpers\Url;
 $this->title = 'Trang chủ Andi';
 ?>
 
@@ -7,10 +8,10 @@ $this->title = 'Trang chủ Andi';
     <!-- Sidebar -->
     <aside class="sidebar">
         <ul class="menu">
-            <li><a href="/index.php?r=site/dashboard" class="active"><img src="/icons/home.png" alt=""> Trang chủ</a></li>
-            <li><a href="#"><img src="/icons/vocabset.png" alt=""> Bộ từ vựng</a></li>
-            <li><a href="#"><img src="/icons/vocabulary.png" alt=""> Từ vựng</a></li>
-            <li><a href="#"><img src="/icons/practice.png" alt=""> Luyện tập</a></li>
+            <li><a href="<?= Url::to(['site/dashboard']) ?>" class="active"><img src="<?= Yii::getAlias('@web') ?>/icons/home.png" alt=""> Trang chủ</a></li>
+            <li><a href="<?= Url::to(['site/vocabset']) ?>" class="<?= Yii::$app->controller->action->id == 'vocabset' ? 'active' : '' ?>"><img src="<?= Yii::getAlias('@web') ?>/icons/vocabset.png" alt=""> Bộ thẻ</a></li>            
+            <li><a href="<?= Url::to(['site/vocabulary']) ?>" class="<?= Yii::$app->controller->action->id == 'vocabulary' ? 'active' : '' ?>"><img src="<?= Yii::getAlias('@web') ?>/icons/vocabulary.png" alt=""> Từ vựng</a></li>            
+            <li><a href="#"><img src="<?= Yii::getAlias('@web') ?>/icons/practice.png" alt=""> Luyện tập</a></li>
         </ul>
 
         <!-- Toggle button -->
@@ -19,7 +20,7 @@ $this->title = 'Trang chủ Andi';
         <!-- Profile section -->
         <div class="profile">
             <div class="avatar">
-                <img src="/images/andi-avatar.png" alt="User Avatar">
+                <img src="<?= Yii::getAlias('@web') ?>/images/andi-avatar.png" alt="User Avatar">
             </div>
             <p class="username">Nguyễn Văn A</p>
             <div class="profile-actions">
@@ -38,7 +39,7 @@ $this->title = 'Trang chủ Andi';
         <div class="content-row">
             <!-- Cover image -->
             <div class="cover">
-                <img src="/images/cover-default.jpg" alt="Ảnh bìa">
+                <img src="<?= Yii::getAlias('@web') ?>/images/cover-default.jpg" alt="Ảnh bìa">
             </div>
 
             <!-- Learning streak -->
@@ -62,11 +63,11 @@ $this->title = 'Trang chủ Andi';
             <h2>Tính năng</h2>
             <div class="feature-buttons">
                 <button class="btn-feature">
-                    <img src="/icons/flashcard.png" alt="Flashcard Icon">
+                    <img src="<?= Yii::getAlias('@web') ?>/icons/flashcard.png" alt="Flashcard Icon">
                     Thêm bộ thẻ
                 </button>
                 <button class="btn-feature">
-                    <img src="/icons/practice.png" alt="Practice Icon">
+                    <img src="<?= Yii::getAlias('@web') ?>/icons/practice.png" alt="Practice Icon">
                     Luyện tập
                 </button>
             </div>
