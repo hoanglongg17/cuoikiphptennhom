@@ -1,0 +1,190 @@
+/* --- FONT NUNITO HỖ TRỢ TIẾNG VIỆT ĐẸP --- */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap');
+
+body, h1, h2, h3, h4, h5, h6, p, span, a, button, input, textarea, label, div {
+    font-family: 'Nunito', sans-serif !important;
+}
+
+/* 1. GỠ BỎ GIỚI HẠN CONTAINER ĐỂ TRANG TRÀN VIỀN */
+.container { 
+    max-width: 100% !important; 
+    padding: 0 !important; 
+    margin: 0 !important; 
+}
+
+.main {
+    background-color: #e2e8f0 !important;
+    min-height: 100vh;
+    padding: 25px 30px 30px 20px !important; 
+    flex: 1; 
+    box-sizing: border-box;
+}
+
+/* --- 2. TÍNH NĂNG CHIA SẺ --- */
+.share-import-group {
+    display: flex;
+    gap: 10px;
+    margin-right: 15px;
+    align-items: center;
+}
+
+.search-input-mini {
+    padding: 10px 15px;
+    border-radius: 25px;
+    border: 1px solid #cbd5e1;
+    width: 150px;
+    outline: none;
+}
+
+.btn-import-share {
+    background: #3182ce;
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 25px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-import-share:hover { 
+    background: #2b6cb0; 
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(49, 130, 206, 0.3);
+}
+
+.btn-share-id {
+    background: #ebf8ff;
+    border: none;
+    outline: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-share-id:hover {
+    background: #3182ce;
+    color: white;
+    transform: rotate(15deg) scale(1.1);
+    box-shadow: 0 4px 10px rgba(49, 130, 206, 0.3);
+}
+
+/* --- 3. BẢNG ĐIỀU KHIỂN & BỘ THẺ --- */
+.vocabset-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+.vocabset-header h1 { font-size: 28px; color: #2d3748; font-weight: 800; margin: 0;}
+.vocabset-actions { display: flex; gap: 15px; align-items: center;}
+.search-input { padding: 10px 15px; border: 1px solid #cbd5e1; border-radius: 25px; width: 280px; outline: none; transition: border 0.2s;}
+.search-input:focus { border-color: #3182ce; }
+.btn-create-set { background: #3182ce; color: white; border: none; padding: 10px 25px; border-radius: 25px; font-weight: bold; cursor: pointer; transition: background 0.2s;}
+.btn-create-set:hover { background: #2b6cb0; }
+
+.set-list { display: flex; flex-direction: column; gap: 15px; }
+.set-row {
+    background: white; padding: 20px 30px; border-radius: 20px; display: flex;
+    align-items: center; justify-content: space-between; margin-bottom: 15px;
+    box-shadow: 0 5px 15px rgba(180, 195, 210, 0.4); border: 1px solid transparent; transition: all 0.2s; cursor: pointer;
+}
+.set-row:hover { transform: translateX(5px); border-color: #3182ce; }
+.set-main-info { display: flex; align-items: center; gap: 20px; flex: 1; }
+.set-icon-box { font-size: 24px; }
+.set-details h3 { margin: 0; font-size: 18px; color: #2d3748; font-weight: 700; }
+.set-details span { font-size: 13px; color: #718096; }
+.set-stats { display: flex; gap: 40px; align-items: center;}
+.stat-item { display: flex; flex-direction: column; align-items: center; min-width: 60px; }
+.stat-number { font-size: 22px; font-weight: 800; }
+.stat-label { font-size: 11px; font-weight: bold; text-transform: uppercase; color: #a0aec0; }
+.stat-new .stat-number { color: #3182ce; }
+.stat-learning .stat-number { color: #e53e3e; }
+.stat-review .stat-number { color: #38a169; }
+.btn-edit-trigger { background: #f7fafc; border: 1px solid #e2e8f0; padding: 8px; border-radius: 8px; cursor: pointer; margin-left: 20px; transition: all 0.2s; }
+.btn-edit-trigger:hover { background: #edf2f7; border-color: #cbd5e1; }
+
+/* --- 4. MODAL (POP-UP) CHUNG --- */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center;
+    z-index: 2000; backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background: white; width: 90%; max-width: 800px; max-height: 85vh;
+    border-radius: 25px; padding: 35px; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    position: relative;
+}
+
+.modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px;
+}
+.modal-header h2 { margin: 0; font-size: 22px; color: #2d3748; font-weight: 800; }
+.btn-close-modal { background: none; border: none; font-size: 28px; cursor: pointer; color: #a0aec0; }
+.btn-close-modal:hover { color: #4a5568; }
+
+/* --- POP-UP FORM INPUTS (Tạo/Sửa Bộ thẻ) --- */
+.input-group { margin-bottom: 25px; }
+.input-group label { font-weight: 700; color: #4a5568; display: block; margin-bottom: 8px; font-size: 14px; }
+.full-input { width: 100%; padding: 12px 15px; border: 1px solid #cbd5e1; border-radius: 12px; box-sizing: border-box; font-size: 15px; outline: none; }
+.full-input:focus { border-color: #3182ce; }
+.btn-delete-deck { background: #fff5f5; color: #e53e3e; border: 1px solid #fed7d7; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+.btn-delete-deck:hover { background: #e53e3e; color: white; border-color: #e53e3e; }
+.btn-save { background: #3182ce; color: white; border: none; padding: 10px 25px; border-radius: 10px; cursor: pointer; font-weight: 600; transition: background 0.2s; }
+.btn-save:hover { background: #2b6cb0; }
+
+/* --- 5. CHI TIẾT THẺ TRONG POP-UP (Mặt trước/Mặt sau) --- */
+.deck-info-label { font-weight: bold; color: #a0aec0; margin-right: 8px; text-transform: uppercase; font-size: 13px; letter-spacing: 0.5px; }
+.deck-divider { border: 0; border-top: 2px solid #2d3748; margin: 25px 0; }
+
+.card-row-display {
+    background: #f8fafc; padding: 20px; border-radius: 15px; border: 1px solid #e2e8f0;
+    margin-bottom: 20px; position: relative;
+}
+
+/* Gạch đứt phân cách nổi bật ở dưới mỗi thẻ (trừ thẻ cuối) */
+.card-row-display:not(:last-child)::after {
+    content: ''; position: absolute; bottom: -20px; left: 2%; width: 96%; border-bottom: 2px dashed #cbd5e1;
+}
+
+.card-main-content { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px; }
+.content-part label { font-size: 12px; text-transform: uppercase; color: #718096; font-weight: 700; display: block; margin-bottom: 6px; }
+.content-text { font-size: 16px; color: #2d3748; font-weight: 600; }
+
+.card-meta-info { display: flex; flex-wrap: wrap; gap: 15px; padding-top: 15px; border-top: 1px solid #edf2f7; align-items: center; }
+.meta-item { font-size: 14px; color: #4a5568; display: flex; align-items: center; gap: 5px; }
+.tag-badge { background: #e0e7ff; color: #4338ca; padding: 4px 12px; border-radius: 15px; font-size: 12px; font-weight: 700; border: 1px solid #c7d2fe; }
+.status-badge { padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; color: white; }
+.status-0 { background: #3182ce; } .status-1 { background: #e53e3e; } .status-2 { background: #38a169; }
+
+/* --- 6. NÚT XÓA THẺ (DẤU X TRÒN GÓC PHẢI) --- */
+.btn-mini-delete {
+    position: absolute; 
+    top: 15px; 
+    right: 15px; 
+    background: #fff5f5; 
+    border: 1px solid #fed7d7;
+    color: #fc8181; 
+    border-radius: 50%; 
+    width: 30px; 
+    height: 30px; 
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: bold;
+    line-height: 1;
+    padding: 0;
+    transition: all 0.2s ease;
+}
+
+.btn-mini-delete:hover {
+    background: #e53e3e;
+    color: white;
+    border-color: #e53e3e;
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(229, 62, 62, 0.2);
+}
