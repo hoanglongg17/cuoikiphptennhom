@@ -8,28 +8,44 @@ use yii\web\Controller;
 use yii\web\Response;
 use yii\filters\VerbFilter;
 use app\models\LoginForm;
-use app\models\Deck;
-use app\models\Card;
-use app\models\ContactForm;
+use app\models\User;
+use app\models\SignupForm;
+use yii\helpers\FileHelper;
+
 
 class SiteController extends Controller
 {
+    public $layout = 'landing';
+
     /**
-     * {@inheritdoc}
+     * Cấu hình quyền truy cập
      */
     public function behaviors()
     {
         return [
             'access' => [
                 'class' => AccessControl::class,
-                'only' => ['logout'],
+                'only' => ['logout', 'dashboard', 'signup', 'login'],
                 'rules' => [
                     [
-                        'actions' => ['logout'],
+                        'actions' => ['dashboard', 'logout'],
                         'allow' => true,
-                        'roles' => ['@'],
+                        'roles' => ['@'], // Chỉ cho phép người đã đăng nhập
+                    ],
+                    [
+                        'actions' => ['signup', 'login'],
+                        'allow' => true,
+                        'roles' => ['?'], // Chỉ cho phép khách (chưa đăng nhập)
                     ],
                 ],
+                // Xử lý khi người dùng cố tình truy cập trang bị cấm
+                'denyCallback' => function ($rule, $action) {
+                    if (Yii::$app->user->isGuest) {
+                        return Yii::$app->response->redirect(['site/login']);
+                    } else {
+                        return Yii::$app->response->redirect(['site/dashboard']);
+                    }
+                },
             ],
             'verbs' => [
                 'class' => VerbFilter::class,
@@ -41,26 +57,24 @@ class SiteController extends Controller
     }
 
     /**
-     * {@inheritdoc}
+     * Các Action mở rộng
      */
     public function actions()
     {
         return [
-            'error' => [
-                'class' => 'yii\web\ErrorAction',
-            ],
+            'error' => ['class' => 'yii\web\ErrorAction'],
             'captcha' => [
                 'class' => 'yii\captcha\CaptchaAction',
                 'fixedVerifyCode' => YII_ENV_TEST ? 'testme' : null,
             ],
+            // Xử lý Google Login
+            'auth' => [
+                'class' => 'yii\authclient\AuthAction',
+                'successCallback' => [$this, 'onAuthSuccess'],
+            ],
         ];
     }
 
-    /**
-     * Displays homepage.
-     *
-     * @return string
-     */
     public function actionIndex()
     {
         $this->layout = 'landing';
@@ -68,19 +82,26 @@ class SiteController extends Controller
     }
 
     /**
-     * Login action.
-     *
-     * @return Response|string
+     * Logic Đăng nhập hệ thống
      */
     public function actionLogin()
     {
+        // Nếu đã đăng nhập thành công trước đó, đẩy vào Dashboard luôn
         if (!Yii::$app->user->isGuest) {
-            return $this->goHome();
+            return $this->redirect(['site/dashboard']);
         }
 
         $model = new LoginForm();
-        if ($model->load(Yii::$app->request->post()) && $model->login()) {
-            return $this->goBack();
+
+        // Kiểm tra dữ liệu POST gửi lên
+        if ($model->load(Yii::$app->request->post())) {
+            if ($model->login()) {
+                // ĐĂNG NHẬP THÀNH CÔNG -> Chuyển hướng
+                return $this->redirect(['site/dashboard']);
+            } else {
+                // Nếu login() trả về false, lỗi sẽ nằm trong $model->errors
+                Yii::error("Đăng nhập thất bại cho email: " . $model->email);
+            }
         }
 
         $model->password = '';
@@ -90,22 +111,52 @@ class SiteController extends Controller
     }
 
     /**
-     * Logout action.
-     *
-     * @return Response
+     * Trang Dashboard (Bàn làm việc)
      */
-    public function actionLogout()
-    {
-        Yii::$app->user->logout();
-
-        return $this->goHome();
-    }
-
     public function actionDashboard()
     {
+        // Kiểm tra lại một lần nữa cho chắc chắn
+        if (Yii::$app->user->isGuest) {
+            return $this->redirect(['site/login']);
+        }
+
         return $this->render('dashboard');
     }
 
+
+    /**
+     * Xử lý sau khi Google Auth thành công
+     */
+    public function onAuthSuccess($client)
+    {
+        $attributes = $client->getUserAttributes();
+        $user = User::findByGoogleId($attributes['id']);
+
+        if (!$user) {
+            $user = User::findByEmail($attributes['email']);
+            if ($user) {
+                $user->googleid = (string)$attributes['id'];
+                $user->save(false);
+            } else {
+                $user = new User();
+                $user->displayname = $attributes['name'];
+                $user->email = $attributes['email'];
+                $user->googleid = (string)$attributes['id'];
+                $user->avatarurl = $attributes['picture'] ?? null;
+                $user->save(false);
+            }
+        }
+
+        Yii::$app->user->login($user, 3600 * 24 * 30);
+    }
+    
+public function actionLogout()
+{
+    Yii::$app->user->logout();
+    return $this->redirect(['site/login']); // Thoát xong đưa về trang Login
+}
+
+    
      public function actionVocabset()
     {
         // Vì là bản demo chưa có login, ta lấy TẤT CẢ bộ thẻ để hiển thị
@@ -117,6 +168,86 @@ class SiteController extends Controller
         return $this->render('vocabset', [
             'decks' => $decks,
         ]);
+    }
+
+    public function actionSignup()
+    {
+        // 1. Nếu đã đăng nhập thì không cho vào trang đăng ký nữa
+        if (!Yii::$app->user->isGuest) {
+            return $this->redirect(['site/dashboard']);
+        }
+
+        $model = new SignupForm();
+
+        // 2. Xử lý khi người dùng nhấn nút Submit (POST)
+        if ($model->load(Yii::$app->request->post())) {
+            if ($user = $model->signup()) {
+                // Đăng ký thành công, tự động đăng nhập luôn
+                if (Yii::$app->user->login($user)) {
+                    return $this->redirect(['site/dashboard']);
+                }
+            }
+        }
+
+        // 3. Hiển thị form đăng ký (GET)
+        return $this->render('signup', [
+            'model' => $model,
+        ]);
+    }
+
+    public function actionAjaxUpdateProfile()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        
+        if (Yii::$app->user->isGuest) {
+            return ['success' => false, 'message' => 'Phiên đăng nhập hết hạn.'];
+        }
+
+        $user = Yii::$app->user->identity;
+        $post = Yii::$app->request->post();
+
+        // 1. Cập nhật tên hiển thị
+        if (!empty($post['displayname'])) {
+            $user->displayname = $post['displayname'];
+        }
+
+        // 2. CẬP NHẬT: Mã hóa mật khẩu mới nếu có thay đổi
+        if (!empty($post['password'])) {
+            $user->setPassword($post['password']);
+        }
+
+        // 3. Xử lý lưu ảnh đại diện (giữ nguyên logic bạn đã có)
+        if (!empty($post['avatar_base64'])) {
+            try {
+                $uploadPath = Yii::getAlias('@webroot/uploads/avatars');
+                if (!is_dir($uploadPath)) {
+                    FileHelper::createDirectory($uploadPath);
+                }
+
+                if (preg_match('/^data:image\/(\w+);base64,/', $post['avatar_base64'], $type)) {
+                    $data = substr($post['avatar_base64'], strpos($post['avatar_base64'], ',') + 1);
+                    $type = strtolower($type[1]); 
+
+                    $data = base64_decode($data);
+                    if ($data !== false) {
+                        $fileName = 'avatar_' . $user->id . '_' . time() . '.' . $type;
+                        $filePath = $uploadPath . '/' . $fileName;
+
+                        if (file_put_contents($filePath, $data)) {
+                            $user->avatarurl = Yii::getAlias('@web/uploads/avatars/') . $fileName;
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                // Log lỗi nếu cần
+            }
+        }
+
+        if ($user->save(false)) {
+            return ['success' => true];
+        }
+
+        return ['success' => false, 'message' => 'Không thể lưu thông tin.'];
     }
 
      public function actionAjaxCreateDeck()

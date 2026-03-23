@@ -2,103 +2,131 @@
 
 namespace app\models;
 
-class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
+use Yii;
+use yii\db\ActiveRecord;
+use yii\web\IdentityInterface;
+
+/**
+ * User model kết nối trực tiếp với bảng users
+ * Chế độ: So khớp mật khẩu không mã hóa (Plain Text) và Google Login
+ */
+class User extends ActiveRecord implements IdentityInterface
 {
-    public $id;
-    public $username;
-    public $password;
-    public $authKey;
-    public $accessToken;
-
-    private static $users = [
-        '100' => [
-            'id' => '100',
-            'username' => 'admin',
-            'password' => 'admin',
-            'authKey' => 'test100key',
-            'accessToken' => '100-token',
-        ],
-        '101' => [
-            'id' => '101',
-            'username' => 'demo',
-            'password' => 'demo',
-            'authKey' => 'test101key',
-            'accessToken' => '101-token',
-        ],
-    ];
-
+    public static function tableName()
+    {
+        return 'users';
+    }
 
     /**
-     * {@inheritdoc}
+     * Tìm danh tính dựa trên ID - Dùng để duy trì đăng nhập qua Session
      */
     public static function findIdentity($id)
     {
-        return isset(self::$users[$id]) ? new static(self::$users[$id]) : null;
+        return static::findOne($id);
     }
 
     /**
-     * {@inheritdoc}
+     * Không sử dụng Access Token trong phiên bản này
      */
     public static function findIdentityByAccessToken($token, $type = null)
     {
-        foreach (self::$users as $user) {
-            if ($user['accessToken'] === $token) {
-                return new static($user);
-            }
-        }
-
         return null;
     }
 
     /**
-     * Finds user by username
-     *
-     * @param string $username
-     * @return static|null
+     * Tìm người dùng bằng Email - Dùng cho logic LoginForm thường
      */
-    public static function findByUsername($username)
+    public static function findByEmail($email)
     {
-        foreach (self::$users as $user) {
-            if (strcasecmp($user['username'], $username) === 0) {
-                return new static($user);
-            }
-        }
-
-        return null;
+        return static::findOne(['email' => $email]);
     }
 
     /**
-     * {@inheritdoc}
+     * Tìm người dùng bằng Google ID - Dùng cho đăng nhập Google
+     */
+    public static function findByGoogleId($googleId)
+    {
+        return static::findOne(['googleid' => $googleId]);
+    }
+
+    /**
+     * Trả về ID người dùng (primary key)
      */
     public function getId()
     {
-        return $this->id;
+        return $this->userid;
     }
 
     /**
-     * {@inheritdoc}
+     * Trả về Auth Key - Dùng cho chức năng "Ghi nhớ đăng nhập" (Remember Me)
      */
     public function getAuthKey()
     {
-        return $this->authKey;
+        return 'auth_key_' . $this->userid;
     }
 
     /**
-     * {@inheritdoc}
+     * Kiểm tra Auth Key khi người dùng quay lại bằng Cookie
      */
     public function validateAuthKey($authKey)
     {
-        return $this->authKey === $authKey;
+        return $this->getAuthKey() === $authKey;
     }
 
+    public function setPassword($password)
+    {
+        $this->passwordhash = Yii::$app->security->generatePasswordHash($password);
+    }
     /**
-     * Validates password
-     *
-     * @param string $password password to validate
-     * @return bool if password provided is valid for current user
+     * Kiểm tra mật khẩu KHÔNG MÃ HÓA
+     * So sánh trực tiếp mật khẩu nhập vào với cột passwordhash trong DB
      */
     public function validatePassword($password)
     {
-        return $this->password === $password;
+        // Nếu passwordhash trống (ví dụ: dùng Google Login), không cho phép đăng nhập bằng pass
+        if (empty($this->passwordhash)) {
+            return false;
+        }
+        
+        // So khớp mật khẩu thuần với mã hash trong database
+        try {
+            return Yii::$app->security->validatePassword($password, $this->passwordhash);
+        } catch (\Exception $e) {
+            // Hỗ trợ tạm thời cho các tài khoản cũ chưa kịp hash (nếu cần)
+            return $this->passwordhash === $password;
+        }
+    }
+
+    /**
+     * Logic tạo người dùng mới hoặc cập nhật khi đăng nhập Google
+     */
+    public static function loginWithGoogle($attributes)
+    {
+        $googleId = (string)$attributes['id'];
+        $email = $attributes['email'];
+        $name = $attributes['name'];
+        $avatar = $attributes['picture'] ?? null;
+
+        $user = self::findByGoogleId($googleId);
+        
+        if (!$user) {
+            $user = self::findByEmail($email);
+            
+            if ($user) {
+                $user->googleid = $googleId;
+                if (!$user->avatarurl) $user->avatarurl = $avatar;
+                $user->save(false);
+            } else {
+                $user = new self();
+                $user->email = $email;
+                $user->googleid = $googleId;
+                $user->displayname = $name;
+                $user->avatarurl = $avatar;
+                $user->passwordhash = null; 
+                $user->createdat = date('Y-m-d H:i:s');
+                $user->save(false);
+            }
+        }
+        return $user;
     }
 }
