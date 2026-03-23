@@ -6,7 +6,10 @@ use yii\helpers\Url;
 use yii\helpers\Html;
 
 $this->title = 'Quản lý Bộ thẻ - Andi';
-// Nhúng 2 file CSS để vừa có Sidebar của Dashboard, vừa có style riêng của Bộ thẻ
+
+// Lấy thông tin người dùng đang đăng nhập
+$user = Yii::$app->user->identity;
+
 $this->registerCssFile('@web/css/dashboard.css', ['depends' => [\app\assets\AppAsset::class]]);
 $this->registerCssFile('@web/css/vocabset.css', ['depends' => [\app\assets\AppAsset::class]]);
 ?>
@@ -22,12 +25,16 @@ $this->registerCssFile('@web/css/vocabset.css', ['depends' => [\app\assets\AppAs
         </ul>
         <button class="toggle-btn">&laquo;</button>
         
-        <!-- Phần Profile (Có Avatar và Nút Sáng/Tối) -->
+        <!-- Phần Profile (Đồng bộ tỷ lệ và dữ liệu) -->
         <div class="profile">
-            <div class="avatar"><img src="<?= Yii::getAlias('@web') ?>/images/andi-avatar.png" alt="Avatar"></div>
-            <p class="username">Nguyễn Văn A</p>
+            <div class="avatar">
+                <img src="<?= $user->avatarurl ?: Yii::getAlias('@web/images/andi-avatar.png') ?>" alt="User Avatar">
+            </div>
+            <!-- Nhấn vào tên để hiện popup -->
+            <p class="username" onclick="toggleProfileModal()"><?= Html::encode($user->displayname) ?></p>
             <div class="profile-actions">
-                <button class="btn-profile">Xem hồ sơ</button>
+                <!-- Nút Xem hồ sơ kích hoạt popup -->
+                <button class="btn-profile" onclick="toggleProfileModal()">Xem hồ sơ</button>
                 <label class="theme-switch">
                     <input type="checkbox" id="darkModeToggle">
                     <span class="slider"></span>
@@ -37,12 +44,12 @@ $this->registerCssFile('@web/css/vocabset.css', ['depends' => [\app\assets\AppAs
         </div>
     </aside>
 
+
     <main class="main">
         <div class="vocabset-header">
             <h1>Quản lý Bộ thẻ</h1>
             
             <div class="vocabset-actions">
-                <!-- KHỐI NHẬP ID CHIA SẺ -->
                 <div class="share-import-group">
                     <input type="text" id="importDeckId" placeholder="Nhập ID bộ bài..." class="search-input-mini">
                     <button class="btn-import-share" onclick="importDeck()">Nhận bộ bài</button>
@@ -78,7 +85,6 @@ $this->registerCssFile('@web/css/vocabset.css', ['depends' => [\app\assets\AppAs
                         <div class="stat-item stat-learning"><span class="stat-number"><?= $l ?></span><span class="stat-label">Đang học</span></div>
                         <div class="stat-item stat-review"><span class="stat-number"><?= $r ?></span><span class="stat-label">Ôn tập</span></div>
                         
-                        <!-- NÚT CHIA SẺ ID -->
                         <button class="btn-share-id" onclick="event.stopPropagation(); shareId(<?= $deck->deckid ?>)" title="Copy ID để chia sẻ">🔗</button>
                         
                         <button class="btn-edit-trigger" onclick="event.stopPropagation(); openModal('modalEdit-<?= $deck->deckid ?>')">✏️</button>
@@ -189,7 +195,6 @@ function openModal(id) { document.getElementById(id).style.display = 'flex'; doc
 function closeModal(overlay) { overlay.style.display = 'none'; document.body.style.overflow = 'auto'; }
 function closeModalById(id) { document.getElementById(id).style.display = 'none'; document.body.style.overflow = 'auto'; }
 
-// CHỨC NĂNG CHIA SẺ ID
 function shareId(id) {
     const tempInput = document.createElement("input");
     tempInput.value = id;
@@ -200,14 +205,16 @@ function shareId(id) {
     alert("Đã copy ID: " + id + ". Hãy gửi số này cho bạn bè nhé!");
 }
 
-// CHỨC NĂNG NHẬP BỘ BÀI QUA ID
 function importDeck() {
     const id = document.getElementById('importDeckId').value.trim();
     if(!id) return alert("Vui lòng nhập ID bộ bài!");
 
     fetch('<?= Url::to(['site/ajax-import-deck']) ?>', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': '<?= Yii::$app->request->csrfToken ?>' },
+        headers: { 
+            'Content-Type': 'application/x-www-form-urlencoded', 
+            'X-CSRF-Token': '<?= Yii::$app->request->csrfToken ?>' 
+        },
         body: new URLSearchParams({ deckId: id })
     })
     .then(res => res.json())
@@ -217,7 +224,6 @@ function importDeck() {
     });
 }
 
-// TÌM KIẾM BỘ BÀI
 document.getElementById('searchInput').addEventListener('input', function(e) {
     const term = e.target.value.toLowerCase();
     const decks = document.querySelectorAll('.deck-item');
@@ -227,7 +233,6 @@ document.getElementById('searchInput').addEventListener('input', function(e) {
     });
 });
 
-// THÊM BỘ BÀI
 function createNewDeck() {
     const name = document.getElementById('create-deck-name').value;
     const desc = document.getElementById('create-deck-desc').value;
@@ -239,44 +244,44 @@ function createNewDeck() {
     }).then(res => res.json()).then(data => { if(data.success) location.reload(); });
 }
 
-// CẬP NHẬT BỘ BÀI
 function updateDeck(id) {
     const name = document.getElementById('edit-name-' + id).value;
     const desc = document.getElementById('edit-desc-' + id).value;
-    fetch('<?= Url::to(['site/ajax-update-deck']) ?>&id=' + id, {
+    fetch('<?= Url::to(['site/ajax-update-deck']) ?>', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': '<?= Yii::$app->request->csrfToken ?>' },
-        body: new URLSearchParams({ name: name, description: desc })
+        body: new URLSearchParams({ id: id, name: name, description: desc })
     }).then(res => res.json()).then(data => { if(data.success) location.reload(); });
 }
 
-// XÓA BỘ BÀI
 function deleteDeck(id) {
     if(!confirm("Bạn có chắc chắn muốn xóa bộ bài này không?")) return;
-    fetch('<?= Url::to(['site/ajax-delete-deck']) ?>&id=' + id, { method: 'POST', headers: { 'X-CSRF-Token': '<?= Yii::$app->request->csrfToken ?>' } })
+    fetch('<?= Url::to(['site/ajax-delete-deck']) ?>', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': '<?= Yii::$app->request->csrfToken ?>' },
+        body: new URLSearchParams({ id: id })
+    })
     .then(res => res.json()).then(data => { if(data.success) location.reload(); });
 }
 
-// GỠ THẺ KHỎI BỘ (KHÔNG XÓA HẲN)
 function removeFromDeck(cardId, deckId) {
     if(!confirm('Bạn có chắc chắn muốn gỡ từ vựng này ra khỏi bộ thẻ? (Từ vựng vẫn nằm trong mục Từ Vựng chung)')) return;
 
-    fetch('<?= Url::to(['site/ajax-remove-from-deck']) ?>&id=' + cardId, { 
+    fetch('<?= Url::to(['site/ajax-remove-from-deck']) ?>', { 
         method: 'POST', 
-        headers: { 'X-CSRF-Token': '<?= Yii::$app->request->csrfToken ?>' } 
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': '<?= Yii::$app->request->csrfToken ?>' },
+        body: new URLSearchParams({ id: cardId })
     })
     .then(res => res.json())
     .then(data => { 
         if(data.success) {
             const row = document.getElementById('card-row-' + cardId);
             if(row) {
-                // Hiệu ứng trượt ngang và biến mất mượt mà
                 row.style.transition = 'all 0.3s ease';
                 row.style.opacity = '0';
                 row.style.transform = 'translateX(30px)';
                 setTimeout(() => {
                     row.remove();
-                    // Trừ số lượng thẻ trên tiêu đề để khỏi phải reload lại toàn trang
                     const countEl = document.getElementById('cardCount-' + deckId);
                     if (countEl) countEl.innerText = parseInt(countEl.innerText) - 1;
                 }, 300);

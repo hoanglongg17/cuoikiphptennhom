@@ -9,13 +9,16 @@ use yii\helpers\Url;
 use yii\helpers\Html;
 
 $this->title = 'Từ vựng - Andi';
-/* Bổ sung lại file dashboard.css để load giao diện Sidebar */
+
+// Lấy thông tin người dùng đang đăng nhập
+$user = Yii::$app->user->identity;
+
 $this->registerCssFile('@web/css/dashboard.css', ['depends' => [\app\assets\AppAsset::class]]);
 $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\AppAsset::class]]);
 ?>
 
 <div class="dashboard">
-    <!-- Sidebar -->
+    <!-- Sidebar - Đã đồng bộ hoàn toàn với Dashboard -->
     <aside class="sidebar">
         <ul class="menu">
             <li><a href="<?= Url::to(['site/dashboard']) ?>"><img src="<?= Yii::getAlias('@web') ?>/icons/home.png" alt=""> Trang chủ</a></li>
@@ -23,13 +26,19 @@ $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\App
             <li><a href="<?= Url::to(['site/vocabulary']) ?>" class="active"><img src="<?= Yii::getAlias('@web') ?>/icons/vocabulary.png" alt=""> Từ vựng</a></li>
             <li><a href="#"><img src="<?= Yii::getAlias('@web') ?>/icons/practice.png" alt=""> Luyện tập</a></li>
         </ul>
-        <!-- Bổ sung Nút thu gọn và Nút Sáng/Tối -->
+        
         <button class="toggle-btn">&laquo;</button>
+        
+        <!-- Phần Profile (Đồng bộ tỷ lệ và dữ liệu) -->
         <div class="profile">
-            <div class="avatar"><img src="<?= Yii::getAlias('@web') ?>/images/andi-avatar.png" alt="Avatar"></div>
-            <p class="username">Nguyễn Văn A</p>
+            <div class="avatar">
+                <img src="<?= $user->avatarurl ?: Yii::getAlias('@web/images/andi-avatar.png') ?>" alt="User Avatar">
+            </div>
+            <!-- Nhấn vào tên để hiện popup -->
+            <p class="username" onclick="toggleProfileModal()"><?= Html::encode($user->displayname) ?></p>
             <div class="profile-actions">
-                <button class="btn-profile">Xem hồ sơ</button>
+                <!-- Nút Xem hồ sơ kích hoạt popup -->
+                <button class="btn-profile" onclick="toggleProfileModal()">Xem hồ sơ</button>
                 <label class="theme-switch">
                     <input type="checkbox" id="darkModeToggle">
                     <span class="slider"></span>
@@ -38,7 +47,7 @@ $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\App
             </div>
         </div>
     </aside>
-
+    
     <main class="main">
         <!-- Khối thống kê -->
         <div class="vocab-stats-container">
@@ -50,13 +59,12 @@ $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\App
 
         <div class="vocab-main-board">
             <div class="vocab-controls">
-                <select class="deck-filter-select" onchange="window.location.href='<?= Url::to(['site/vocabulary']) ?>&deck_id=' + this.value">
+                <select class="deck-filter-select" onchange="var url = '<?= Url::to(['site/vocabulary']) ?>'; window.location.href = url + (url.indexOf('?') !== -1 ? '&' : '?') + 'deck_id=' + this.value">
                     <option value="">Tất cả thẻ từ vựng</option>
                     <?php foreach ($decks as $deck): ?>
                         <option value="<?= $deck->deckid ?>" <?= $currentDeckId == $deck->deckid ? 'selected' : '' ?>><?= Html::encode($deck->name) ?></option>
                     <?php endforeach; ?>
                 </select>
-                <!-- Nút dấu cộng mở Pop-up thêm thẻ hàng loạt -->
                 <button class="btn-add-huge" onclick="document.getElementById('modalAddBatch').style.display='flex'">+</button>
             </div>
 
@@ -87,9 +95,7 @@ $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\App
                                             <?php 
                                                 $tagStr = trim($tag);
                                                 if ($tagStr === '') continue;
-                                                
                                                 $badgeClass = 'tag-pill';
-                                                // Nếu là tag hệ thống thì có màu cam
                                                 if (in_array($tagStr, ['Cơ bản', 'Đảo ngược', 'Nhập liệu'])) {
                                                     $badgeClass .= ' tag-system';
                                                 }
@@ -101,11 +107,8 @@ $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\App
                                 <td style="font-style: italic; color: #718096;"><?= Html::encode($card->examplesentence) ?></td>
                                 <td style="font-family: monospace;"><?= Html::encode($card->pronunciation) ?></td>
                                 <td class="col-action" style="width: 90px; text-align: center;">
-                                    <!-- Nút ➕: Thêm vào bộ -->
                                     <button class="btn-action-add" onclick="openAssignModal(<?= $card->cardid ?>)" title="Thêm vào bộ thẻ khác">➕</button>
-                                    
-                                    <!-- Nút ❌: GỠ KHỎI BỘ (Chỉ làm mất liên kết với bộ thẻ hiện hành) -->
-                                    <button class="btn-delete-card-table" onclick="removeFromDeck(<?= $card->cardid ?>)" title="Gỡ thẻ khỏi bộ này">&times;</button>
+                                    <button class="btn-delete-card-table" onclick="deleteCard(<?= $card->cardid ?>)" title="Xóa thẻ vĩnh viễn">&times;</button>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -174,7 +177,7 @@ $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\App
     </div>
 </div>
 
-<!-- POP-UP 2: CHỌN BỘ THẺ ĐỂ GẮN VÀO (Cho nút ➕) -->
+<!-- POP-UP 2: CHỌN BỘ THẺ ĐỂ GẮN VÀO -->
 <div id="modalAssignDeck" class="modal-overlay" onclick="this.style.display='none'">
     <div class="modal-content" style="max-width: 400px; text-align: center;" onclick="event.stopPropagation()">
         <h2 style="margin-bottom: 20px; font-size: 20px;">Thêm thẻ vào bộ</h2>
@@ -193,34 +196,29 @@ $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\App
 </div>
 
 <script>
-// --- 1. CHỨC NĂNG GỠ THẺ KHỎI BỘ (KHÔNG XÓA VĨNH VIỄN) ---
-function removeFromDeck(id) {
-    if(!confirm('Bạn có chắc chắn muốn gỡ từ vựng này ra khỏi bộ thẻ? (Từ vựng vẫn sẽ nằm trong Kho chung)')) return;
+function deleteCard(id) {
+    if(!confirm('Bạn có chắc chắn muốn XÓA VĨNH VIỄN thẻ này?')) return;
 
-    fetch('<?= Url::to(['site/ajax-remove-from-deck']) ?>&id=' + id, {
+    fetch('<?= Url::to(['site/ajax-delete-card']) ?>', { 
         method: 'POST',
-        headers: { 'X-CSRF-Token': '<?= Yii::$app->request->csrfToken ?>' }
+        headers: { 
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRF-Token': '<?= Yii::$app->request->csrfToken ?>' 
+        },
+        body: new URLSearchParams({ id: id })
     })
     .then(res => res.json())
     .then(data => {
         if(data.success) {
             const row = document.getElementById('row-card-' + id);
-            row.style.transition = 'all 0.3s ease';
             row.style.opacity = '0';
-            row.style.transform = 'translateX(20px)';
-            
-            setTimeout(() => {
-                row.remove();
-                // Báo hiệu và tải lại để cập nhật bảng thống kê trên đầu
-                location.reload(); 
-            }, 300);
+            setTimeout(() => { row.remove(); }, 300);
         } else {
-            alert('Không thể gỡ thẻ này. Vui lòng thử lại!');
+            alert('Lỗi: ' + data.message);
         }
     });
 }
 
-// --- 2. CHỨC NĂNG THÊM THẺ VÀO BỘ (Nhân bản) ---
 function openAssignModal(cardId) {
     document.getElementById('assignCardId').value = cardId;
     document.getElementById('modalAssignDeck').style.display = 'flex';
@@ -251,7 +249,6 @@ function assignCardToDeck() {
     });
 }
 
-// --- 3. CHỨC NĂNG POP-UP THÊM NHIỀU HÀNG ---
 function addEntryRow() {
     const tbody = document.querySelector('#batchEntryTable tbody');
     const index = tbody.children.length + 1;
@@ -279,7 +276,6 @@ function removeEntryRow(btn) {
     }
 }
 
-// --- 4. CHỨC NĂNG LƯU NHIỀU THẺ CÙNG LÚC ---
 function saveBatchCards() {
     const deckId = document.getElementById('batchDeckId').value;
     const cardType = document.getElementById('batchCardType').value;
@@ -318,7 +314,9 @@ function saveBatchCards() {
     .then(data => {
         if (data.success) {
             alert('Đã lưu thành công!');
-            window.location.href = '<?= Url::to(['site/vocabulary']) ?>&deck_id=' + deckId;
+            var baseUrl = '<?= Url::to(['site/vocabulary']) ?>';
+            var separator = baseUrl.indexOf('?') !== -1 ? '&' : '?';
+            window.location.href = baseUrl + separator + 'deck_id=' + deckId;
         } else {
             alert('Lỗi: ' + data.message);
         }
