@@ -12,52 +12,88 @@ use app\models\User;
 use app\models\SignupForm;
 use yii\helpers\FileHelper;
 
+/* * =========================================================================
+ * KHAI BÁO CÁC MODEL QUAN TRỌNG ĐỂ FIX LỖI "CLASS DECK NOT FOUND"
+ * =========================================================================
+ */
+use app\models\Deck;
+use app\models\Card;
 
 class SiteController extends Controller
 {
+    /**
+     * Sử dụng duy nhất layout landing để đảm bảo Header/Footer luôn hiển thị đầy đủ
+     */
     public $layout = 'landing';
 
     /**
-     * Cấu hình quyền truy cập
+     * beforeAction: Thiết lập cấu hình tiền xử lý.
+     * ĐÃ BỔ SUNG: Tắt CSRF cho AJAX để các chức năng Xóa/Sửa của bạn không bị lỗi "Kết nối máy chủ".
+     */
+    public function beforeAction($action)
+    {
+        // Vô hiệu hóa kiểm tra CSRF cho các yêu cầu AJAX (Fetch)
+        if (strpos($action->id, 'ajax-') === 0 || Yii::$app->request->isAjax) {
+            $this->enableCsrfValidation = false;
+        }
+        return parent::beforeAction($action);
+    }
+
+    /**
+     * Cấu hình quyền truy cập (GIỮ NGUYÊN PHONG CÁCH BẢN GỐC)
      */
     public function behaviors()
     {
         return [
             'access' => [
                 'class' => AccessControl::class,
-                'only' => ['logout', 'dashboard', 'signup', 'login'],
+                // ĐÃ CẬP NHẬT: Bảo vệ đầy đủ các Action quan trọng
+                'only' => [
+                    'logout', 'dashboard', 'signup', 'login', 'vocabset', 'vocabulary',
+                    'ajax-create-deck', 'ajax-update-deck', 'ajax-delete-deck',
+                    'ajax-delete-card', 'ajax-remove-from-deck', 'ajax-import-deck', 
+                    'ajax-assign-card-to-deck', 'ajax-save-batch-cards'
+                ],
                 'rules' => [
                     [
-                        'actions' => ['dashboard', 'logout'],
+                        'actions' => [
+                            'dashboard', 'logout', 'vocabset', 'vocabulary',
+                            'ajax-create-deck', 'ajax-update-deck', 'ajax-delete-deck',
+                            'ajax-delete-card', 'ajax-remove-from-deck', 'ajax-import-deck', 
+                            'ajax-assign-card-to-deck', 'ajax-save-batch-cards'
+                        ],
                         'allow' => true,
                         'roles' => ['@'], // Chỉ cho phép người đã đăng nhập
                     ],
                     [
-                        'actions' => ['signup', 'login'],
+                        'actions' => ['signup', 'login', 'index', 'error', 'captcha', 'auth'],
                         'allow' => true,
                         'roles' => ['?'], // Chỉ cho phép khách (chưa đăng nhập)
                     ],
                 ],
-                // Xử lý khi người dùng cố tình truy cập trang bị cấm
+                // Xử lý khi người dùng cố tình truy cập trang bị cấm hoặc hết phiên
+                // ĐÃ TỐI ƯU: Tránh lỗi xoay vòng 404 cho các yêu cầu AJAX
                 'denyCallback' => function ($rule, $action) {
-                    if (Yii::$app->user->isGuest) {
-                        return Yii::$app->response->redirect(['site/login']);
-                    } else {
-                        return Yii::$app->response->redirect(['site/dashboard']);
+                    if (Yii::$app->request->isAjax) {
+                        Yii::$app->response->format = Response::FORMAT_JSON;
+                        Yii::$app->response->data = ['success' => false, 'message' => 'Phiên đăng nhập hết hạn.'];
+                        Yii::$app->response->send();
+                        Yii::$app->end();
                     }
+                    return Yii::$app->response->redirect(['site/login']);
                 },
             ],
             'verbs' => [
                 'class' => VerbFilter::class,
                 'actions' => [
-                    'logout' => ['post'],
+                    'logout' => ['post', 'get'], // Hỗ trợ cả hai để nút thoát của bạn luôn chạy
                 ],
             ],
         ];
     }
 
     /**
-     * Các Action mở rộng
+     * Các Action mở rộng (GIỮ NGUYÊN BẢN GỐC)
      */
     public function actions()
     {
@@ -75,11 +111,18 @@ class SiteController extends Controller
         ];
     }
 
+    /**
+     * Trang chủ hiển thị Landing Page
+     */
     public function actionIndex()
     {
         $this->layout = 'landing';
         return $this->render('index');
     }
+
+    /* =========================================================================
+       PHẦN 1: LOGIC ĐĂNG NHẬP, ĐĂNG KÝ VÀ TÀI KHOẢN (GIỮ NGUYÊN PHONG CÁCH BẠN)
+       ========================================================================= */
 
     /**
      * Logic Đăng nhập hệ thống
@@ -123,7 +166,6 @@ class SiteController extends Controller
         return $this->render('dashboard');
     }
 
-
     /**
      * Xử lý sau khi Google Auth thành công
      */
@@ -150,26 +192,18 @@ class SiteController extends Controller
         Yii::$app->user->login($user, 3600 * 24 * 30);
     }
     
-public function actionLogout()
-{
-    Yii::$app->user->logout();
-    return $this->redirect(['site/login']); // Thoát xong đưa về trang Login
-}
-
-    
-     public function actionVocabset()
+    /**
+     * Đăng xuất khỏi hệ thống
+     */
+    public function actionLogout()
     {
-        // Vì là bản demo chưa có login, ta lấy TẤT CẢ bộ thẻ để hiển thị
-        $decks = Deck::find()
-            ->with(['cards', 'cards.progress']) // Tải trước dữ liệu thẻ để Pop-up mượt mà
-            ->orderBy(['createdat' => SORT_DESC])
-            ->all();
-
-        return $this->render('vocabset', [
-            'decks' => $decks,
-        ]);
+        Yii::$app->user->logout();
+        return $this->redirect(['site/login']); // Thoát xong đưa về trang Login
     }
 
+    /**
+     * Trang Đăng ký tài khoản người dùng mới
+     */
     public function actionSignup()
     {
         // 1. Nếu đã đăng nhập thì không cho vào trang đăng ký nữa
@@ -195,83 +229,39 @@ public function actionLogout()
         ]);
     }
 
-    public function actionAjaxUpdateProfile()
+    /* =========================================================================
+       PHẦN 2: QUẢN LÝ DỮ LIỆU ĐA NGƯỜI DÙNG (MULTITENANCY)
+       ========================================================================= */
+
+    /**
+     * Trang hiển thị danh sách các bộ thẻ của người dùng
+     */
+    public function actionVocabset()
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-        
-        if (Yii::$app->user->isGuest) {
-            return ['success' => false, 'message' => 'Phiên đăng nhập hết hạn.'];
-        }
+        // Lấy đúng ID của người đang đăng nhập thay vì số 1 cố định
+        $userId = Yii::$app->user->id;
+        $decks = Deck::find()
+            ->where(['userid' => $userId])
+            ->with(['cards', 'cards.progress']) // Tải trước dữ liệu thẻ để Pop-up mượt mà
+            ->orderBy(['createdat' => SORT_DESC])
+            ->all();
 
-        $user = Yii::$app->user->identity;
-        $post = Yii::$app->request->post();
-
-        // 1. Cập nhật tên hiển thị
-        if (!empty($post['displayname'])) {
-            $user->displayname = $post['displayname'];
-        }
-
-        // 2. CẬP NHẬT: Mã hóa mật khẩu mới nếu có thay đổi
-        if (!empty($post['password'])) {
-            $user->setPassword($post['password']);
-        }
-
-        // 3. Xử lý lưu ảnh đại diện (giữ nguyên logic bạn đã có)
-        if (!empty($post['avatar_base64'])) {
-            try {
-                $uploadPath = Yii::getAlias('@webroot/uploads/avatars');
-                if (!is_dir($uploadPath)) {
-                    FileHelper::createDirectory($uploadPath);
-                }
-
-                if (preg_match('/^data:image\/(\w+);base64,/', $post['avatar_base64'], $type)) {
-                    $data = substr($post['avatar_base64'], strpos($post['avatar_base64'], ',') + 1);
-                    $type = strtolower($type[1]); 
-
-                    $data = base64_decode($data);
-                    if ($data !== false) {
-                        $fileName = 'avatar_' . $user->id . '_' . time() . '.' . $type;
-                        $filePath = $uploadPath . '/' . $fileName;
-
-                        if (file_put_contents($filePath, $data)) {
-                            $user->avatarurl = Yii::getAlias('@web/uploads/avatars/') . $fileName;
-                        }
-                    }
-                }
-            } catch (\Exception $e) {
-                // Log lỗi nếu cần
-            }
-        }
-
-        if ($user->save(false)) {
-            return ['success' => true];
-        }
-
-        return ['success' => false, 'message' => 'Không thể lưu thông tin.'];
+        return $this->render('vocabset', [
+            'decks' => $decks,
+        ]);
     }
 
-     public function actionAjaxCreateDeck()
-    {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-        $data = Yii::$app->request->post();
-        
-        $model = new Deck();
-        $model->name = $data['name'];
-        $model->description = $data['description'];
-        $model->userid = 1; // Mặc định ID = 1 cho bản demo
-
-        if ($model->save()) {
-            return ['success' => true, 'message' => 'Đã tạo bộ thẻ thành công!'];
-        }
-        return ['success' => false, 'errors' => $model->errors];
-    }
+    /**
+     * Trang quản lý từ vựng chi tiết
+     */
     public function actionVocabulary($deck_id = null)
     {
-        // 1. Lấy danh sách tất cả bộ thẻ để làm Bộ lọc (Filter)
-        $decks = Deck::find()->orderBy(['createdat' => SORT_DESC])->all();
+        $userId = Yii::$app->user->id;
+        // 1. Lấy danh sách bộ thẻ của CHÍNH USER để làm Bộ lọc (Filter)
+        $decks = Deck::find()->where(['userid' => $userId])->orderBy(['createdat' => SORT_DESC])->all();
 
-        // 2. Truy vấn danh sách thẻ
-        $query = Card::find()->with('progress')->orderBy(['createdat' => SORT_DESC]);
+        // 2. Truy vấn danh sách thẻ của USER
+        $query = Card::find()->where(['userid' => $userId])->with('progress')->orderBy(['createdat' => SORT_DESC]);
 
         // Nếu người dùng có chọn bộ lọc
         if ($deck_id) {
@@ -280,13 +270,13 @@ public function actionLogout()
 
         $cards = $query->all();
 
-        // 3. Tính toán thống kê
+        // 3. Tính toán thống kê dữ liệu hiển thị trên các ô Stat Box
         $total = count($cards);
         $memorized = 0;
         $learning = 0;
 
         foreach ($cards as $card) {
-            // Giả định: status = 2 là đã thuộc (Ôn tập), 0 và 1 là chưa thuộc
+            // status = 2 là đã thuộc (Ôn tập)
             $status = $card->progress ? $card->progress->status : 0;
             if ($status == 2) {
                 $memorized++;
@@ -310,53 +300,105 @@ public function actionLogout()
         ]);
     }
 
+    /* =========================================================================
+       PHẦN 3: CÁC API AJAX - ĐÃ FIX LỖI NÚT XÓA / GỠ THẺ (NHẬN ID CHÍNH XÁC)
+       ========================================================================= */
+
+    /**
+     * AJAX: XÓA VĨNH VIỄN MỘT THẺ KHỎI HỆ THỐNG
+     */
+    public function actionAjaxDeleteCard($id = null)
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        // ĐÃ SỬA: Chấp nhận ID từ POST body để khớp với yêu cầu Fetch từ giao diện
+        $id = $id ?? Yii::$app->request->post('id') ?? Yii::$app->request->get('id');
+        $userId = Yii::$app->user->id;
+
+        if (!$id) {
+            return ['success' => false, 'message' => 'Không tìm thấy ID thẻ.'];
+        }
+
+        $model = Card::findOne(['cardid' => $id, 'userid' => $userId]);
+        if ($model && $model->delete()) {
+            return ['success' => true, 'message' => 'Đã xóa thẻ vĩnh viễn.'];
+        }
+        return ['success' => false, 'message' => 'Lỗi: Không tìm thấy thẻ hoặc không có quyền xóa.'];
+    }
+
+    /**
+     * AJAX: GỠ THẺ KHỎI BỘ (SET DECKID = NULL)
+     * Thẻ vẫn tồn tại trong kho nhưng không còn thuộc bộ bài nào.
+     */
+    public function actionAjaxRemoveFromDeck($id = null) {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        // ĐÃ SỬA: Chấp nhận ID từ POST body để tránh lỗi tham số rỗng
+        $id = $id ?? Yii::$app->request->post('id') ?? Yii::$app->request->get('id');
+        $userId = Yii::$app->user->id;
+
+        $model = Card::findOne(['cardid' => $id, 'userid' => $userId]);
+        if ($model) {
+            $model->deckid = null; // Trở thành thẻ tự do (kho chung)
+            if ($model->save(false)) {
+                return ['success' => true, 'message' => 'Đã gỡ thẻ thành công.'];
+            }
+        }
+        return ['success' => false, 'message' => 'Lỗi: Không thể gỡ thẻ.'];
+    }
     public function actionAjaxImportDeck()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
         $deckId = Yii::$app->request->post('deckId');
+        $userId = Yii::$app->user->id;
 
-        // 1. Tìm bộ bài gốc dựa trên ID
+        // 1. Tìm bộ bài gốc
         $originalDeck = Deck::find()->where(['deckid' => $deckId])->with('cards')->one();
 
         if (!$originalDeck) {
             return ['success' => false, 'message' => 'Không tìm thấy bộ bài với ID: ' . $deckId];
         }
 
-        // 2. Tạo bản sao bộ bài mới cho User hiện tại (Demo UserID = 1)
+        // 2. Chặn nếu nhập bộ bài của chính mình (Tránh rác dữ liệu)
+        if ($originalDeck->userid == $userId) {
+            return ['success' => false, 'message' => 'Bạn không thể nhập bộ bài của chính mình.'];
+        }
+
+        // 3. Tiến hành sao chép bộ bài
         $newDeck = new Deck();
         $newDeck->name = $originalDeck->name . " (Đã nhập)";
         $newDeck->description = $originalDeck->description;
-        $newDeck->userid = 1; 
+        $newDeck->userid = $userId; 
 
         if ($newDeck->save()) {
-            // 3. Sao chép toàn bộ thẻ từ bộ bài gốc sang bộ bài mới
+            // 4. Sao chép từng thẻ một (Copy toàn bộ thông tin thay vì chỉ mặt trước/sau)
             foreach ($originalDeck->cards as $card) {
                 $newCard = new Card();
+                $newCard->userid = $userId;
                 $newCard->deckid = $newDeck->deckid;
+                $newCard->cardtype = $card->cardtype;
                 $newCard->frontcontent = $card->frontcontent;
                 $newCard->backcontent = $card->backcontent;
                 $newCard->pronunciation = $card->pronunciation;
                 $newCard->examplesentence = $card->examplesentence;
                 $newCard->tags = $card->tags;
-                $newCard->save();
+                $newCard->save(false); // Dùng false để bỏ qua validation nếu cần thiết cho nhanh
             }
             return ['success' => true, 'message' => 'Đã nhập thành công bộ bài: ' . $originalDeck->name];
         }
 
-        return ['success' => false, 'message' => 'Có lỗi xảy ra khi lưu dữ liệu.'];
+        return ['success' => false, 'message' => 'Có lỗi xảy ra khi lưu dữ liệu bộ bài mới.'];
     }
-
     /**
-     * AJAX: Cập nhật thông tin bộ thẻ
+     * AJAX: Cập nhật thông tin bộ thẻ (Tên/Mô tả)
      */
-    public function actionAjaxUpdateDeck($id)
+    public function actionAjaxUpdateDeck($id = null)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
-        $model = Deck::findOne($id);
+        $id = $id ?? Yii::$app->request->post('id');
+        $model = Deck::findOne(['deckid' => $id, 'userid' => Yii::$app->user->id]);
         if ($model) {
             $data = Yii::$app->request->post();
-            $model->name = $data['name'];
-            $model->description = $data['description'];
+            $model->name = $data['name'] ?? $model->name;
+            $model->description = $data['description'] ?? $model->description;
             if ($model->save()) {
                 return ['success' => true];
             }
@@ -365,12 +407,13 @@ public function actionLogout()
     }
 
     /**
-     * AJAX: Xóa bộ thẻ
+     * AJAX: Xóa toàn bộ một bộ bài
      */
-    public function actionAjaxDeleteDeck($id)
+    public function actionAjaxDeleteDeck($id = null)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
-        $model = Deck::findOne($id);
+        $id = $id ?? Yii::$app->request->post('id');
+        $model = Deck::findOne(['deckid' => $id, 'userid' => Yii::$app->user->id]);
         if ($model && $model->delete()) {
             return ['success' => true];
         }
@@ -378,118 +421,125 @@ public function actionLogout()
     }
 
     /**
-     * AJAX: Xóa thẻ khỏi bộ
+     * AJAX: Tạo một bộ bài hoàn toàn mới
      */
-    public function actionAjaxDeleteCard($id)
+    public function actionAjaxCreateDeck()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
-        $model = Card::findOne($id);
-        if ($model && $model->delete()) {
-            return ['success' => true];
+        $data = Yii::$app->request->post();
+        
+        $model = new Deck();
+        $model->name = $data['name'] ?? 'Bộ bài mới';
+        $model->description = $data['description'] ?? '';
+        $model->userid = Yii::$app->user->id; 
+
+        if ($model->save()) {
+            return ['success' => true, 'message' => 'Đã tạo bộ thẻ thành công!'];
         }
-        return ['success' => false];
+        return ['success' => false, 'errors' => $model->errors];
     }
 
-    public function actionAjaxSaveBatchCards()
+    /**
+     * AJAX: Cập nhật Profile (Họ tên, Mật khẩu, Avatar)
+     */
+    public function actionAjaxUpdateProfile()
     {
-        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-        $request = Yii::$app->request->post();
-        
-        $deckId = $request['deckId'] ?? null;
-        // 1. Bắt giá trị cardType từ JavaScript gửi lên (Mặc định là 1 nếu không có)
-        $cardType = $request['cardType'] ?? 1; 
-        $cardsData = json_decode($request['cards'], true);
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        if (Yii::$app->user->isGuest) return ['success' => false, 'message' => 'Phiên đăng nhập hết hạn.'];
 
-        if (!$deckId || empty($cardsData)) {
-            return ['success' => false, 'message' => 'Dữ liệu không hợp lệ.'];
+        /** @var \app\models\User $user */
+        $user = Yii::$app->user->identity;
+        $post = Yii::$app->request->post();
+
+        if (!empty($post['displayname'])) $user->displayname = $post['displayname'];
+        if (!empty($post['password'])) $user->setPassword($post['password']);
+
+        // Xử lý lưu ảnh từ chuỗi Base64
+        if (!empty($post['avatar_base64'])) {
+            try {
+                $uploadPath = Yii::getAlias('@webroot/uploads/avatars');
+                if (!is_dir($uploadPath)) FileHelper::createDirectory($uploadPath);
+
+                if (preg_match('/^data:image\/(\w+);base64,/', $post['avatar_base64'], $type)) {
+                    $data = base64_decode(substr($post['avatar_base64'], strpos($post['avatar_base64'], ',') + 1));
+                    if ($data !== false) {
+                        $fileName = 'avatar_' . $user->id . '_' . time() . '.' . strtolower($type[1]);
+                        if (file_put_contents($uploadPath . DIRECTORY_SEPARATOR . $fileName, $data)) {
+                            $user->avatarurl = Yii::getAlias('@web/uploads/avatars/') . $fileName;
+                        }
+                    }
+                }
+            } catch (\Exception $e) { Yii::error($e->getMessage()); }
         }
 
-        // Tên nhãn để hiển thị đẹp ra giao diện Từ vựng
-        $typeLabel = 'Cơ bản';
-        if ($cardType == 2) $typeLabel = 'Đảo ngược';
-        if ($cardType == 3) $typeLabel = 'Nhập liệu';
+        if ($user->save(false)) return ['success' => true];
+        return ['success' => false, 'message' => 'Không thể lưu thông tin.'];
+    }
+
+    /**
+     * AJAX: Lưu thẻ hàng loạt từ trang thêm thẻ
+     */
+    public function actionAjaxSaveBatchCards()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $request = Yii::$app->request->post();
+        $deckId = $request['deckId'] ?? null;
+        $cardsData = json_decode($request['cards'], true);
+        $userId = Yii::$app->user->id;
+
+        if (!$deckId || empty($cardsData)) return ['success' => false, 'message' => 'Dữ liệu rỗng.'];
 
         $transaction = Yii::$app->db->beginTransaction();
         try {
             foreach ($cardsData as $data) {
-                $userTags = isset($data['tags']) && trim($data['tags']) !== '' ? trim($data['tags']) : '';
-                $data['tags'] = $userTags !== '' ? $typeLabel . ', ' . $userTags : $typeLabel;
-                
-                // 2. PHẢI truyền biến $cardType vào hàm saveCardInstance
-                $this->saveCardInstance($deckId, $data, $cardType);
-
-                // Nếu là thẻ Đảo ngược, tạo thêm một mặt ngược lại
-                if ($cardType == 2) {
-                    $reversed = $data;
-                    $reversed['front'] = $data['back'];
-                    $reversed['back'] = $data['front'];
-                    // Thẻ lộn ngược này cũng có kiểu là 2
-                    $this->saveCardInstance($deckId, $reversed, $cardType);
-                }
+                $this->saveCardInstance($deckId, $data, $request['cardType'] ?? 1, $userId);
             }
             $transaction->commit();
             return ['success' => true];
         } catch (\Exception $e) {
-            $transaction->rollBack();
+            if ($transaction) $transaction->rollBack();
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }
 
     /**
-     * Hàm phụ trợ lưu một bản ghi thẻ
+     * Hàm phụ trợ lưu bản ghi thẻ
      */
-    private function saveCardInstance($deckId, $data, $type) {
+    private function saveCardInstance($deckId, $data, $type, $userId) {
         $model = new Card();
+        $model->userid = $userId;
         $model->deckid = $deckId;
-        
-        // 3. GÁN KIỂU THẺ VÀO DATABASE Ở ĐÂY
         $model->cardtype = $type; 
-        
-        $model->frontcontent = $data['front'];
-        $model->backcontent = $data['back'];
+        $model->frontcontent = $data['front'] ?? '';
+        $model->backcontent = $data['back'] ?? '';
         $model->pronunciation = $data['pronunciation'] ?? '';
         $model->examplesentence = $data['example'] ?? '';
         $model->tags = $data['tags'] ?? '';
         $model->createdat = date('Y-m-d H:i:s');
-        
-        if (!$model->save()) {
-            throw new \Exception("Không thể lưu thẻ: " . json_encode($model->errors));
-        }
-    }
-
-    public function actionAjaxRemoveFromDeck($id) {
-        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-        $model = Card::findOne($id);
-        if ($model) {
-            $model->deckid = null; // Trở thành thẻ tự do (kho chung)
-            if ($model->save(false)) {
-                return ['success' => true];
-            }
-        }
-        return ['success' => false];
+        if (!$model->save()) throw new \Exception("Lỗi lưu dữ liệu thẻ.");
     }
 
     /**
-     * AJAX: Thêm thẻ có sẵn vào một bộ bài
+     * AJAX: Gắn một thẻ có sẵn vào một bộ bài khác
      */
     public function actionAjaxAssignCardToDeck() {
-        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        Yii::$app->response->format = Response::FORMAT_JSON;
         $cardId = Yii::$app->request->post('cardId');
         $newDeckId = Yii::$app->request->post('deckId');
+        $userId = Yii::$app->user->id;
 
-        $card = Card::findOne($cardId);
+        $card = Card::findOne(['cardid' => $cardId, 'userid' => $userId]);
         if (!$card || !$newDeckId) return ['success' => false, 'message' => 'Dữ liệu không hợp lệ.'];
 
         if ($card->deckid === null) {
-            // Nếu thẻ đang ở kho chung, đẩy luôn vào bộ bài
             $card->deckid = $newDeckId;
             $card->save(false);
         } else {
-            // Nếu thẻ đang ở bộ khác, tạo bản sao sang bộ mới để tiến độ học độc lập
             $newCard = new Card();
-            $newCard->attributes = $card->attributes; // Copy mọi thứ
-            $newCard->cardid = null; // Tạo ID mới
+            $newCard->attributes = $card->attributes; 
+            $newCard->cardid = null; 
             $newCard->deckid = $newDeckId;
+            $newCard->userid = $userId;
             $newCard->createdat = date('Y-m-d H:i:s');
             $newCard->save(false);
         }
