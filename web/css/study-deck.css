@@ -1,0 +1,397 @@
+/* ============================================
+   TRANG HỌC BỘ THẺ (FLASHCARD) - STUDY-DECK.PHP
+   ============================================ */
+
+.study-deck-container {
+    padding: 30px 20px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* Header */
+.study-header {
+    margin-bottom: 40px;
+}
+
+.study-deck-name {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.back-btn {
+    display: inline-block;
+    background: #e0e0e0;
+    color: #333;
+    padding: 8px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+    background: #d0d0d0;
+}
+
+.study-deck-name h1 {
+    margin: 0;
+    font-size: 28px;
+    color: #2c3e50;
+}
+
+/* Progress */
+.study-progress {
+    margin-bottom: 20px;
+}
+
+.progress-text {
+    display: block;
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: #e0e0e0;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #1abc9c, #16a085);
+    transition: width 0.3s ease;
+}
+
+/* Flashcard */
+.study-content {
+    background: #fff;
+    border-radius: 12px;
+    padding: 40px 30px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.flashcard {
+    perspective: 1000px;
+    height: 400px;
+    margin-bottom: 30px;
+    cursor: pointer;
+}
+
+.card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+}
+
+.flashcard.flipped .card-inner {
+    transform: rotateY(180deg);
+}
+
+.card-front,
+.card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.card-front {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+}
+
+.card-back {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: #fff;
+    transform: rotateY(180deg);
+}
+
+.card-label {
+    font-size: 12px;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+}
+
+.card-text {
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.4;
+    margin-bottom: 20px;
+    word-wrap: break-word;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.card-pronunciation {
+    font-size: 18px;
+    font-style: italic;
+    opacity: 0.9;
+}
+
+.card-example {
+    font-size: 14px;
+    margin-top: 15px;
+    font-style: italic;
+    opacity: 0.85;
+    max-height: 80px;
+    overflow-y: auto;
+}
+
+/* Controls */
+.study-controls {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+/* Nút Tiếp theo */
+.next-button-container {
+    padding: 20px 0;
+}
+
+.btn-next {
+    background: linear-gradient(135deg, #1abc9c, #16a085);
+    color: #fff;
+    padding: 14px 40px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(26, 188, 156, 0.3);
+}
+
+.btn-next:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(26, 188, 156, 0.4);
+}
+
+.btn-next:active {
+    transform: scale(0.98);
+}
+
+/* Nút đánh giá container */
+.grade-buttons-container {
+    padding: 20px 0;
+}
+
+.flip-hint {
+    font-size: 14px;
+    color: #999;
+    margin: 0 0 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.grade-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.btn-grade {
+    padding: 16px 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-grade:hover {
+    border-color: #1abc9c;
+    background: #f0fffe;
+}
+
+.btn-grade:active {
+    transform: scale(0.98);
+}
+
+.grade-0 { /* Again */
+    border-color: #f44336;
+}
+
+.grade-0:hover {
+    background: #ffebee;
+}
+
+.grade-1 { /* Hard */
+    border-color: #ff9800;
+}
+
+.grade-1:hover {
+    background: #fff3e0;
+}
+
+.grade-2 { /* Good */
+    border-color: #2196f3;
+}
+
+.grade-2:hover {
+    background: #e3f2fd;
+}
+
+.grade-3 { /* Easy */
+    border-color: #4caf50;
+}
+
+.grade-3:hover {
+    background: #e8f5e9;
+}
+
+.grade-4 { /* Very Easy */
+    border-color: #9c27b0;
+}
+
+.grade-4:hover {
+    background: #f3e5f5;
+}
+
+.grade-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.grade-desc {
+    font-size: 11px;
+    color: #999;
+    font-weight: normal;
+}
+
+/* Card Info */
+.card-info {
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    border-left: 4px solid #1abc9c;
+}
+
+.info-row {
+    display: flex;
+    gap: 16px;
+    padding: 8px 0;
+    font-size: 14px;
+}
+
+.info-row:not(:last-child) {
+    border-bottom: 1px solid #e8e8e8;
+}
+
+.label {
+    font-weight: 600;
+    color: #666;
+    min-width: 100px;
+}
+
+.value {
+    color: #333;
+    flex: 1;
+}
+
+/* Loading state */
+.btn-grade:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.spinner-border {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: currentColor;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .flashcard {
+        height: 300px;
+    }
+
+    .card-text {
+        font-size: 24px;
+    }
+
+    .grade-buttons {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .btn-grade {
+        padding: 12px 8px;
+    }
+
+    .study-content {
+        padding: 20px 15px;
+    }
+
+    .btn-next {
+        padding: 12px 30px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .study-deck-name {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .study-deck-name h1 {
+        font-size: 22px;
+    }
+
+    .flashcard {
+        height: 250px;
+    }
+
+    .card-text {
+        font-size: 20px;
+    }
+
+    .grade-buttons {
+        grid-template-columns: 1fr;
+    }
+
+    .card-front,
+    .card-back {
+        padding: 20px;
+    }
+
+    .btn-next {
+        padding: 12px 24px;
+        font-size: 14px;
+    }
+}

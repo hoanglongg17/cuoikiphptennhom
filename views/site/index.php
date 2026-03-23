@@ -24,7 +24,7 @@ $this->title = 'Andi - Học từ vựng';
       </div>
     </div>
     <div class="hero-image">
-      <img src="/images/studybanner.png" alt="Học tập minh họa">
+      <img src="<?= Yii::getAlias('@web') ?>/images/studybanner.png" alt="Học tập minh họa">
     </div>
   </div>
 </section>
@@ -39,19 +39,19 @@ $this->title = 'Andi - Học từ vựng';
 
     <div class="feature-list">
         <div class="feature">
-            <img src="/icons/flashcard.png" alt="Flashcards Icon">
+            <img src="<?= Yii::getAlias('@web') ?>/icons/flashcard.png" alt="Flashcard Icon">
             <h3>Flashcards thông minh</h3>
         </div>
         <div class="feature">
-            <img src="/icons/graduation.png" alt="Graduation Icon">
+            <img src="<?= Yii::getAlias('@web') ?>/icons/graduation.png" alt="Graduation Icon">
             <h3>Lộ trình cá nhân hóa</h3>
         </div>
         <div class="feature">
-            <img src="/icons/statistics.png" alt="Statistics Icon">
+            <img src="<?= Yii::getAlias('@web') ?>/icons/statistics.png" alt="Statistics Icon">
             <h3>Thống kê chi tiết</h3>
         </div>
         <div class="feature">
-            <img src="/icons/vocabulary.png" alt="Vocabulary Icon">
+            <img src="<?= Yii::getAlias('@web') ?>/icons/vocabulary.png" alt="Vocabulary Icon">
             <h3>Từ vựng phong phú</h3>
         </div>
     </div>
@@ -66,19 +66,19 @@ $this->title = 'Andi - Học từ vựng';
 
     <div class="benefits">
         <div class="benefit">
-            <img src="/icons/free.png" alt="Miễn phí Icon">
+            <img src="<?= Yii::getAlias('@web') ?>/icons/free.png" alt="Miễn phí Icon">
             <h3>Miễn phí</h3>
         </div>
         <div class="benefit">
-            <img src="/icons/anywhere.png" alt="Học mọi lúc mọi nơi Icon">
+            <img src="<?= Yii::getAlias('@web') ?>/icons/anywhere.png" alt="Học mọi lúc mọi nơi Icon">
             <h3>Học mọi lúc mọi nơi</h3>
         </div>
         <div class="benefit">
-            <img src="/icons/science.png" alt="Phương pháp khoa học Icon">
+            <img src="<?= Yii::getAlias('@web') ?>/icons/science.png" alt="Phương pháp khoa học Icon">
             <h3>Phương pháp khoa học</h3>
         </div>
         <div class="benefit">
-            <img src="/icons/needs.png" alt="Theo nhu cầu Icon">
+            <img src="<?= Yii::getAlias('@web') ?>/icons/needs.png" alt="Theo nhu cầu Icon">
             <h3>Học từ vựng theo từng nhu cầu</h3>
         </div>
     </div>

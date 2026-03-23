@@ -1,6 +1,7 @@
 <?php
 /** @var yii\web\View $this */
 /** @var app\models\Deck[] $decks */
+/** @var array $deckQuotas */
 
 use yii\helpers\Url;
 use yii\helpers\Html;
@@ -14,38 +15,6 @@ $this->registerCssFile('@web/css/dashboard.css', ['depends' => [\app\assets\AppA
 $this->registerCssFile('@web/css/vocabset.css', ['depends' => [\app\assets\AppAsset::class]]);
 ?>
 
-<div class="dashboard">
-    <!-- Sidebar Hoàn chỉnh -->
-    <aside class="sidebar">
-        <ul class="menu">
-            <li><a href="<?= Url::to(['site/dashboard']) ?>"><img src="<?= Yii::getAlias('@web') ?>/icons/home.png" alt=""> Trang chủ</a></li>
-            <li><a href="<?= Url::to(['site/vocabset']) ?>" class="active"><img src="<?= Yii::getAlias('@web') ?>/icons/vocabset.png" alt=""> Bộ thẻ</a></li>
-            <li><a href="<?= Url::to(['site/vocabulary']) ?>"><img src="<?= Yii::getAlias('@web') ?>/icons/vocabulary.png" alt=""> Từ vựng</a></li>
-            <li><a href="#"><img src="<?= Yii::getAlias('@web') ?>/icons/practice.png" alt=""> Luyện tập</a></li>
-        </ul>
-        <button class="toggle-btn">&laquo;</button>
-        
-        <!-- Phần Profile (Đồng bộ tỷ lệ và dữ liệu) -->
-        <div class="profile">
-            <div class="avatar">
-                <img src="<?= $user->avatarurl ?: Yii::getAlias('@web/images/andi-avatar.png') ?>" alt="User Avatar">
-            </div>
-            <!-- Nhấn vào tên để hiện popup -->
-            <p class="username" onclick="toggleProfileModal()"><?= Html::encode($user->displayname) ?></p>
-            <div class="profile-actions">
-                <!-- Nút Xem hồ sơ kích hoạt popup -->
-                <button class="btn-profile" onclick="toggleProfileModal()">Xem hồ sơ</button>
-                <label class="theme-switch">
-                    <input type="checkbox" id="darkModeToggle">
-                    <span class="slider"></span>
-                    <span class="label-text">Tối</span>
-                </label>
-            </div>
-        </div>
-    </aside>
-
-
-    <main class="main">
         <div class="vocabset-header">
             <h1>Quản lý Bộ thẻ</h1>
             
@@ -66,9 +35,25 @@ $this->registerCssFile('@web/css/vocabset.css', ['depends' => [\app\assets\AppAs
             <?php foreach ($decks as $deck): ?>
                 <?php 
                     $n = 0; $l = 0; $r = 0;
+                    $today = date('Y-m-d');
+                    $newQuotaRemaining = $deckQuotas[$deck->deckid]['newRemaining'] ?? 20;
+                    $reviewQuotaRemaining = $deckQuotas[$deck->deckid]['reviewRemaining'] ?? 200;
+                    
                     foreach($deck->cards as $c) {
                         $s = $c->progress ? $c->progress->status : 0;
-                        if ($s == 0) $n++; elseif ($s == 1) $l++; else $r++;
+                        
+                        if ($s == 0 && $newQuotaRemaining > 0) {
+                            // Thẻ mới còn quota
+                            $n++;
+                            $newQuotaRemaining--;
+                        } elseif ($s == 1) {
+                            // Thẻ đang học (không quota limit)
+                            $l++;
+                        } elseif ($s == 2 && $c->progress && strtotime($c->progress->duedate) <= strtotime($today . ' 23:59:59') && $reviewQuotaRemaining > 0) {
+                            // Thẻ ôn due hôm nay, còn quota
+                            $r++;
+                            $reviewQuotaRemaining--;
+                        }
                     }
                 ?>
                 <div class="set-row deck-item" data-name="<?= strtolower(Html::encode($deck->name)) ?>" onclick="openModal('modalView-<?= $deck->deckid ?>')">
@@ -168,8 +153,6 @@ $this->registerCssFile('@web/css/vocabset.css', ['depends' => [\app\assets\AppAs
                 </div>
             <?php endforeach; ?>
         </div>
-    </main>
-</div>
 
 <!-- POP-UP TẠO MỚI BỘ THẺ -->
 <div id="modalCreate" class="modal-overlay" onclick="closeModal(this)">

@@ -47,18 +47,8 @@ if (!isset($frameworkPath) || !is_dir($frameworkPath)) {
 require_once($frameworkPath . '/requirements/YiiRequirementChecker.php');
 $requirementsChecker = new YiiRequirementChecker();
 
-$gdMemo = $imagickMemo = 'Either GD PHP extension with FreeType support or ImageMagick PHP extension with PNG support is required for image CAPTCHA.';
-$gdOK = $imagickOK = false;
-
-if (extension_loaded('imagick')) {
-    $imagick = new Imagick();
-    $imagickFormats = $imagick->queryFormats('PNG');
-    if (in_array('PNG', $imagickFormats)) {
-        $imagickOK = true;
-    } else {
-        $imagickMemo = 'Imagick extension should be installed with PNG support in order to be used for image CAPTCHA.';
-    }
-}
+$gdMemo = 'GD PHP extension with FreeType support is required for image CAPTCHA.';
+$gdOK = false;
 
 if (extension_loaded('gd')) {
     $gdInfo = gd_info();
@@ -116,13 +106,6 @@ $requirements = array(
         'condition' => $gdOK,
         'by' => '<a href="https://www.yiiframework.com/doc-2.0/yii-captcha-captcha.html">Captcha</a>',
         'memo' => $gdMemo,
-    ),
-    array(
-        'name' => 'ImageMagick PHP extension with PNG support',
-        'mandatory' => false,
-        'condition' => $imagickOK,
-        'by' => '<a href="https://www.yiiframework.com/doc-2.0/yii-captcha-captcha.html">Captcha</a>',
-        'memo' => $imagickMemo,
     ),
     // PHP ini :
     'phpExposePhp' => array(

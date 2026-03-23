@@ -1,12 +1,12 @@
 .dashboard {
   display: flex;
-  margin-top: 60px; /* chừa chỗ cho header */
+  margin-top: 0; /* body đã chừa chỗ header (70px) */
 }
 
 /* Sidebar */
 .sidebar {
   position: fixed;
-  top: 60px;
+  top: 70px; /* khớp với header cao 70px */
   left: 0;
   width: 220px;
   background: #2c3e50;
@@ -83,6 +83,10 @@
 .toggle-btn:active {
   background: rgba(255,255,255,0.25);
   transform: scale(0.95);
+}
+
+.sidebar.collapsed .toggle-btn {
+  transform: scaleX(-1);
 }
 
 
@@ -173,10 +177,46 @@
 .main {
   margin-left: 220px;
   flex: 1;
-  padding: 20px;
+  padding: 0 20px 20px 20px;
   background: #f9f9f9;
-  min-height: calc(100vh - 60px);
+  min-height: calc(100vh - 70px);
   box-sizing: border-box;
+  transition: margin-left 0.3s ease;
+}
+
+.sidebar.collapsed ~ .main {
+  margin-left: 80px;
+}
+
+/* Dark Mode */
+body.dark-mode {
+  background: #1a1a1a;
+  color: #e0e0e0;
+}
+
+body.dark-mode .main {
+  background: #2a2a2a;
+  color: #e0e0e0;
+}
+
+body.dark-mode .sidebar {
+  background: #1a1a1a;
+  border-right: 1px solid #444;
+}
+
+body.dark-mode .sidebar .menu a {
+  color: #b0b0b0;
+}
+
+body.dark-mode .sidebar .menu a:hover,
+body.dark-mode .sidebar .menu a.active {
+  background: rgba(26, 188, 156, 0.2);
+  color: #fff;
+}
+
+body.dark-mode .sidebar .menu a.active {
+  background: #1abc9c;
+  color: #fff;
 }
 
 .content-row {
@@ -264,13 +304,13 @@
 /* Container chính */
 .dashboard {
     display: flex;
-    margin-top: 60px;
+    margin-top: 0;
 }
 
 /* Sidebar */
 .sidebar {
     position: fixed;
-    top: 60px;
+    top: 70px;
     left: 0;
     width: 240px;
     background: #2c3e50;
@@ -279,9 +319,9 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    height: calc(100vh - 60px);
+    height: calc(100vh - 70px);
     box-sizing: border-box;
-    z-index: 1000;
+    z-index: 900; /* dưới header */
 }
 
 .sidebar .menu {
@@ -302,9 +342,36 @@
 }
 
 .sidebar .menu a img {
-    width: 20px;
-    filter: brightness(0) invert(1);
-    opacity: 0.7;
+    width: 22px;
+    height: 22px;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+/* Icons giữ nguyên màu gốc */
+.sidebar .menu a img {
+    filter: none;
+}
+
+/* Collapsed sidebar */
+.sidebar.collapsed {
+    width: 80px;
+}
+
+.sidebar.collapsed .menu a span {
+    display: none;
+}
+
+.sidebar.collapsed .profile {
+    font-size: 12px;
+}
+
+.sidebar.collapsed .profile .username {
+    display: none;
+}
+
+.sidebar.collapsed .profile-actions {
+    display: none !important;
 }
 
 .sidebar .menu a:hover, .sidebar .menu a.active {
@@ -361,43 +428,108 @@
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.5);
-    backdrop-filter: blur(4px);
+    background-color: rgba(0,0,0,0.6);
+    backdrop-filter: blur(8px);
     justify-content: center;
     align-items: center;
+    overflow-y: auto;
+}
+
+.profile-modal.show {
+    display: flex !important;
 }
 
 .modal-content {
     background-color: #fff;
-    padding: 30px;
+    padding: 20px 25px;
     border-radius: 20px;
     width: 90%;
-    max-width: 400px;
+    max-width: 420px;
+    max-height: 85vh;
+    overflow-y: auto;
     position: relative;
     text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     animation: slideIn 0.3s ease-out;
 }
 
-@keyframes slideIn {
-    from { transform: translateY(-30px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+/* Scrollbar styling for modal */
+.modal-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background: #1abc9c;
+    border-radius: 3px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background: #16a085;
+}
+
+.modal-content h3 {
+    margin: 5px 0 10px 0;
+    color: #2c3e50;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.modal-content h2 {
+    margin: 0;
+    font-size: 22px;
+    color: #fff;
 }
 
 .close-btn {
     position: absolute;
-    right: 20px;
+    right: 15px;
     top: 15px;
-    font-size: 28px;
+    background: none;
+    border: none;
+    font-size: 24px;
     cursor: pointer;
-    color: #aaa;
+    color: #999;
+}
+
+.close-btn:hover {
+    color: #333;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 8px 16px;
+    border-radius: 12px;
+    color: #fff;
+    margin-bottom: 10px;
+}
+
+.logo-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
 }
 
 .modal-avatar img {
-    width: 100px;
-    height: 100px;
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
-    border: 3px solid #1abc9c;
-    margin-bottom: 15px;
+    border: 4px solid #1abc9c;
+    margin: 10px 0;
 }
 
 .modal-body {
@@ -433,48 +565,7 @@
 .btn-logout-modal { background: #ff4757; color: #fff; }
 
 /* --- MODAL PROFILE (Phần Popup giữa màn hình) --- */
-.profile-modal {
-    display: none; 
-    position: fixed;
-    z-index: 3000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(8px);
-    justify-content: center;
-    align-items: center;
-}
-
-.modal-content {
-    background-color: #fff;
-    padding: 40px;
-    border-radius: 30px;
-    width: 95%;
-    max-width: 500px;
-    position: relative;
-    display: flex; /* Sử dụng flexbox */
-    flex-direction: column; /* Ép Avatar -> Tên -> Body xếp dọc */
-    align-items: center; /* Căn giữa tất cả */
-    text-align: center;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
-    animation: zoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.modal-avatar {
-    margin-bottom: 15px;
-}
-
-.modal-avatar img {
-    width: 140px;
-    height: 140px;
-    border-radius: 50%;
-    border: 5px solid #1abc9c;
-    padding: 5px;
-    background: #fff;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-}
+/* Đã dịch chuyển lên trên */
 
 /* Tên người dùng trong Modal */
 .modal-content h2 {
@@ -595,3 +686,172 @@
 
 /* Tiện ích ẩn/hiện nhanh */
 .w-100 { width: 100%; }
+
+/* Dark Mode - Extended Styles */
+body.dark-mode header {
+    background: #1a1a1a;
+    border-bottom: 1px solid #444;
+}
+
+body.dark-mode .logo {
+    color: #e0e0e0;
+}
+
+body.dark-mode .btn-feature {
+    background: #333;
+    border-color: #555;
+    color: #e0e0e0;
+}
+
+body.dark-mode .btn-feature:hover {
+    background: #404040;
+}
+
+body.dark-mode .btn-profile {
+    background: #ff4081;
+    color: #fff;
+}
+
+body.dark-mode .modal-content {
+    background: #333;
+    color: #e0e0e0;
+}
+
+body.dark-mode input,
+body.dark-mode textarea {
+    background: #404040;
+    color: #e0e0e0;
+    border-color: #555;
+}
+
+body.dark-mode .theme-switch .slider {
+    background-color: #666;
+}
+
+body.dark-mode .theme-switch .label-text {
+    color: #e0e0e0;
+}
+
+body.dark-mode .banner {
+    background: linear-gradient(135deg, #ff8c00 0%, #ff6b35 100%);
+}
+
+body.dark-mode .cover img {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+body.dark-mode a {
+    color: #64b5f6;
+}
+
+body.dark-mode a:hover {
+    color: #90caf9;
+}
+
+/* Action Buttons Styles for Profile Modal */
+.info-section {
+    background: #f5f5f5;
+    padding: 12px;
+    border-radius: 12px;
+    margin: 10px 0;
+    text-align: left;
+}
+
+.info-section p {
+    margin: 5px 0;
+    color: #555;
+    font-size: 13px;
+}
+
+.action-btn {
+    width: 100%;
+    padding: 10px 12px;
+    margin: 8px 0;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    background: #fff;
+    color: #333;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    font-size: 13px;
+}
+
+.action-btn:hover {
+    border-color: #1abc9c;
+    background: #f0f9f7;
+    transform: translateY(-2px);
+}
+
+.action-btn .icon {
+    font-size: 16px;
+}
+
+.edit-btn {
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.edit-btn:hover {
+    background: #f0f4ff;
+    border-color: #667eea;
+}
+
+.google-btn {
+    border-color: #ff9900;
+    color: #ff9900;
+}
+
+.google-btn:hover {
+    background: #fff5f0;
+}
+
+.help-btn {
+    border-color: #17a2b8;
+    color: #17a2b8;
+}
+
+.help-btn:hover {
+    background: #f0f8fb;
+}
+
+.logout-btn {
+    border-color: #ff4757;
+    color: #ff4757;
+    margin-top: 12px;
+    margin-bottom: 8px;
+}
+
+.logout-btn:hover {
+    background: #fff0f0;
+    border-color: #ff4757;
+}
+
+/* Dark mode for action buttons */
+body.dark-mode .info-section {
+    background: #2a2a2a;
+    color: #e0e0e0;
+}
+
+body.dark-mode .info-section p {
+    color: #c0c0c0;
+}
+
+body.dark-mode .action-btn {
+    background: #1a1a1a;
+    color: #e0e0e0;
+    border-color: #444;
+}
+
+body.dark-mode .action-btn:hover {
+    background: #2a2a2a;
+    border-color: #1abc9c;
+}
+
+body.dark-mode .modal-avatar img {
+    border-color: #1abc9c;
+}

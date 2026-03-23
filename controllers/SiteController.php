@@ -18,13 +18,15 @@ use yii\helpers\FileHelper;
  */
 use app\models\Deck;
 use app\models\Card;
+use app\models\CardProgress;
+use app\models\ReviewLog;
+use app\models\DeckSettings;
+use app\helpers\SM2Helper;
 
 class SiteController extends Controller
 {
-    /**
-     * Sử dụng duy nhất layout landing để đảm bảo Header/Footer luôn hiển thị đầy đủ
-     */
-    public $layout = 'landing';
+    // Mặc định dùng layout main cho dashboard/vocabset/vocabulary
+    public $layout = 'main';
 
     /**
      * beforeAction: Thiết lập cấu hình tiền xử lý.
@@ -36,6 +38,12 @@ class SiteController extends Controller
         if (strpos($action->id, 'ajax-') === 0 || Yii::$app->request->isAjax) {
             $this->enableCsrfValidation = false;
         }
+
+        // Dành riêng layout cho các page public (landing/login/signup)
+        if (in_array($action->id, ['index', 'login', 'signup'])) {
+            $this->layout = 'landing';
+        }
+
         return parent::beforeAction($action);
     }
 
@@ -50,17 +58,19 @@ class SiteController extends Controller
                 // ĐÃ CẬP NHẬT: Bảo vệ đầy đủ các Action quan trọng
                 'only' => [
                     'logout', 'dashboard', 'signup', 'login', 'vocabset', 'vocabulary',
+                    'practice', 'study-deck',
                     'ajax-create-deck', 'ajax-update-deck', 'ajax-delete-deck',
                     'ajax-delete-card', 'ajax-remove-from-deck', 'ajax-import-deck', 
-                    'ajax-assign-card-to-deck', 'ajax-save-batch-cards'
+                    'ajax-assign-card-to-deck', 'ajax-save-batch-cards', 'ajax-grade-card', 'ajax-get-next-card'
                 ],
                 'rules' => [
                     [
                         'actions' => [
                             'dashboard', 'logout', 'vocabset', 'vocabulary',
+                            'practice', 'study-deck',
                             'ajax-create-deck', 'ajax-update-deck', 'ajax-delete-deck',
                             'ajax-delete-card', 'ajax-remove-from-deck', 'ajax-import-deck', 
-                            'ajax-assign-card-to-deck', 'ajax-save-batch-cards'
+                            'ajax-assign-card-to-deck', 'ajax-save-batch-cards', 'ajax-grade-card', 'ajax-get-next-card'
                         ],
                         'allow' => true,
                         'roles' => ['@'], // Chỉ cho phép người đã đăng nhập
@@ -242,12 +252,50 @@ class SiteController extends Controller
         $userId = Yii::$app->user->id;
         $decks = Deck::find()
             ->where(['userid' => $userId])
-            ->with(['cards', 'cards.progress']) // Tải trước dữ liệu thẻ để Pop-up mượt mà
+            ->with(['cards.progress']) // Eager load dữ liệu cards và progress từ DB
             ->orderBy(['createdat' => SORT_DESC])
             ->all();
 
+        // Tính quota còn lại hôm nay cho mỗi deck
+        $today = date('Y-m-d');
+        $deckQuotas = [];
+        
+        foreach ($decks as $deck) {
+            // Lấy cài đặt bộ thẻ
+            $deckSettings = DeckSettings::findOne(['deckid' => $deck->deckid]) ?: new DeckSettings();
+            $maxNewCards = $deckSettings->maxnewcardsperday ?? 20;
+            $maxReviewCards = $deckSettings->maxreviewcardsperday ?? 200;
+
+            // Đếm đã học hôm nay
+            $todayNewCount = ReviewLog::find()
+                ->joinWith('card')
+                ->joinWith('cardProgress')
+                ->where(['>=', 'DATE(reviewlogs.reviewdate)', $today])
+                ->andWhere(['cards.deckid' => $deck->deckid, 'cards.userid' => $userId])
+                ->andWhere(['cardprogress.status' => 0])
+                ->count();
+
+            $todayReviewCount = ReviewLog::find()
+                ->joinWith('card')
+                ->joinWith('cardProgress')
+                ->where(['>=', 'DATE(reviewlogs.reviewdate)', $today])
+                ->andWhere(['cards.deckid' => $deck->deckid, 'cards.userid' => $userId])
+                ->andWhere(['cardprogress.status' => 2])
+                ->count();
+
+            $newQuotaRemaining = $maxNewCards - $todayNewCount;
+            $reviewQuotaRemaining = $maxReviewCards - $todayReviewCount;
+
+            // Lưu quota vào array (thay vì set vào deck object)
+            $deckQuotas[$deck->deckid] = [
+                'newRemaining' => max(0, $newQuotaRemaining),
+                'reviewRemaining' => max(0, $reviewQuotaRemaining),
+            ];
+        }
+
         return $this->render('vocabset', [
             'decks' => $decks,
+            'deckQuotas' => $deckQuotas,
         ]);
     }
 
@@ -544,5 +592,441 @@ class SiteController extends Controller
             $newCard->save(false);
         }
         return ['success' => true];
+    }
+
+    /* =========================================================================
+       PHẦN 4: LUYỆN TẬP - PRACTICE (FLASHCARD STUDY) VỚI SM-2
+       ========================================================================= */
+
+    /**
+     * Trang Luyện tập: Hiển thị danh sách bộ thẻ với thống kê
+     */
+    public function actionPractice()
+    {
+        $userId = Yii::$app->user->id;
+        $today = date('Y-m-d');
+        
+        // Lấy tất cả bộ thẻ của user
+        $decks = Deck::find()
+            ->where(['userid' => $userId])
+            ->with(['cards', 'cards.progress'])
+            ->orderBy(['createdat' => SORT_DESC])
+            ->all();
+
+        // Tính toán thống kê cho mỗi bộ thẻ (áp dụng quota như Anki)
+        $deckStats = [];
+        foreach ($decks as $deck) {
+            // Lấy cài đặt bộ thẻ
+            $deckSettings = DeckSettings::findOne(['deckid' => $deck->deckid]) ?: new DeckSettings();
+            $maxNewCards = $deckSettings->maxnewcardsperday ?? 20;
+            $maxReviewCards = $deckSettings->maxreviewcardsperday ?? 200;
+
+            // Đếm đã học hôm nay (từ ReviewLog)
+            $todayNewCount = ReviewLog::find()
+                ->joinWith('card')
+                ->joinWith('cardProgress')
+                ->where(['>=', 'DATE(reviewlogs.reviewdate)', $today])
+                ->andWhere(['cards.deckid' => $deck->deckid, 'cards.userid' => $userId])
+                ->andWhere(['cardprogress.status' => 0])
+                ->count();
+
+            $todayReviewCount = ReviewLog::find()
+                ->joinWith('card')
+                ->joinWith('cardProgress')
+                ->where(['>=', 'DATE(reviewlogs.reviewdate)', $today])
+                ->andWhere(['cards.deckid' => $deck->deckid, 'cards.userid' => $userId])
+                ->andWhere(['cardprogress.status' => 2])
+                ->count();
+
+            // Tính quota có sẵn
+            $newQuotaRemaining = $maxNewCards - $todayNewCount;
+            $reviewQuotaRemaining = $maxReviewCards - $todayReviewCount;
+
+            // Đếm thẻ cần ôn với quota limit
+            $new = 0;
+            $learning = 0;
+            $review = 0;
+
+            foreach ($deck->cards as $card) {
+                $progress = $card->progress;
+                if (!$progress) {
+                    // Thẻ mới chưa học - check quota
+                    if ($newQuotaRemaining > 0) {
+                        $new++;
+                        $newQuotaRemaining--;
+                    }
+                } else {
+                    $status = $progress->status;
+                    // Check due: before end of today
+                    $isDue = strtotime($progress->duedate) <= strtotime($today . ' 23:59:59');
+                    
+                    if ($status == 0) {
+                        // Thẻ mới - check quota
+                        if ($isDue && $newQuotaRemaining > 0) {
+                            $new++;
+                            $newQuotaRemaining--;
+                        }
+                    } elseif ($status == 1) {
+                        // Thẻ đang học - no quota limit
+                        if ($isDue) {
+                            $learning++;
+                        }
+                    } elseif ($status == 2) {
+                        // Thẻ ôn tập - check quota
+                        if ($isDue && $reviewQuotaRemaining > 0) {
+                            $review++;
+                            $reviewQuotaRemaining--;
+                        }
+                    }
+                }
+            }
+
+            $deckStats[$deck->deckid] = [
+                'new' => $new,
+                'learning' => $learning,
+                'review' => $review,
+                'total' => count($deck->cards),
+            ];
+        }
+
+        return $this->render('practice', [
+            'decks' => $decks,
+            'deckStats' => $deckStats,
+        ]);
+    }
+
+    /**
+     * Trang Học bộ thẻ: Hiển thị flashcard và xử lý SM-2
+     */
+    public function actionStudyDeck($deckid = null)
+    {
+        if (!$deckid) return $this->redirect(['site/practice']);
+
+        $userId = Yii::$app->user->id;
+        $deck = Deck::findOne(['deckid' => $deckid, 'userid' => $userId]);
+
+        if (!$deck) return $this->redirect(['site/practice']);
+
+        // Lấy tất cả bộ thẻ của user (cho sidebar)
+        $decks = Deck::find()
+            ->where(['userid' => $userId])
+            ->orderBy(['createdat' => SORT_DESC])
+            ->all();
+
+        // Lấy các thẻ cần ôn tập hôm nay
+        $cardsToStudy = Card::find()
+            ->where(['userid' => $userId, 'deckid' => $deckid])
+            ->with('progress')
+            ->all();
+
+        // Lấy cài đặt bộ thẻ để áp dụng daily limit (như Anki)
+        $deckSettings = DeckSettings::findOne(['deckid' => $deckid]) ?: new DeckSettings();
+        $maxNewCards = $deckSettings->maxnewcardsperday ?? 20;
+        $maxReviewCards = $deckSettings->maxreviewcardsperday ?? 200;
+
+        // Đếm thẻ đã học hôm nay
+        $today = date('Y-m-d');
+        $todayNewCount = ReviewLog::find()
+            ->joinWith('card')
+            ->joinWith('cardProgress')
+            ->where(['>=', 'DATE(reviewlogs.reviewdate)', $today])
+            ->andWhere(['cards.deckid' => $deckid, 'cards.userid' => $userId])
+            ->andWhere(['cardprogress.status' => 0])
+            ->count();
+
+        $todayReviewCount = ReviewLog::find()
+            ->joinWith('card')
+            ->joinWith('cardProgress')
+            ->where(['>=', 'DATE(reviewlogs.reviewdate)', $today])
+            ->andWhere(['cards.deckid' => $deckid, 'cards.userid' => $userId])
+            ->andWhere(['cardprogress.status' => 2])
+            ->count();
+
+        // Tính quota còn lại
+        $newQuotaRemaining = $maxNewCards - $todayNewCount;
+        $reviewQuotaRemaining = $maxReviewCards - $todayReviewCount;
+
+        // Lọc thẻ cần ôn (sắp xếp ưu tiên: mới > learning > review due)
+        $dueSoon = [];
+        $new = [];
+        $learning = [];
+        $review = [];
+
+        foreach ($cardsToStudy as $card) {
+            $progress = $card->progress;
+            if (!$progress) {
+                $new[] = $card;
+            } else {
+                // Check due: thẻ phải due trước cuối hôm nay (giống vocabset)
+                $isDue = strtotime($progress->duedate) <= strtotime($today . ' 23:59:59');
+                if ($progress->status == 0) {
+                    if ($isDue) $dueSoon[] = $card;
+                    else $new[] = $card;
+                } elseif ($progress->status == 1) {
+                    if ($isDue) $dueSoon[] = $card;
+                    else $learning[] = $card;
+                } elseif ($progress->status == 2) {
+                    if ($isDue) $dueSoon[] = $card;
+                    else $review[] = $card;
+                }
+            }
+        }
+
+        // Áp dụng daily limit: lọc các thẻ available theo quota
+        $availableDue = [];
+        foreach ($dueSoon as $card) {
+            $progress = $card->progress;
+            if ($progress && $progress->status == 2 && $reviewQuotaRemaining > 0) {
+                $availableDue[] = $card;
+                $reviewQuotaRemaining--;
+            } elseif ($progress && $progress->status == 1) {
+                // Learning card không có quota limit, luôn show
+                $availableDue[] = $card;
+            } elseif (!$progress && $newQuotaRemaining > 0) {
+                $availableDue[] = $card;
+                $newQuotaRemaining--;
+            } elseif ($progress && $progress->status == 0 && $newQuotaRemaining > 0) {
+                $availableDue[] = $card;
+                $newQuotaRemaining--;
+            }
+        }
+
+        // Additional: Filter $new cards by quota (những thẻ chưa học, chưa due)
+        $availableNew = [];
+        foreach ($new as $card) {
+            if ($newQuotaRemaining > 0) {
+                $availableNew[] = $card;
+                $newQuotaRemaining--;
+            }
+        }
+
+        // Lọc thẻ learning chưa due (không bị quota limit)
+        $availableLearning = $learning;
+
+        // Ưu tiên: thẻ sắp đến hạn > thẻ mới > đang học
+        // CHỈ show những thẻ DUE hôm nay, chưa học (còn quota), hoặc đang học
+        $priorityQueue = array_merge($availableDue, $availableNew, $availableLearning);
+
+        // Lấy thẻ đầu tiên (hoặc redirect nếu không có)
+        if (empty($priorityQueue)) {
+            Yii::$app->session->setFlash('info', 'Hôm nay bạn đã hoàn thành tất cả bộ này! 🎉');
+            return $this->redirect(['site/practice']);
+        }
+
+        $currentCard = $priorityQueue[0];
+        $cardIndex = 1;
+        $totalCards = count($priorityQueue);
+
+        return $this->render('study-deck', [
+            'deck' => $deck,
+            'decks' => $decks,
+            'currentCard' => $currentCard,
+            'cardIndex' => $cardIndex,
+            'totalCards' => $totalCards,
+            'priorityQueue' => $priorityQueue,
+        ]);
+    }
+
+    /**
+     * AJAX: Lấy thẻ tiếp theo cần học
+     */
+    public function actionAjaxGetNextCard()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $deckId = Yii::$app->request->post('deckId');
+        $currentCardId = Yii::$app->request->post('currentCardId');
+        $userId = Yii::$app->user->id;
+
+        // Get deck settings for daily limits
+        $deckSettings = DeckSettings::findOne(['deckid' => $deckId]) ?: new DeckSettings();
+        $maxNewCards = $deckSettings->maxnewcardsperday ?? 20;
+        $maxReviewCards = $deckSettings->maxreviewcardsperday ?? 200;
+
+        // Count today's review counts (from ReviewLog where reviewdate is today)
+        $today = date('Y-m-d');
+        $todayReviews = ReviewLog::find()
+            ->joinWith('card')
+            ->where(['>=', 'DATE(reviewlogs.reviewdate)', $today])
+            ->andWhere(['cards.deckid' => $deckId, 'cards.userid' => $userId])
+            ->count();
+
+        // Breakdown of today's reviews by card status
+        $todayNewCount = ReviewLog::find()
+            ->joinWith('card')
+            ->joinWith('cardProgress')
+            ->where(['>=', 'DATE(reviewlogs.reviewdate)', $today])
+            ->andWhere(['cards.deckid' => $deckId, 'cards.userid' => $userId])
+            ->andWhere(['cardprogress.status' => 0])
+            ->count();
+
+        $todayReviewCount = ReviewLog::find()
+            ->joinWith('card')
+            ->joinWith('cardProgress')
+            ->where(['>=', 'DATE(reviewlogs.reviewdate)', $today])
+            ->andWhere(['cards.deckid' => $deckId, 'cards.userid' => $userId])
+            ->andWhere(['cardprogress.status' => 2])
+            ->count();
+
+        // Lấy thẻ tiếp theo từ queue (tính lại từ DB)
+        $cardsToStudy = Card::find()
+            ->where(['userid' => $userId, 'deckid' => $deckId])
+            ->with('progress')
+            ->all();
+
+        $dueSoon = [];
+        $new = [];
+        $learning = [];
+        $review = [];
+
+        foreach ($cardsToStudy as $card) {
+            $progress = $card->progress;
+            if (!$progress) {
+                $new[] = $card;
+            } else {
+                // KHÔNG check isDue ở đây! Vì user đã bắt đầu học session, duedate có thể change sau grade
+                // Chỉ check status - nếu thẻ vừa được grade và duedate updated, vẫn phải show
+                if ($progress->status == 0) {
+                    $dueSoon[] = $card; // Thẻ mới chưa học
+                } elseif ($progress->status == 1) {
+                    $learning[] = $card; // Thẻ đang learn
+                } elseif ($progress->status == 2) {
+                    $dueSoon[] = $card; // Thẻ review
+                }
+            }
+        }
+
+        // Apply daily limits: Filter due cards by daily quotas
+        // Nhưng nếu user đã vào study session, không nên block bởi quota
+        // Chỉ add status như bình thường
+        $availableDue = $dueSoon;
+        $availableNew = $new;
+
+        // Ưu tiên: thẻ review > thẻ mới > đang học
+        $priorityQueue = array_merge($availableDue, $availableNew, $learning);
+
+        // Tìm thẻ tiếp theo
+        // Nếu chỉ có 1 thẻ và nó vừa được grade, sẽ return lại nó để show tiếp
+        $nextCard = null;
+        $skipFirst = true;
+        foreach ($priorityQueue as $card) {
+            if ($card->cardid != $currentCardId) {
+                $nextCard = $card;
+                break;
+            } elseif ($card->cardid == $currentCardId && !$skipFirst) {
+                // Thẻ đó xuất hiện lần 2, có thể return nó
+                $nextCard = $card;
+                break;
+            }
+        }
+        
+        // Nếu không tìm thấy thẻ khác, check xem currentCard có trong queue không
+        // Nếu có = hỏi có thể show lại
+        if (!$nextCard) {
+            foreach ($priorityQueue as $card) {
+                if ($card->cardid == $currentCardId) {
+                    // Thẻ hiện tại vẫn trong queue (ví dụ vừa score "Again" thành Learning)
+                    $nextCard = $card;
+                    break;
+                }
+            }
+        }
+
+        if (!$nextCard) {
+            // Hết thẻ, quay lại practice
+            return [
+                'success' => true,
+                'finished' => true,
+                'message' => 'Hoàn thành tất cả thẻ trong bộ này! 🎉'
+            ];
+        }
+
+        // Tìm vị trí của thẻ tiếp theo trong priorityQueue
+        $cardIndex = 1;
+        foreach ($priorityQueue as $idx => $card) {
+            if ($card->cardid == $nextCard->cardid) {
+                $cardIndex = $idx + 1;
+                break;
+            }
+        }
+
+        return [
+            'success' => true,
+            'finished' => false,
+            'card' => [
+                'cardid' => $nextCard->cardid,
+                'frontcontent' => $nextCard->frontcontent,
+                'backcontent' => $nextCard->backcontent,
+                'pronunciation' => $nextCard->pronunciation,
+                'examplesentence' => $nextCard->examplesentence,
+                'cardtype' => $nextCard->cardtype,
+                'tags' => $nextCard->tags,
+                'cardIndex' => $cardIndex,
+                'totalCards' => count($priorityQueue),
+            ]
+        ];
+    }
+
+    /**
+     * AJAX: Đánh giá thẻ và cập nhật tiến độ theo SM-2
+     */
+    public function actionAjaxGradeCard()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        
+        $cardId = Yii::$app->request->post('cardId');
+        $grade = Yii::$app->request->post('grade'); // 0-4
+        $userId = Yii::$app->user->id;
+
+        // Kiểm tra thẻ tồn tại và thuộc user
+        $card = Card::findOne(['cardid' => $cardId, 'userid' => $userId]);
+        if (!$card) {
+            return ['success' => false, 'message' => 'Thẻ không tìm thấy.'];
+        }
+
+        // Lấy hoặc tạo progress record
+        $progress = CardProgress::findOne(['cardid' => $cardId]);
+        if (!$progress) {
+            $progress = new CardProgress();
+            $progress->cardid = $cardId;
+            $progress->status = 0;
+            $progress->duedate = date('Y-m-d H:i:s');
+            $progress->intervaldays = 0;
+            $progress->easefactor = 2.5;
+            $progress->repetitions = 0;
+        }
+
+        // Lưu lịch sử đánh giá
+        $reviewLog = new \app\models\ReviewLog();
+        $reviewLog->cardid = $cardId;
+        $reviewLog->grade = $grade;
+        $reviewLog->reviewdate = date('Y-m-d H:i:s');
+        $reviewLog->save(false);
+
+        // Tính toán SM-2
+        $sm2Result = SM2Helper::calculateNextReview(
+            $grade,
+            $progress->status,
+            $progress->repetitions,
+            $progress->intervaldays ?: 0,
+            $progress->easefactor,
+            $progress->lapses ?? 0
+        );
+
+        // Cập nhật progress
+        $progress->status = $sm2Result['status'];
+        $progress->repetitions = $sm2Result['repetitions'];
+        $progress->intervaldays = $sm2Result['interval'];
+        $progress->easefactor = $sm2Result['easeFactor'];
+        $progress->lapses = $sm2Result['lapses'];
+        $progress->duedate = $sm2Result['nextReview'];
+
+        if ($progress->save()) {
+            return [
+                'success' => true,
+                'message' => 'Đã cập nhật tiến độ.',
+            ];
+        }
+
+        return ['success' => false, 'message' => 'Lỗi khi lưu tiến độ.'];
     }
 }

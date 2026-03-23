@@ -31,20 +31,16 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
 
 <header>
     <div class="logo">
-        <img src="/images/andilogo.png" alt="Andi Logo">
+        <img src="<?= Yii::getAlias('@web') ?>/images/andilogo.png" alt="Andi Logo">
         <span>Andi</span>
     </div>
 </header>  
-
-<main id="main" class="flex-shrink-0" role="main">
-    <div class="container">
-        <?php if (!empty($this->params['breadcrumbs'])): ?>
-            <?= Breadcrumbs::widget(['links' => $this->params['breadcrumbs']]) ?>
-        <?php endif ?>
-        <?= Alert::widget() ?>
+<div class="dashboard">
+    <?= $this->render('sidebar') ?>
+    <main class="main">
         <?= $content ?>
-    </div>
-</main>
+    </main>
+</div>
 
 <footer id="footer" class="mt-auto py-3 bg-light">
 

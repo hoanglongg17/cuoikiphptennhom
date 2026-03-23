@@ -6,91 +6,36 @@ use yii\helpers\Html;
 $this->title = 'Trang chủ Andi';
 // Lấy thông tin người dùng đang đăng nhập
 $user = Yii::$app->user->identity; 
-
-// Đăng ký file CSS riêng cho dashboard
-$this->registerCssFile('@web/css/dashboard.css', ['depends' => [\yii\bootstrap5\BootstrapAsset::class]]);
 ?>
 
-<div class="dashboard">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <ul class="menu">
-            <li>
-                <a href="<?= Url::to(['site/dashboard']) ?>" class="<?= Yii::$app->controller->action->id == 'dashboard' ? 'active' : '' ?>">
-                    <img src="<?= Yii::getAlias('@web') ?>/icons/home.png" alt=""> Trang chủ
-                </a>
-            </li>
-            <li>
-                <a href="<?= Url::to(['site/vocabset']) ?>">
-                    <img src="<?= Yii::getAlias('@web') ?>/icons/vocabset.png" alt=""> Bộ thẻ
-                </a>
-            </li>            
-            <li>
-                <a href="<?= Url::to(['site/vocabulary']) ?>">
-                    <img src="<?= Yii::getAlias('@web') ?>/icons/vocabulary.png" alt=""> Từ vựng
-                </a>
-            </li>            
-            <li>
-                <a href="#">
-                    <img src="<?= Yii::getAlias('@web') ?>/icons/practice.png" alt=""> Luyện tập
-                </a>
-            </li>
-        </ul>
+<div class="content-row">
+    <div class="cover">
+        <img src="<?= Yii::getAlias('@web') ?>/images/cover-default.jpg" alt="Ảnh bìa">
+    </div>
 
-        <button class="toggle-btn">&laquo;</button>
-
-        <!-- Profile section -->
-        <div class="profile">
-            <div class="avatar">
-                <img src="<?= $user->avatarurl ?: Yii::getAlias('@web/images/andi-avatar.png') ?>" alt="User Avatar">
-            </div>
-            <!-- Nhấn vào tên để hiện popup -->
-            <p class="username" onclick="toggleProfileModal()"><?= Html::encode($user->displayname) ?></p>
-            <div class="profile-actions">
-                <!-- Nút Xem hồ sơ kích hoạt popup -->
-                <button class="btn-profile" onclick="toggleProfileModal()">Xem hồ sơ</button>
-                <label class="theme-switch">
-                    <input type="checkbox" id="darkModeToggle">
-                    <span class="slider"></span>
-                    <span class="label-text">Tối</span>
-                </label>
-            </div>
+    <div class="banner">
+        <h3>🔥 CHUỖI NGÀY HỌC</h3>
+        <p class="streak"><?= $user->currentstreak ?? 0 ?> ngày</p>
+        <div class="days">
+            <span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span><span>CN</span>
+            <span class="active">T2</span>
         </div>
-    </aside>
-
-    <!-- Main content -->
-    <main class="main">
-        <div class="content-row">
-            <div class="cover">
-                <img src="<?= Yii::getAlias('@web') ?>/images/cover-default.jpg" alt="Ảnh bìa">
-            </div>
-
-            <div class="banner">
-                <h3>🔥 CHUỖI NGÀY HỌC</h3>
-                <p class="streak"><?= $user->currentstreak ?? 0 ?> ngày</p>
-                <div class="days">
-                    <span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span><span>CN</span>
-                    <span class="active">T2</span>
-                </div>
-            </div>
-        </div>
-
-        <section class="features">
-            <h2>Tính năng</h2>
-            <div class="feature-buttons">
-                <button class="btn-feature">
-                    <img src="<?= Yii::getAlias('@web') ?>/icons/flashcard.png" alt="Flashcard Icon">
-                    Thêm bộ thẻ
-                </button>
-                <button class="btn-feature">
-                    <img src="<?= Yii::getAlias('@web') ?>/icons/practice.png" alt="Practice Icon">
-                    Luyện tập
-                </button>
-            </div>
-        </section>
-    </main>
+    </div>
 </div>
 
+<section class="features">
+    <h2>Tính năng</h2>
+    <div class="feature-buttons">
+        <button class="btn-feature">
+            <img src="<?= Yii::getAlias('@web') ?>/icons/flashcard.png" alt="Flashcard Icon">
+            Thêm bộ thẻ
+        </button>
+        <button class="btn-feature">
+            <img src="<?= Yii::getAlias('@web') ?>/icons/practice.png" alt="Practice Icon">
+            Luyện tập
+        </button>
+    </div>
+</section>
 <!-- MODAL PROFILE CẬP NHẬT CHỨC NĂNG EDIT, ĐỔI MẬT KHẨU & AVATAR -->
 <div id="profileModal" class="profile-modal">
     <div class="modal-content" id="modalContent">

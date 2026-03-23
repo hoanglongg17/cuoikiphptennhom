@@ -1,0 +1,241 @@
+/* ============================================
+   TRANG LUYỆN TẬP - PRACTICE.PHP
+   ============================================ */
+
+.practice-container {
+    padding: 30px 20px;
+}
+
+.practice-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.practice-header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin: 0 0 10px;
+    color: #2c3e50;
+}
+
+.practice-header .subtitle {
+    font-size: 16px;
+    color: #727272;
+    margin: 0;
+}
+
+/* Thống kê tổng quan */
+.practice-stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.stat-card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.stat-label {
+    display: block;
+    font-size: 13px;
+    color: #999;
+    font-weight: 600;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.stat-value {
+    display: block;
+    font-size: 28px;
+    font-weight: 700;
+    color: #1abc9c;
+}
+
+/* Bảng danh sách bộ thẻ */
+.decks-grid {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.decks-table-header {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+    gap: 20px;
+    padding: 16px 20px;
+    background: #f5f5f5;
+    border-bottom: 2px solid #e0e0e0;
+    font-weight: 600;
+    font-size: 13px;
+    color: #666;
+    text-transform: uppercase;
+}
+
+.deck-study-card {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+    gap: 20px;
+    padding: 20px;
+    border-bottom: 1px solid #e8e8e8;
+    align-items: center;
+    transition: background 0.2s ease;
+}
+
+.deck-study-card:hover {
+    background: #fafafa;
+}
+
+.deck-study-card:last-child {
+    border-bottom: none;
+}
+
+.col-name {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.deck-name {
+    font-weight: 600;
+    font-size: 15px;
+    color: #2c3e50;
+}
+
+.deck-info {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.badge-total {
+    display: inline-block;
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.col-stat {
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+    padding: 8px 12px;
+    border-radius: 8px;
+}
+
+.stat-new {
+    color: #2196F3;
+    background: rgba(33, 150, 243, 0.1);
+}
+
+.stat-learning {
+    color: #FF9800;
+    background: rgba(255, 152, 0, 0.1);
+}
+
+.stat-review {
+    color: #4CAF50;
+    background: rgba(76, 175, 80, 0.1);
+}
+
+.col-action {
+    text-align: center;
+}
+
+.btn-start-study {
+    display: inline-block;
+    background: #1abc9c;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-start-study:hover {
+    background: #16a085;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(26, 188, 156, 0.3);
+}
+
+.empty-state {
+    padding: 60px 20px;
+    text-align: center;
+    color: #999;
+}
+
+.empty-state h3 {
+    font-size: 20px;
+    margin: 0 0 10px;
+    color: #666;
+}
+
+.empty-state p {
+    margin: 0 0 20px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .decks-table-header,
+    .deck-study-card {
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    .col-name {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 640px) {
+    .practice-stats-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .practice-header h1 {
+        font-size: 24px;
+    }
+
+    .decks-table-header {
+        display: none;
+    }
+
+    .deck-study-card {
+        grid-template-columns: 1fr;
+        flex-wrap: wrap;
+        flex-direction: column;
+        padding: 15px;
+    }
+
+    .col-stat,
+    .col-action {
+        width: 100%;
+    }
+
+    .stat-card {
+        padding: 15px 10px;
+    }
+
+    .stat-value {
+        font-size: 24px;
+    }
+}
