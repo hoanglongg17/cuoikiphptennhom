@@ -1,0 +1,19 @@
+.form-control:focus {
+    border-color: #ff4081 !important;
+    box-shadow: 0 0 0 4px rgba(255, 64, 129, 0.1) !important;
+    outline: none;
+}
+
+/* Hiệu ứng hover cho nút đăng nhập chính */
+.btn-primary:hover {
+    background: #e73370 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(255, 64, 129, 0.35) !important;
+}
+
+/* Hiệu ứng hover cho nút Google */
+.btn-outline-secondary:hover {
+    background: #fdfdfd !important;
+    border-color: #ddd !important;
+    color: #000 !important;
+}
