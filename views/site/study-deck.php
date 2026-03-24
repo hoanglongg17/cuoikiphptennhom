@@ -135,6 +135,12 @@ function gradeCard(grade, gradeName) {
     const currentCardId = flashcard.getAttribute('data-cardid');
     const gradeBtn = event.target.closest('.btn-grade');
     
+    // LƯU label/desc trước khi tay lên spinner
+    const gradeLabel = gradeBtn.querySelector('.grade-label');
+    const gradeDesc = gradeBtn.querySelector('.grade-desc');
+    const savedLabel = gradeLabel ? gradeLabel.textContent : gradeName;
+    const savedDesc = gradeDesc ? gradeDesc.textContent : '';
+    
     gradeBtn.disabled = true;
     gradeBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
 
@@ -178,6 +184,10 @@ function gradeCard(grade, gradeName) {
         } else if (data.success) {
             // Update UI với thẻ tiếp theo
             updateCard(data.card);
+            // RESTORE button text AFTER updateCard
+            setTimeout(() => {
+                gradeBtn.innerHTML = '<span class="grade-label">' + savedLabel + '</span><span class="grade-desc">' + savedDesc + '</span>';
+            }, 0);
         } else {
             throw new Error(data.message || 'Lỗi khi lấy thẻ tiếp theo');
         }
@@ -186,7 +196,7 @@ function gradeCard(grade, gradeName) {
         console.error(err);
         alert('Lỗi: ' + err.message);
         gradeBtn.disabled = false;
-        gradeBtn.innerHTML = gradeName;
+        gradeBtn.innerHTML = '<span class="grade-label">' + savedLabel + '</span><span class="grade-desc">' + savedDesc + '</span>';
     });
 }
 
@@ -240,14 +250,10 @@ function updateCard(cardData) {
     nextContainer.style.display = 'block';
     gradeContainer.style.display = 'none';
     
-    // Reset grade buttons state
+    // Reset grade buttons: disable everything first, then re-enable
+    // (gradeCard sẽ restore HTML/state sau khi hàm này chạy xong)
     document.querySelectorAll('.btn-grade').forEach(btn => {
         btn.disabled = false;
-        const label = btn.querySelector('.grade-label');
-        if (label) {
-            const origText = label.textContent;
-            btn.innerHTML = '<span class="grade-label">' + origText + '</span><span class="grade-desc">' + btn.querySelector('.grade-desc').textContent + '</span>';
-        }
     });
     
     // UPDATE PROGRESS BAR (FIX: thanh tiến độ không chạy)

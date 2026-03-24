@@ -123,9 +123,15 @@ class SiteController extends Controller
 
     /**
      * Trang chủ hiển thị Landing Page
+     * Nếu đã đăng nhập, redirect to dashboard
      */
     public function actionIndex()
     {
+        // Nếu đã đăng nhập, redirect to dashboard
+        if (!Yii::$app->user->isGuest) {
+            return $this->redirect(['site/dashboard']);
+        }
+        
         $this->layout = 'landing';
         return $this->render('index');
     }
@@ -883,14 +889,13 @@ class SiteController extends Controller
             if (!$progress) {
                 $new[] = $card;
             } else {
-                // KHÔNG check isDue ở đây! Vì user đã bắt đầu học session, duedate có thể change sau grade
-                // Chỉ check status - nếu thẻ vừa được grade và duedate updated, vẫn phải show
+                // FIX: Kiểm tra isDue để chỉ hiển thị thẻ đã đến hạn học (không hiển thị thẻ được lên lịch tương lai)
                 if ($progress->status == 0) {
-                    $dueSoon[] = $card; // Thẻ mới chưa học
-                } elseif ($progress->status == 1) {
-                    $learning[] = $card; // Thẻ đang learn
-                } elseif ($progress->status == 2) {
-                    $dueSoon[] = $card; // Thẻ review
+                    $dueSoon[] = $card; // Thẻ mới luôn hiển thị
+                } elseif ($progress->status == 1 && $progress->isDue()) {
+                    $learning[] = $card; // Thẻ đang learn, chỉ nếu đã đến hạn
+                } elseif ($progress->status == 2 && $progress->isDue()) {
+                    $dueSoon[] = $card; // Thẻ review, chỉ nếu đã đến hạn
                 }
             }
         }

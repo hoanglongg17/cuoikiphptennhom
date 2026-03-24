@@ -31,12 +31,11 @@ function openEditProfile() {
     // TODO: Implement edit profile modal
 }
 
-// Confirm Logout
-function confirmLogout() {
+// Submit Logout Form
+function submitLogoutForm(event) {
+    event.preventDefault();
     if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
-        // Construct logout URL based on current site path
-        const basePath = window.location.pathname.includes('/ANDIFlashcard') ? '/ANDIFlashcard' : '';
-        window.location.href = basePath + '/site/logout';
+        document.getElementById('logoutForm').submit();
     }
 }
 

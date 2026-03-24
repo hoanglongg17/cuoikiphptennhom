@@ -66,9 +66,13 @@ $user = Yii::$app->user->identity;
                 <span class="icon">⬇️</span> Hướng dẫn cài đặt ứng dụng
             </button>
 
-            <button class="action-btn logout-btn" onclick="confirmLogout()">
+            <button class="action-btn logout-btn" onclick="submitLogoutForm(event)">
                 <span class="icon">→</span> Đăng xuất
             </button>
+            
+            <!-- Hidden Logout Form (Yii auto-add CSRF) -->
+            <?= Html::beginForm(['/site/logout'], 'post', ['id' => 'logoutForm', 'style' => 'display:none;']) ?>
+            <?= Html::endForm() ?>
         </div>
     </div>
 </aside>
