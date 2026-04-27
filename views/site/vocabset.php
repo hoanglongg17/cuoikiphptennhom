@@ -43,12 +43,18 @@ $this->registerCssFile('@web/css/vocabset.css', ['depends' => [\app\assets\AppAs
                         $s = $c->progress ? $c->progress->status : 0;
                         
                         if ($s == 0 && $newQuotaRemaining > 0) {
-                            // Thẻ mới còn quota
-                            $n++;
-                            $newQuotaRemaining--;
+                            // Thẻ mới (status 0): Chỉ đếm nếu còn quota
+                            // Nếu có progress và status = 0, phải check isDue
+                            if (!$c->progress || strtotime($c->progress->duedate) <= strtotime($today . ' 23:59:59')) {
+                                $n++;
+                                $newQuotaRemaining--;
+                            }
                         } elseif ($s == 1) {
-                            // Thẻ đang học (không quota limit)
-                            $l++;
+                            // FIX: Thẻ đang học (status 1): Chỉ đếm nếu đã đến hạn học
+                            // (Giống như logic trong actionPractice)
+                            if ($c->progress && strtotime($c->progress->duedate) <= strtotime($today . ' 23:59:59')) {
+                                $l++;
+                            }
                         } elseif ($s == 2 && $c->progress && strtotime($c->progress->duedate) <= strtotime($today . ' 23:59:59') && $reviewQuotaRemaining > 0) {
                             // Thẻ ôn due hôm nay, còn quota
                             $r++;

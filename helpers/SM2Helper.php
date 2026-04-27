@@ -85,13 +85,19 @@ class SM2Helper
                 $nextReview = date('Y-m-d H:i:s', strtotime('+' . self::LEARNING_STEPS[0] . ' minutes'));
             } else {
                 // Good (grade 3) - move to next learning step or graduate
-                if (count(self::LEARNING_STEPS) > 1 && $grade != 4) {
-                    // Next learning step
-                    $nextReview = date('Y-m-d H:i:s', strtotime('+' . self::LEARNING_STEPS[1] . ' minutes'));
+                // FIX: Count which learning step we're on based on number of Good grades
+                // Anki's logic: need to pass through all LEARNING_STEPS
+                // repetitions tracks how many "Good" answers during learning phase
+                
+                if ($repetitions < count(self::LEARNING_STEPS) - 1) {
+                    // Still have more learning steps to complete
+                    // Move to next step interval
+                    $repetitions++;
+                    $nextReview = date('Y-m-d H:i:s', strtotime('+' . self::LEARNING_STEPS[$repetitions] . ' minutes'));
                 } else {
-                    // Graduate to review
+                    // All learning steps completed - Graduate to review
                     $status = 2;
-                    $repetitions = 1;
+                    $repetitions = 1; // Reset for review phase
                     $interval = self::GRADUATING_INTERVAL; // 1 ngày
                     $nextReview = date('Y-m-d H:i:s', strtotime('+' . $interval . ' days'));
                 }

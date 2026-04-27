@@ -325,17 +325,28 @@ class SiteController extends Controller
         $cards = $query->all();
 
         // 3. Tính toán thống kê dữ liệu hiển thị trên các ô Stat Box
+        // Chỉ tính các thẻ cần học/ôn trong ngày hôm nay để đồng bộ với phần Luyện tập
+        $today = date('Y-m-d');
         $total = count($cards);
-        $memorized = 0;
-        $learning = 0;
+        $memorized = 0;  // status = 2 (Ôn tập - đã thuộc)
+        $learning = 0;   // status = 1 và đã đến hạn
+        $new = 0;        // status = 0 và đã đến hạn
 
         foreach ($cards as $card) {
-            // status = 2 là đã thuộc (Ôn tập)
             $status = $card->progress ? $card->progress->status : 0;
             if ($status == 2) {
-                $memorized++;
+                $memorized++;  // Đã ôn tập, đã thuộc
+            } elseif ($status == 1) {
+                if ($card->progress->isDue()) {
+                    $learning++;   // Đang học và do due hôm nay
+                } else {
+                    $memorized++;  // Đã học xong học phần hiện tại, chỉ chờ review sau
+                }
             } else {
-                $learning++;
+                // New card chưa có progress hoặc progress status 0
+                if (!$card->progress || strtotime($card->progress->duedate) <= strtotime($today . ' 23:59:59')) {
+                    $new++;        // Mới và đã đến hạn
+                }
             }
         }
 
@@ -349,6 +360,7 @@ class SiteController extends Controller
                 'total' => $total,
                 'memorized' => $memorized,
                 'learning' => $learning,
+                'new' => $new,
                 'percent' => $percent
             ]
         ]);

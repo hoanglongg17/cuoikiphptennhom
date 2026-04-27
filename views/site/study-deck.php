@@ -33,6 +33,10 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
 
     <!-- Flashcard -->
     <div class="study-content">
+        <?php $cardType = $currentCard->cardtype ?? 1; ?>
+        
+        <!-- LOẠI 1: CƠ BẢN (Lật thẻ) -->
+        <?php if ($cardType == 1): ?>
         <div id="flashcard" class="flashcard" data-flipped="false" data-cardid="<?= $currentCard->cardid ?>">
             <div class="card-inner">
                 <div class="card-front">
@@ -57,17 +61,100 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
                 </div>
             </div>
         </div>
+        
+        <!-- LOẠI 2: ĐẢO NGƯỢC (Cả 2 mặt) -->
+        <?php elseif ($cardType == 2): ?>
+        <div id="flashcard" class="flashcard flashcard-reverse" data-cardid="<?= $currentCard->cardid ?>" data-flipped="false">
+            <div class="card-reverse-container">
+                <div class="card-reverse-side card-front">
+                    <div class="card-label">Mặt trước</div>
+                    <div class="card-text"><?= nl2br(Html::encode($currentCard->frontcontent)) ?></div>
+                    <?php if ($currentCard->pronunciation): ?>
+                        <div class="card-pronunciation">/ <?= Html::encode($currentCard->pronunciation) ?> /</div>
+                    <?php endif; ?>
+                </div>
+                <div class="card-reverse-divider" onclick="toggleReverse()" style="cursor: pointer; text-align: center; color: #999; padding: 20px; font-size: 14px;">
+                    ⟷ Nhấn để đảo
+                </div>
+                <div class="card-reverse-side card-back">
+                    <div class="card-label">Mặt sau</div>
+                    <div class="card-text"><?= nl2br(Html::encode($currentCard->backcontent)) ?></div>
+                    <?php if ($currentCard->examplesentence): ?>
+                        <div class="card-example">
+                            <strong>Ví dụ:</strong> <em><?= nl2br(Html::encode($currentCard->examplesentence)) ?></em>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+        
+        <!-- LOẠI 3: NHẬP LIỆU -->
+        <?php elseif ($cardType == 3): ?>
+        <div id="flashcard" class="flashcard flashcard-input" data-cardid="<?= $currentCard->cardid ?>">
+            <div id="inputPhase1" class="input-phase">
+                <div class="card-front input-mode">
+                    <div class="card-label">Trả lời</div>
+                    <div class="card-question"><?= nl2br(Html::encode($currentCard->frontcontent)) ?></div>
+                    <input type="text" id="userAnswer" class="input-answer" placeholder="Nhập câu trả lời...">
+                    <button class="btn-submit-answer" onclick="submitAnswer()">Kiểm tra</button>
+                </div>
+            </div>
+            <div id="inputPhase2" class="input-phase" style="display: none;">
+                <div class="card-answer-reveal">
+                    <div class="question-display">
+                        <div class="card-label">Câu hỏi</div>
+                        <div class="card-text"><?= nl2br(Html::encode($currentCard->frontcontent)) ?></div>
+                    </div>
+                    <div class="answer-compare">
+                        <div class="left-side">
+                            <div class="card-label">Câu trả lời của bạn</div>
+                            <div class="card-text user-answer-display"></div>
+                        </div>
+                        <div class="right-side">
+                            <div class="card-label">Câu trả lời đúng</div>
+                            <div class="card-text" id="cardBackText"><?= nl2br(Html::encode($currentCard->backcontent)) ?></div>
+                            <?php if ($currentCard->examplesentence): ?>
+                                <div class="card-example">
+                                    <strong>Ví dụ:</strong> <em><?= nl2br(Html::encode($currentCard->examplesentence)) ?></em>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
 
         <!-- Control Buttons -->
         <div class="study-controls">
-            <!-- Nút Tiếp theo (hiện khi chưa lật) -->
+            <?php $cardType = $currentCard->cardtype ?? 1; ?>
+            
+            <!-- LOẠI 1: CƠ BẢN - Nút Tiếp theo (lật) -->
+            <?php if ($cardType == 1): ?>
             <div id="nextButtonContainer" class="next-button-container">
                 <button class="btn-next" onclick="flipCard()">
                     Tiếp theo →
                 </button>
             </div>
+            
+            <!-- LOẠI 2: ĐẢO NGƯỢC - Nút Tiếp theo (xem đáp án) -->
+            <?php elseif ($cardType == 2): ?>
+            <div id="nextButtonContainer" class="next-button-container">
+                <button class="btn-next" onclick="showGradeButtons()">
+                    Tiếp theo →
+                </button>
+            </div>
+            
+            <!-- LOẠI 3: NHẬP LIỆU - Không cần nút ở đây (có submitAnswer) -->
+            <?php elseif ($cardType == 3): ?>
+            <div id="nextButtonContainer" class="next-button-container" style="display: none;">
+                <button class="btn-next" onclick="showGradeButtons()">
+                    Tiếp theo →
+                </button>
+            </div>
+            <?php endif; ?>
 
-            <!-- Nút đánh giá (hiện sau khi lật) -->
+            <!-- Nút đánh giá (hiện sau khi lật hoặc submit) -->
             <div id="gradeButtonContainer" class="grade-buttons-container" style="display: none;">
                 <p class="flip-hint" style="margin-bottom: 20px;">Chọn độ khó</p>
                 <div class="grade-buttons">
@@ -212,28 +299,11 @@ function updateCard(cardData) {
     flashcard.classList.remove('flipped');
     flashcard.setAttribute('data-flipped', 'false');
     
-    // Update text
-    document.getElementById('cardFrontText').innerHTML = cardData.frontcontent;
-    document.getElementById('cardBackText').innerHTML = cardData.backcontent;
-    
-    // Update pronunciation
-    if (cardData.pronunciation) {
-        document.getElementById('cardPronunciation').innerHTML = '/ ' + cardData.pronunciation + ' /';
-        document.getElementById('cardPronunciation').style.display = 'block';
-    } else {
-        document.getElementById('cardPronunciation').style.display = 'none';
-    }
-    
-    // Update example
-    if (cardData.examplesentence) {
-        document.getElementById('cardExample').innerHTML = '<strong>Ví dụ:</strong> <em>' + cardData.examplesentence + '</em>';
-        document.getElementById('cardExample').style.display = 'block';
-    } else {
-        document.getElementById('cardExample').style.display = 'none';
-    }
-    
-    // Update card type
+    // Determine card type
+    const cardType = cardData.cardtype || 1;
     const typeNames = ['Cơ bản', 'Đảo ngược', 'Nhập liệu'];
+    
+    // Update card type display
     document.getElementById('cardTypeValue').textContent = typeNames[cardData.cardtype - 1] || 'Không xác định';
     
     // Update tags
@@ -246,17 +316,41 @@ function updateCard(cardData) {
         if (tagsRow) tagsRow.style.display = 'none';
     }
     
+    // Update UI based on card type
+    if (cardType == 1) {
+        // LOẠI 1: CƠ BẢN
+        if (document.getElementById('cardFrontText')) {
+            document.getElementById('cardFrontText').innerHTML = cardData.frontcontent;
+        }
+        if (document.getElementById('cardBackText')) {
+            document.getElementById('cardBackText').innerHTML = cardData.backcontent;
+        }
+        if (cardData.pronunciation && document.getElementById('cardPronunciation')) {
+            document.getElementById('cardPronunciation').innerHTML = '/ ' + cardData.pronunciation + ' /';
+            document.getElementById('cardPronunciation').style.display = 'block';
+        }
+        if (cardData.examplesentence && document.getElementById('cardExample')) {
+            document.getElementById('cardExample').innerHTML = '<strong>Ví dụ:</strong> <em>' + cardData.examplesentence + '</em>';
+            document.getElementById('cardExample').style.display = 'block';
+        }
+    } else if (cardType == 2) {
+        // LOẠI 2: ĐẢO NGƯỢC - cái này cần render lại từ server nên reload page
+        window.location.reload();
+    } else if (cardType == 3) {
+        // LOẠI 3: NHẬP LIỆU - cái này cũng cần reload
+        window.location.reload();
+    }
+    
     // Reset buttons and containers
     nextContainer.style.display = 'block';
     gradeContainer.style.display = 'none';
     
-    // Reset grade buttons: disable everything first, then re-enable
-    // (gradeCard sẽ restore HTML/state sau khi hàm này chạy xong)
+    // Reset grade buttons
     document.querySelectorAll('.btn-grade').forEach(btn => {
         btn.disabled = false;
     });
     
-    // UPDATE PROGRESS BAR (FIX: thanh tiến độ không chạy)
+    // UPDATE PROGRESS BAR
     const progressBar = document.querySelector('.progress-fill');
     const progressText = document.querySelector('.progress-text');
     if (progressBar && cardData.cardIndex !== undefined && cardData.totalCards !== undefined) {
@@ -264,5 +358,48 @@ function updateCard(cardData) {
         progressBar.style.width = percentage + '%';
         progressText.textContent = 'Thẻ ' + cardData.cardIndex + ' / ' + cardData.totalCards;
     }
+}
+
+// LOẠI 2: ĐẢO NGƯỢC - Toggle hiển thị 2 mặt
+function toggleReverse() {
+    const flashcard = document.getElementById('flashcard');
+    flashcard.classList.toggle('reversed');
+}
+
+// LOẠI 3: NHẬP LIỆU - Submit đáp án
+function submitAnswer() {
+    const userAnswer = document.getElementById('userAnswer');
+    if (!userAnswer || !userAnswer.value.trim()) {
+        alert('Vui lòng nhập câu trả lời cả!');
+        return;
+    }
+    
+    // Hiển thị phase 2 (so sánh)
+    const phase1 = document.getElementById('inputPhase1');
+    const phase2 = document.getElementById('inputPhase2');
+    
+    if (phase1) phase1.style.display = 'none';
+    if (phase2) phase2.style.display = 'block';
+    
+    // Hiển thị đáp án của user
+    const userAnswerDisplay = document.querySelector('.user-answer-display');
+    if (userAnswerDisplay) {
+        userAnswerDisplay.innerHTML = userAnswer.value;
+    }
+    
+    // Ẩn nút Tiếp theo, hiện nút đánh giá
+    const nextContainer = document.getElementById('nextButtonContainer');
+    const gradeContainer = document.getElementById('gradeButtonContainer');
+    if (nextContainer) nextContainer.style.display = 'none';
+    if (gradeContainer) gradeContainer.style.display = 'block';
+}
+
+// LOẠI 2 & 3: Hiển thị nút đánh giá
+function showGradeButtons() {
+    const nextContainer = document.getElementById('nextButtonContainer');
+    const gradeContainer = document.getElementById('gradeButtonContainer');
+    
+    if (nextContainer) nextContainer.style.display = 'none';
+    if (gradeContainer) gradeContainer.style.display = 'block';
 }
 </script>

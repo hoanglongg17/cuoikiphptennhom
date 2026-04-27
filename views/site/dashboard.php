@@ -15,10 +15,16 @@ $user = Yii::$app->user->identity;
 
     <div class="banner">
         <h3>🔥 CHUỖI NGÀY HỌC</h3>
-        <p class="streak"><?= $user->currentstreak ?? 0 ?> ngày</p>
-        <div class="days">
-            <span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span><span>CN</span>
-            <span class="active">T2</span>
+        <p class="streak"><?= $user->currentStreak ?> ngày</p>
+        <div class="days" id="studyDays">
+            <?php
+                $weekDays = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+                foreach ($weekDays as $index => $label) {
+                    $dayNumber = $index + 1;
+                    $active = ($dayNumber === date('N')) ? ' active' : '';
+                    echo '<span data-day="' . $dayNumber . '" class="' . $active . '">' . $label . '</span>';
+                }
+            ?>
         </div>
     </div>
 </div>
@@ -68,7 +74,7 @@ $user = Yii::$app->user->identity;
             <div class="view-mode">
                 <div class="info-row">
                     <span class="info-label">🔥 Chuỗi ngày:</span>
-                    <span class="info-value"><?= $user->currentstreak ?? 0 ?> ngày</span>
+                    <span class="info-value"><?= $user->currentStreak ?> ngày</span>
                 </div>
                 <div class="info-row">
                 <span class="info-label">📅 Ngày bắt đầu tham gia:</span>
@@ -257,4 +263,17 @@ function toggleProfileModal() {
     modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
     if (modal.style.display === 'none') exitEditMode();
 }
+
+function updateActiveWeekday() {
+    const today = new Date();
+    let weekday = today.getDay();
+    weekday = weekday === 0 ? 7 : weekday; // Chuyển CN từ 0 sang 7
+    document.querySelectorAll('#studyDays span').forEach(el => {
+        el.classList.toggle('active', parseInt(el.dataset.day, 10) === weekday);
+    });
+}
+
+// Cập nhật theo thời gian thực nếu người dùng để trang mở lâu
+updateActiveWeekday();
+setInterval(updateActiveWeekday, 60 * 1000);
 </script>

@@ -20,7 +20,8 @@ $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\App
 <div class="vocab-stats-container">
     <div class="stat-box"><div class="stat-title">Tổng</div><div class="stat-value"><?= $stats['total'] ?></div></div>
     <div class="stat-box"><div class="stat-title">Thuộc</div><div class="stat-value"><?= $stats['memorized'] ?></div></div>
-    <div class="stat-box"><div class="stat-title">Chưa</div><div class="stat-value"><?= $stats['learning'] ?></div></div>
+    <div class="stat-box"><div class="stat-title">Đang học</div><div class="stat-value"><?= $stats['learning'] ?></div></div>
+    <div class="stat-box"><div class="stat-title">Mới</div><div class="stat-value"><?= $stats['new'] ?></div></div>
     <div class="stat-box"><div class="stat-title">%</div><div class="stat-value"><?= $stats['percent'] ?>%</div></div>
 </div>
 

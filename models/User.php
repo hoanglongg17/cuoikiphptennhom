@@ -5,6 +5,7 @@ namespace app\models;
 use Yii;
 use yii\db\ActiveRecord;
 use yii\web\IdentityInterface;
+use app\models\ReviewLog;
 
 /**
  * User model kết nối trực tiếp với bảng users
@@ -95,6 +96,38 @@ class User extends ActiveRecord implements IdentityInterface
             // Hỗ trợ tạm thời cho các tài khoản cũ chưa kịp hash (nếu cần)
             return $this->passwordhash === $password;
         }
+    }
+
+    /**
+     * Lấy chuỗi ngày học liên tiếp hiện tại (chỉ tính khi có ít nhất 1 thẻ học hôm nay)
+     * Nếu hôm nay không học, chuỗi sẽ reset.
+     */
+    public function getCurrentStreak()
+    {
+        $today = date('Y-m-d');
+        $reviewDates = ReviewLog::find()
+            ->joinWith('card')
+            ->where(['cards.userid' => $this->userid])
+            ->select(["DATE(reviewdate) AS review_date"])
+            ->distinct()
+            ->orderBy(['review_date' => SORT_DESC])
+            ->column();
+
+        $streak = 0;
+        $expectedDate = $today;
+
+        foreach ($reviewDates as $date) {
+            if ($date > $expectedDate) {
+                continue;
+            }
+            if ($date !== $expectedDate) {
+                break;
+            }
+            $streak++;
+            $expectedDate = date('Y-m-d', strtotime($expectedDate . ' -1 day'));
+        }
+
+        return $streak;
     }
 
     /**
