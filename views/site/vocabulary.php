@@ -17,15 +17,6 @@ $user = Yii::$app->user->identity;
 $this->registerCssFile('@web/css/dashboard.css', ['depends' => [\app\assets\AppAsset::class]]);
 $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\AppAsset::class]]);
 ?>
-<!-- Khối thống kê -->
-<div class="vocab-stats-container">
-    <div class="stat-box"><div class="stat-title">Tổng</div><div class="stat-value"><?= $stats['total'] ?></div></div>
-    <div class="stat-box"><div class="stat-title">Thuộc</div><div class="stat-value"><?= $stats['memorized'] ?></div></div>
-    <div class="stat-box"><div class="stat-title">Đang học</div><div class="stat-value"><?= $stats['learning'] ?></div></div>
-    <div class="stat-box"><div class="stat-title">Mới</div><div class="stat-value"><?= $stats['new'] ?></div></div>
-    <div class="stat-box"><div class="stat-title">%</div><div class="stat-value"><?= $stats['percent'] ?>%</div></div>
-</div>
-
 <!-- SRS LEVEL DISTRIBUTION -->
 <section class="srs-section">
     <h2>📚 Phân bố từ vựng theo cấp độ</h2>

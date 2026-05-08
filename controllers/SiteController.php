@@ -311,10 +311,14 @@ class SiteController extends Controller
     public function actionVocabulary($deck_id = null)
     {
         $userId = Yii::$app->user->id;
-        // 1. Lấy danh sách bộ thẻ của CHÍNH USER để làm Bộ lọc (Filter)
-        $decks = Deck::find()->where(['userid' => $userId])->orderBy(['createdat' => SORT_DESC])->all();
 
-        // 2. Truy vấn danh sách thẻ của USER
+        // 1. Lấy danh sách bộ thẻ của CHÍNH USER để làm Bộ lọc (Filter)
+        $decks = Deck::find()
+            ->where(['userid' => $userId])
+            ->orderBy(['createdat' => SORT_DESC])
+            ->all();
+
+        // 2. Truy vấn danh sách thẻ để hiển thị trong bảng
         $query = Card::find()->where(['userid' => $userId])->with('progress')->orderBy(['createdat' => SORT_DESC]);
 
         // Nếu người dùng có chọn bộ lọc
@@ -324,35 +328,7 @@ class SiteController extends Controller
 
         $cards = $query->all();
 
-        // 3. Tính toán thống kê dữ liệu hiển thị trên các ô Stat Box
-        // Chỉ tính các thẻ cần học/ôn trong ngày hôm nay để đồng bộ với phần Luyện tập
-        $today = date('Y-m-d');
-        $total = count($cards);
-        $memorized = 0;  // status = 2 (Ôn tập - đã thuộc)
-        $learning = 0;   // status = 1 và đã đến hạn
-        $new = 0;        // status = 0 và đã đến hạn
-
-        foreach ($cards as $card) {
-            $status = $card->progress ? $card->progress->status : 0;
-            if ($status == 2) {
-                $memorized++;  // Đã ôn tập, đã thuộc
-            } elseif ($status == 1) {
-                if ($card->progress->isDue()) {
-                    $learning++;   // Đang học và do due hôm nay
-                } else {
-                    $memorized++;  // Đã học xong học phần hiện tại, chỉ chờ review sau
-                }
-            } else {
-                // New card chưa có progress hoặc progress status 0
-                if (!$card->progress || strtotime($card->progress->duedate) <= strtotime($today . ' 23:59:59')) {
-                    $new++;        // Mới và đã đến hạn
-                }
-            }
-        }
-
-        $percent = $total > 0 ? round(($memorized / $total) * 100) : 0;
-
-        // 4. Tính SRS Level Distribution (luôn tính, dù có deck_id hay không)
+        // 3. Tính SRS Level Distribution (phân bố từ vựng theo cấp độ ôn tập)
         $srsByLevel = [
             0 => ['name' => 'Từ mới', 'count' => 0, 'nextReview' => 'Học ngay', 'color' => '#2196F3'],
             1 => ['name' => 'Sau 1 ngày', 'count' => 0, 'nextReview' => '', 'color' => '#FF9800'],
@@ -401,13 +377,6 @@ class SiteController extends Controller
             'cards' => $cards,
             'currentDeckId' => $deck_id,
             'srsByLevel' => $srsByLevel,
-            'stats' => [
-                'total' => $total,
-                'memorized' => $memorized,
-                'learning' => $learning,
-                'new' => $new,
-                'percent' => $percent
-            ]
         ]);
     }
 
