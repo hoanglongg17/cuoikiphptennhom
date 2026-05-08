@@ -352,10 +352,55 @@ class SiteController extends Controller
 
         $percent = $total > 0 ? round(($memorized / $total) * 100) : 0;
 
+        // 4. Tính SRS Level Distribution (luôn tính, dù có deck_id hay không)
+        $srsByLevel = [
+            0 => ['name' => 'Từ mới', 'count' => 0, 'nextReview' => 'Học ngay', 'color' => '#2196F3'],
+            1 => ['name' => 'Sau 1 ngày', 'count' => 0, 'nextReview' => '', 'color' => '#FF9800'],
+            2 => ['name' => 'Sau 3 ngày', 'count' => 0, 'nextReview' => '', 'color' => '#FF6B6B'],
+            3 => ['name' => 'Sau 7 ngày', 'count' => 0, 'nextReview' => '', 'color' => '#9C27B0'],
+            4 => ['name' => 'Sau 14 ngày', 'count' => 0, 'nextReview' => '', 'color' => '#4CAF50'],
+            5 => ['name' => 'Đã thuộc', 'count' => 0, 'nextReview' => 'Không ôn', 'color' => '#00BCD4'],
+        ];
+
+        foreach ($cards as $card) {
+            if (!$card->progress) {
+                $srsByLevel[0]['count']++;
+            } else {
+                $intervalDays = $card->progress->intervaldays ?? 0;
+                $status = $card->progress->status;
+
+                if ($status == 0 || $status == 1) {
+                    $srsByLevel[0]['count']++;
+                } else if ($status == 2) {
+                    if ($intervalDays <= 1) {
+                        $level = 1;
+                    } elseif ($intervalDays <= 3) {
+                        $level = 2;
+                    } elseif ($intervalDays <= 7) {
+                        $level = 3;
+                    } elseif ($intervalDays < 14) {
+                        $level = 4;
+                    } else {
+                        $level = 5;
+                    }
+                    $srsByLevel[$level]['count']++;
+
+                    $dueDate = strtotime($card->progress->duedate);
+                    $diffDays = ceil(($dueDate - strtotime('now')) / 86400);
+                    if ($diffDays <= 0) {
+                        $srsByLevel[$level]['nextReview'] = 'Due hôm nay';
+                    } else {
+                        $srsByLevel[$level]['nextReview'] = '+' . $diffDays . ' ngày';
+                    }
+                }
+            }
+        }
+
         return $this->render('vocabulary', [
             'decks' => $decks,
             'cards' => $cards,
             'currentDeckId' => $deck_id,
+            'srsByLevel' => $srsByLevel,
             'stats' => [
                 'total' => $total,
                 'memorized' => $memorized,
@@ -538,7 +583,13 @@ class SiteController extends Controller
             } catch (\Exception $e) { Yii::error($e->getMessage()); }
         }
 
-        if ($user->save(false)) return ['success' => true];
+        if ($user->save(false)) {
+            return [
+                'success' => true,
+                'displayname' => $user->displayname,
+                'avatarurl' => $user->avatarurl
+            ];
+        }
         return ['success' => false, 'message' => 'Không thể lưu thông tin.'];
     }
 
@@ -979,6 +1030,11 @@ class SiteController extends Controller
                 'tags' => $nextCard->tags,
                 'cardIndex' => $cardIndex,
                 'totalCards' => count($priorityQueue),
+                // SM2 data for JavaScript grade timing calculation
+                'status' => $nextCard->progress->status ?? 0,
+                'intervaldays' => $nextCard->progress->intervaldays ?? 0,
+                'repetitions' => $nextCard->progress->repetitions ?? 0,
+                'easefactor' => $nextCard->progress->easefactor ?? 2.5,
             ]
         ];
     }

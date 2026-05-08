@@ -4,6 +4,7 @@
 /** @var app\models\Card[] $cards */
 /** @var int $currentDeckId */
 /** @var array $stats */
+/** @var array $srsByLevel */
 
 use yii\helpers\Url;
 use yii\helpers\Html;
@@ -24,6 +25,27 @@ $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\App
     <div class="stat-box"><div class="stat-title">Mới</div><div class="stat-value"><?= $stats['new'] ?></div></div>
     <div class="stat-box"><div class="stat-title">%</div><div class="stat-value"><?= $stats['percent'] ?>%</div></div>
 </div>
+
+<!-- SRS LEVEL DISTRIBUTION -->
+<section class="srs-section">
+    <h2>📚 Phân bố từ vựng theo cấp độ</h2>
+    <p class="srs-description">Lịch ôn tập theo Hệ thống Lặp lại Ngắt quãng (SRS)</p>
+    
+    <div class="srs-grid">
+        <?php foreach($srsByLevel as $level => $data): ?>
+            <div class="srs-card" style="border-left: 4px solid <?= $data['color'] ?>;">
+                <div class="srs-level">Level <?= $level ?></div>
+                <div class="srs-name"><?= Html::encode($data['name']) ?></div>
+                <div class="srs-count" style="color: <?= $data['color'] ?>;"><?= $data['count'] ?> từ</div>
+                <div class="srs-next">
+                    <?php if ($data['nextReview'] && $level != 5): ?>
+                        <span class="next-review"><?= Html::encode($data['nextReview']) ?></span>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    </div>
+</section>
 
 <div class="vocab-main-board">
     <div class="vocab-controls">

@@ -37,7 +37,7 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
         
         <!-- LOẠI 1: CƠ BẢN (Lật thẻ) -->
         <?php if ($cardType == 1): ?>
-        <div id="flashcard" class="flashcard" data-flipped="false" data-cardid="<?= $currentCard->cardid ?>">
+        <div id="flashcard" class="flashcard" data-flipped="false" data-cardid="<?= $currentCard->cardid ?>" data-card-status="<?= $currentCard->progress ? $currentCard->progress->status : 0 ?>" data-card-interval="<?= $currentCard->progress ? $currentCard->progress->intervaldays : 0 ?>" data-card-repetitions="<?= $currentCard->progress ? $currentCard->progress->repetitions : 0 ?>" data-card-easefactor="<?= $currentCard->progress ? $currentCard->progress->easefactor : 2.5 ?>">
             <div class="card-inner">
                 <div class="card-front">
                     <div class="card-label">Mặt trước</div>
@@ -64,7 +64,7 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
         
         <!-- LOẠI 2: ĐẢO NGƯỢC (Cả 2 mặt) -->
         <?php elseif ($cardType == 2): ?>
-        <div id="flashcard" class="flashcard flashcard-reverse" data-cardid="<?= $currentCard->cardid ?>" data-flipped="false">
+        <div id="flashcard" class="flashcard flashcard-reverse" data-flipped="false" data-cardid="<?= $currentCard->cardid ?>" data-card-status="<?= $currentCard->progress ? $currentCard->progress->status : 0 ?>" data-card-interval="<?= $currentCard->progress ? $currentCard->progress->intervaldays : 0 ?>" data-card-repetitions="<?= $currentCard->progress ? $currentCard->progress->repetitions : 0 ?>" data-card-easefactor="<?= $currentCard->progress ? $currentCard->progress->easefactor : 2.5 ?>">
             <div class="card-reverse-container">
                 <div class="card-reverse-side card-front">
                     <div class="card-label">Mặt trước</div>
@@ -90,7 +90,7 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
         
         <!-- LOẠI 3: NHẬP LIỆU -->
         <?php elseif ($cardType == 3): ?>
-        <div id="flashcard" class="flashcard flashcard-input" data-cardid="<?= $currentCard->cardid ?>">
+        <div id="flashcard" class="flashcard flashcard-input" data-cardid="<?= $currentCard->cardid ?>" data-card-status="<?= $currentCard->progress ? $currentCard->progress->status : 0 ?>" data-card-interval="<?= $currentCard->progress ? $currentCard->progress->intervaldays : 0 ?>" data-card-repetitions="<?= $currentCard->progress ? $currentCard->progress->repetitions : 0 ?>" data-card-easefactor="<?= $currentCard->progress ? $currentCard->progress->easefactor : 2.5 ?>">
             <div id="inputPhase1" class="input-phase">
                 <div class="card-front input-mode">
                     <div class="card-label">Trả lời</div>
@@ -158,21 +158,25 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
             <div id="gradeButtonContainer" class="grade-buttons-container" style="display: none;">
                 <p class="flip-hint" style="margin-bottom: 20px;">Chọn độ khó</p>
                 <div class="grade-buttons">
-                    <button class="btn-grade grade-1" onclick="gradeCard(1, 'Again')">
+                    <button class="btn-grade grade-1" onclick="gradeCard(1, 'Again')" data-grade="1">
                         <span class="grade-label">Again</span>
                         <span class="grade-desc">Quên</span>
+                        <span class="grade-time">10ph</span>
                     </button>
-                    <button class="btn-grade grade-2" onclick="gradeCard(2, 'Hard')">
+                    <button class="btn-grade grade-2" onclick="gradeCard(2, 'Hard')" data-grade="2">
                         <span class="grade-label">Hard</span>
                         <span class="grade-desc">Khó</span>
+                        <span class="grade-time">—</span>
                     </button>
-                    <button class="btn-grade grade-3" onclick="gradeCard(3, 'Good')">
+                    <button class="btn-grade grade-3" onclick="gradeCard(3, 'Good')" data-grade="3">
                         <span class="grade-label">Good</span>
                         <span class="grade-desc">Ổn</span>
+                        <span class="grade-time">—</span>
                     </button>
-                    <button class="btn-grade grade-4" onclick="gradeCard(4, 'Easy')">
+                    <button class="btn-grade grade-4" onclick="gradeCard(4, 'Easy')" data-grade="4">
                         <span class="grade-label">Easy</span>
                         <span class="grade-desc">Dễ</span>
+                        <span class="grade-time">4ng</span>
                     </button>
                 </div>
             </div>
@@ -295,6 +299,20 @@ function updateCard(cardData) {
     // Update card data attributes
     flashcard.setAttribute('data-cardid', cardData.cardid);
     
+    // Update SM2 progress attributes (if provided from server)
+    if (cardData.status !== undefined) {
+        flashcard.setAttribute('data-card-status', cardData.status);
+    }
+    if (cardData.intervaldays !== undefined) {
+        flashcard.setAttribute('data-card-interval', cardData.intervaldays);
+    }
+    if (cardData.repetitions !== undefined) {
+        flashcard.setAttribute('data-card-repetitions', cardData.repetitions);
+    }
+    if (cardData.easefactor !== undefined) {
+        flashcard.setAttribute('data-card-easefactor', cardData.easefactor);
+    }
+    
     // Reset flip state
     flashcard.classList.remove('flipped');
     flashcard.setAttribute('data-flipped', 'false');
@@ -358,6 +376,9 @@ function updateCard(cardData) {
         progressBar.style.width = percentage + '%';
         progressText.textContent = 'Thẻ ' + cardData.cardIndex + ' / ' + cardData.totalCards;
     }
+    
+    // Cập nhật thời gian review dự kiến sau khi card được load
+    updateGradeTimings();
 }
 
 // LOẠI 2: ĐẢO NGƯỢC - Toggle hiển thị 2 mặt
@@ -401,5 +422,154 @@ function showGradeButtons() {
     
     if (nextContainer) nextContainer.style.display = 'none';
     if (gradeContainer) gradeContainer.style.display = 'block';
+    
+    updateGradeTimings();
 }
+
+// Tính toán và hiển thị thời gian review dự kiến cho mỗi nút
+function updateGradeTimings() {
+    const flashcard = document.getElementById('flashcard');
+    if (!flashcard) return;
+    
+    const status = parseInt(flashcard.dataset.cardStatus, 10) || 0;
+    const interval = parseFloat(flashcard.dataset.cardInterval) || 0;
+    const repetitions = parseInt(flashcard.dataset.cardRepetitions, 10) || 0;
+    const easefactor = parseFloat(flashcard.dataset.cardEasefactor) || 2.5;
+    
+    // SM2 Constants
+    const LEARNING_STEPS = [1, 10]; // phút
+    const GRADUATING_INTERVAL = 1; // ngày
+    const EASY_INTERVAL = 4; // ngày
+    const RELEARNING_STEPS = [10]; // phút
+    
+    // Tính nextReview cho mỗi grade
+    const timings = {};
+    for (let grade = 1; grade <= 4; grade++) {
+        const result = calculateSM2(grade, status, repetitions, interval, easefactor, LEARNING_STEPS, GRADUATING_INTERVAL, EASY_INTERVAL, RELEARNING_STEPS);
+        timings[grade] = formatTime(result.nextReview);
+    }
+    
+    // Cập nhật UI
+    document.querySelectorAll('.btn-grade').forEach(btn => {
+        const grade = parseInt(btn.dataset.grade, 10);
+        const timeSpan = btn.querySelector('.grade-time');
+        if (timeSpan && timings[grade]) {
+            timeSpan.textContent = timings[grade];
+        }
+    });
+}
+
+// Tính SM2 dựa trên grade
+function calculateSM2(grade, status, repetitions, interval, easefactor, LEARNING_STEPS, GRADUATING_INTERVAL, EASY_INTERVAL, RELEARNING_STEPS) {
+    grade = Math.max(1, Math.min(4, parseInt(grade, 10)));
+    easefactor = Math.max(1.3, easefactor);
+    
+    let nextReviewDate = new Date();
+    let nextReviewMinutes = 0;
+    let nextReviewDays = 0;
+    let newStatus = status;
+    let newRepetitions = repetitions;
+    
+    if (grade === 1) {
+        // Again - Lapse: back to relearning for 10 minutes
+        nextReviewMinutes = RELEARNING_STEPS[0]; // 10
+        newStatus = 1; // Back to learning/relearning
+    } else if (status === 0) {
+        // New card
+        if (grade === 4) {
+            newStatus = 2;
+            newRepetitions = 1;
+            nextReviewDays = EASY_INTERVAL; // 4 days
+            easefactor = easefactor + 0.1;
+        } else {
+            // grade 2 or 3 - Move to learning
+            newStatus = 1;
+            newRepetitions = 0;
+            nextReviewMinutes = LEARNING_STEPS[0]; // 1 minute
+        }
+    } else if (status === 1) {
+        // Learning/Relearning card
+        if (grade === 4) {
+            // Easy - skip to review
+            newStatus = 2;
+            newRepetitions = 1;
+            nextReviewDays = EASY_INTERVAL; // 4 days
+            easefactor = easefactor + 0.1;
+        } else if (grade === 2) {
+            // Hard - repeat current step (1 minute)
+            nextReviewMinutes = LEARNING_STEPS[0]; // 1 minute
+        } else if (grade === 3) {
+            // Good - move to next learning step or graduate
+            if (newRepetitions < LEARNING_STEPS.length - 1) {
+                // More learning steps to complete
+                newRepetitions++;
+                nextReviewMinutes = LEARNING_STEPS[newRepetitions]; // 10 minutes for step 2
+            } else {
+                // All learning steps completed - Graduate to review
+                newStatus = 2;
+                newRepetitions = 1;
+                nextReviewDays = GRADUATING_INTERVAL; // 1 day
+            }
+        }
+    } else if (status === 2) {
+        // Review card - Apply SM-2 algorithm
+        let newInterval = interval;
+        if (grade === 2) {
+            // Hard - reduce interval by 40%
+            newInterval = Math.max(1, Math.round(interval * 0.6));
+        } else if (grade === 3) {
+            // Good - multiply by easeFactor
+            newInterval = Math.round(interval * easefactor);
+        } else if (grade === 4) {
+            // Easy - multiply by easeFactor + 10%
+            newInterval = Math.round(interval * (easefactor + 0.1));
+            easefactor = easefactor + 0.1;
+        }
+        nextReviewDays = Math.max(1, newInterval);
+        newRepetitions = repetitions + 1;
+    }
+    
+    // Calculate easeFactor using SM-2 formula
+    // EF' = EF + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02))
+    const q = grade;
+    easefactor = easefactor + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02));
+    easefactor = Math.max(1.3, easefactor);
+    
+    // Set actual nextReviewDate
+    if (nextReviewMinutes > 0) {
+        nextReviewDate.setMinutes(nextReviewDate.getMinutes() + nextReviewMinutes);
+    }
+    if (nextReviewDays > 0) {
+        nextReviewDate.setDate(nextReviewDate.getDate() + nextReviewDays);
+    }
+    
+    return { nextReview: nextReviewDate, status: newStatus, repetitions: newRepetitions };
+}
+
+// Format thời gian thành chuỗi viết tắt
+function formatTime(date) {
+    const now = new Date();
+    const diffMs = date.getTime() - now.getTime();
+    const diffMins = Math.ceil(diffMs / 60000);
+    const diffDays = Math.ceil(diffMs / (24 * 60 * 60 * 1000));
+    
+    // Nếu < 60 phút, hiển thị phút
+    if (diffMins < 60 && diffMins > 0) {
+        return diffMins + 'ph';
+    } 
+    // Nếu < 30 ngày, hiển thị ngày
+    else if (diffDays >= 0 && diffDays < 30) {
+        return Math.max(1, diffDays) + 'ng';
+    } 
+    // Nếu >= 30 ngày, hiển thị tháng
+    else {
+        const diffMonths = Math.ceil(diffDays / 30);
+        return diffMonths + 'th';
+    }
+}
+
+// Gọi khi trang load hoặc khi hiển thị grade buttons
+document.addEventListener('DOMContentLoaded', function() {
+    updateGradeTimings();
+});
 </script>
