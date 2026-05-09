@@ -212,3 +212,162 @@ body, h1, h2, h3, h4, h5, h6, p, span, a, button, input, textarea, label, div, t
 .btn-text-cancel:hover { color: #c53030; }
 .btn-text-save { color: #3182ce; background: none; border: none; font-weight: 800; cursor: pointer; font-size: 18px; transition: color 0.2s;}
 .btn-text-save:hover { color: #2b6cb0; }
+
+
+body.dark-mode .main {
+    background-color: #1a202c !important; 
+}
+
+/* Thống kê */
+body.dark-mode .stat-box {
+    background-color: #2d3748;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+}
+body.dark-mode .stat-box .stat-title { color: #a0aec0; }
+body.dark-mode .stat-box .stat-value { color: #63b3ed; }
+
+/* Khung chính */
+body.dark-mode .vocab-main-board {
+    background-color: #2d3748;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .deck-filter-select {
+    background-color: #1a202c;
+    color: #f7fafc;
+    border-color: #4a5568;
+    background-image: url('data:image/svg+xml;utf8,<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="%23a0aec0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+}
+body.dark-mode .deck-filter-select:hover, 
+body.dark-mode .deck-filter-select:focus {
+    border-color: #718096;
+    background-color: #2d3748;
+}
+
+body.dark-mode .btn-add-huge {
+    background-color: #4a5568;
+    color: #90cdf4;
+}
+body.dark-mode .btn-add-huge:hover {
+    background-color: #3182ce;
+    color: #fff;
+}
+
+/* Bảng từ vựng */
+body.dark-mode .vocab-table th {
+    border-bottom-color: #4a5568;
+    color: #a0aec0;
+}
+body.dark-mode .vocab-table td {
+    border-bottom-color: #4a5568;
+    color: #e2e8f0;
+}
+body.dark-mode .vocab-table tr:hover td {
+    background-color: #1a202c;
+}
+
+body.dark-mode .col-front { color: #90cdf4; }
+body.dark-mode .col-back { color: #f7fafc; }
+body.dark-mode .col-example { color: #a0aec0; }
+body.dark-mode .col-pronun { color: #cbd5e1; }
+
+body.dark-mode .btn-delete-card-table {
+    background-color: #4a5568;
+    border-color: #fc8181;
+    color: #fc8181;
+}
+body.dark-mode .btn-delete-card-table:hover {
+    background-color: #e53e3e;
+    color: #fff;
+    border-color: #e53e3e;
+}
+
+body.dark-mode .btn-action-add {
+    background-color: #4a5568;
+    border-color: #319795;
+    color: #38b2ac;
+}
+body.dark-mode .btn-action-add:hover {
+    background-color: #319795;
+    color: #fff;
+    border-color: #319795;
+}
+
+/* Tags */
+body.dark-mode .tag-pill {
+    background-color: #2b6cb0;
+    color: #ebf8ff;
+    border-color: #3182ce;
+}
+body.dark-mode .tag-system {
+    background-color: #c05621 !important;
+    color: #feebc8 !important;
+    border-color: #dd6b20 !important;
+}
+
+/* Modal */
+body.dark-mode .modal-content,
+body.dark-mode .modal-content-huge,
+body.dark-mode .add-table-container,
+body.dark-mode .modal-header-add {
+    background-color: #2d3748;
+    color: #e2e8f0;
+    border-color: #4a5568;
+}
+body.dark-mode .modal-header { border-bottom-color: #4a5568; }
+body.dark-mode .modal-header h2,
+body.dark-mode .modal-content h2,
+body.dark-mode .modal-content h3 { color: #f7fafc !important; }
+body.dark-mode .header-label { color: #e2e8f0; }
+
+body.dark-mode .full-input,
+body.dark-mode #batchEntryTable input,
+body.dark-mode .modal-select {
+    background-color: #1a202c;
+    color: #f7fafc;
+    border-color: #4a5568;
+}
+
+body.dark-mode .modal-select {
+    background-image: url('data:image/svg+xml;utf8,<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="%23a0aec0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+}
+
+body.dark-mode #batchEntryTable input:focus {
+    background-color: #2d3748;
+    border-color: #63b3ed;
+}
+
+body.dark-mode #batchEntryTable th {
+    border-bottom-color: #4a5568;
+    color: #a0aec0;
+}
+body.dark-mode #batchEntryTable td { color: #e2e8f0; }
+
+body.dark-mode #batchEntryTable button {
+    background-color: #4a5568;
+    border-color: #fc8181;
+    color: #fc8181;
+}
+body.dark-mode #batchEntryTable button:hover {
+    background-color: #e53e3e;
+    color: #fff;
+    border-color: #e53e3e;
+}
+
+body.dark-mode .btn-add-row-dashed {
+    background-color: #1a202c;
+    border-color: #4a5568;
+    color: #a0aec0;
+}
+body.dark-mode .btn-add-row-dashed:hover {
+    border-color: #63b3ed;
+    color: #63b3ed;
+}
+
+body.dark-mode .btn-text-save { color: #63b3ed; }
+body.dark-mode .btn-text-cancel { color: #fc8181; }
+
+body.dark-mode #modalProfileContent {
+    background-color: #2d3748 !important;
+    color: #f7fafc !important;
+}
