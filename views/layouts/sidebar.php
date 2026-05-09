@@ -71,6 +71,9 @@ $user = Yii::$app->user->identity;
             <button class="action-btn logout-btn" onclick="submitLogoutForm(event)">
                 <span class="icon">→</span> Đăng xuất
             </button>
+            <form id="logoutForm" action="<?= Url::to(['/site/logout']) ?>" method="post" style="display: none;">
+                <input type="hidden" name="<?= Yii::$app->request->csrfParam ?>" value="<?= Yii::$app->request->csrfToken ?>">
+            </form>
         </div>
     </div>
 

@@ -470,22 +470,41 @@ class SiteController extends Controller
     /**
      * AJAX: Cập nhật thông tin bộ thẻ (Tên/Mô tả)
      */
-    public function actionAjaxUpdateDeck($id = null)
+     public function actionAjaxUpdateDeck($id = null)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
         $id = $id ?? Yii::$app->request->post('id');
-        $model = Deck::findOne(['deckid' => $id, 'userid' => Yii::$app->user->id]);
-        if ($model) {
-            $data = Yii::$app->request->post();
-            $model->name = $data['name'] ?? $model->name;
-            $model->description = $data['description'] ?? $model->description;
-            if ($model->save()) {
-                return ['success' => true];
+        $userId = Yii::$app->user->id;
+
+        $model = Deck::findOne(['deckid' => $id, 'userid' => $userId]);
+        if (!$model) {
+            return ['success' => false, 'message' => 'Không tìm thấy bộ thẻ.'];
+        }
+
+        $data = Yii::$app->request->post();
+        $newName = trim($data['name'] ?? $model->name);
+
+        // KIỂM TRA TRÙNG TÊN KHI ĐỔI TÊN
+        if ($newName !== $model->name) {
+            $exists = Deck::findOne(['name' => $newName, 'userid' => $userId]);
+            if ($exists) {
+                return ['success' => false, 'message' => 'Bạn đã có bộ thẻ với tên này rồi. Vui lòng chọn tên khác!'];
             }
         }
-        return ['success' => false];
-    }
 
+        $model->name = $newName;
+        $model->description = trim($data['description'] ?? $model->description);
+
+        try {
+            if ($model->save()) {
+                return ['success' => true, 'message' => 'Đã lưu thay đổi thành công!'];
+            }
+            $errorMsg = reset($model->errors)[0] ?? 'Lỗi khi cập nhật bộ thẻ.';
+            return ['success' => false, 'message' => $errorMsg];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => 'Lỗi cơ sở dữ liệu, không thể lưu.'];
+        }
+    }
     /**
      * AJAX: Xóa toàn bộ một bộ bài
      */
@@ -503,20 +522,43 @@ class SiteController extends Controller
     /**
      * AJAX: Tạo một bộ bài hoàn toàn mới
      */
-    public function actionAjaxCreateDeck()
+   public function actionAjaxCreateDeck()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
         $data = Yii::$app->request->post();
-        
-        $model = new Deck();
-        $model->name = $data['name'] ?? 'Bộ bài mới';
-        $model->description = $data['description'] ?? '';
-        $model->userid = Yii::$app->user->id; 
+        $name = trim($data['name'] ?? 'Bộ bài mới');
+        $userId = Yii::$app->user->id; 
 
-        if ($model->save()) {
-            return ['success' => true, 'message' => 'Đã tạo bộ thẻ thành công!'];
+        // KIỂM TRA TRÙNG TÊN RÕ RÀNG NGAY TỪ CONTROLLER
+        $exists = Deck::findOne(['name' => $name, 'userid' => $userId]);
+        if ($exists) {
+            return ['success' => false, 'message' => 'Bạn đã có bộ thẻ với tên này rồi. Vui lòng chọn tên khác!'];
         }
-        return ['success' => false, 'errors' => $model->errors];
+
+        $model = new Deck();
+        $model->name = $name;
+        // Bắt buộc ép kiểu string, tránh null gây lỗi DB
+        $model->description = trim($data['description'] ?? '');
+        $model->userid = $userId; 
+        
+        try {
+            if ($model->save()) {
+                // Tự động tạo DeckSettings mặc định luôn để tránh lỗi các trang khác
+                $setting = new DeckSettings();
+                $setting->deckid = $model->deckid;
+                $setting->save(false);
+
+                return ['success' => true, 'message' => 'Tạo bộ thẻ mới thành công!'];
+            }
+            
+            // Xử lý báo lỗi chi tiết nếu Model validate thất bại
+            $errorMsg = reset($model->errors)[0] ?? 'Lỗi không xác định khi tạo bộ thẻ.';
+            return ['success' => false, 'message' => 'Lỗi dữ liệu: ' . $errorMsg];
+            
+        } catch (\Exception $e) {
+            // IN RA MÃ LỖI GỐC CỦA SQL ĐỂ DEBUG (CHỈ DÙNG KHI DEV)
+            return ['success' => false, 'message' => 'Lỗi DB: ' . $e->getMessage()];
+        }
     }
 
     /**

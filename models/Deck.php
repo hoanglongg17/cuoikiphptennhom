@@ -19,7 +19,7 @@ use yii\db\ActiveRecord;
 class Deck extends ActiveRecord
 {
     /**
-     * Tên bảng trong database (viết thường như bạn đã tạo)
+     * Tên bảng trong database
      */
     public static function tableName()
     {
@@ -34,9 +34,20 @@ class Deck extends ActiveRecord
         return [
             [['userid', 'name'], 'required'],
             [['userid'], 'integer'],
-            [['description'], 'string'],
-            [['createdat'], 'safe'],
+            [['description'], 'string'], // ĐÃ XÓA cover_image
+            [['createdat'], 'safe'],     // ĐÃ ĐỔI THÀNH createdat (không có gạch dưới)
             [['name'], 'string', 'max' => 255],
+            
+            // Sửa lại targetAttribute của User cho khớp với cột userid trong bảng users
+            [['userid'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['userid' => 'userid']],
+            
+            // CHẶN TRÙNG TÊN BỘ THẺ THEO USER
+            [
+                ['name'], 
+                'unique', 
+                'targetAttribute' => ['name', 'userid'], 
+                'message' => 'Bạn đã có bộ thẻ với tên này rồi. Vui lòng chọn tên khác!'
+            ],
         ];
     }
 

@@ -223,24 +223,40 @@ document.getElementById('searchInput').addEventListener('input', function(e) {
 });
 
 function createNewDeck() {
-    const name = document.getElementById('create-deck-name').value;
-    const desc = document.getElementById('create-deck-desc').value;
+    const name = document.getElementById('create-deck-name').value.trim();
+    const desc = document.getElementById('create-deck-desc').value.trim();
     if(!name) return alert('Vui lòng nhập tên bộ thẻ!');
+    
     fetch('<?= Url::to(['site/ajax-create-deck']) ?>', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': '<?= Yii::$app->request->csrfToken ?>' },
         body: new URLSearchParams({ name: name, description: desc })
-    }).then(res => res.json()).then(data => { if(data.success) location.reload(); });
+    }).then(res => res.json()).then(data => { 
+        if(data.success) {
+            alert(data.message || 'Tạo bộ thẻ thành công!');
+            location.reload(); 
+        } else {
+            alert(data.message || 'Có lỗi xảy ra, không thể tạo!');
+        }
+    }).catch(err => alert('Lỗi kết nối máy chủ! Vui lòng thử lại.'));
 }
 
 function updateDeck(id) {
-    const name = document.getElementById('edit-name-' + id).value;
-    const desc = document.getElementById('edit-desc-' + id).value;
+    const name = document.getElementById('edit-name-' + id).value.trim();
+    const desc = document.getElementById('edit-desc-' + id).value.trim();
+    
     fetch('<?= Url::to(['site/ajax-update-deck']) ?>', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': '<?= Yii::$app->request->csrfToken ?>' },
         body: new URLSearchParams({ id: id, name: name, description: desc })
-    }).then(res => res.json()).then(data => { if(data.success) location.reload(); });
+    }).then(res => res.json()).then(data => { 
+        if(data.success) {
+            alert(data.message || 'Cập nhật bộ thẻ thành công!');
+            location.reload(); 
+        } else {
+            alert(data.message || 'Có lỗi xảy ra, không thể lưu!');
+        }
+    }).catch(err => alert('Lỗi kết nối máy chủ! Vui lòng thử lại.'));
 }
 
 function deleteDeck(id) {

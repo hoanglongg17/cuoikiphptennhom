@@ -188,3 +188,73 @@ body, h1, h2, h3, h4, h5, h6, p, span, a, button, input, textarea, label, div {
     transform: scale(1.1);
     box-shadow: 0 4px 8px rgba(229, 62, 62, 0.2);
 }
+
+body.dark-mode .main {
+    background-color: #1a202c !important; 
+}
+
+body.dark-mode .vocabset-header h1 { color: #f7fafc; }
+
+body.dark-mode .search-input,
+body.dark-mode .search-input-mini {
+    background-color: #2d3748;
+    color: #f7fafc;
+    border-color: #4a5568;
+}
+
+body.dark-mode .set-row {
+    background-color: #2d3748;
+    border-color: #4a5568;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+}
+body.dark-mode .set-details h3 { color: #f7fafc; }
+body.dark-mode .set-details span { color: #a0aec0; }
+body.dark-mode .btn-edit-trigger { background-color: #4a5568; border-color: #718096; color: #fff; }
+body.dark-mode .btn-edit-trigger:hover { background-color: #718096; }
+
+body.dark-mode .modal-content,
+body.dark-mode .modal-content-huge,
+body.dark-mode .add-table-container,
+body.dark-mode .modal-header-add {
+    background-color: #2d3748;
+    color: #e2e8f0;
+    border-color: #4a5568;
+}
+body.dark-mode .modal-header { border-bottom-color: #4a5568; }
+body.dark-mode .modal-header h2 { color: #f7fafc; }
+body.dark-mode .input-group label { color: #e2e8f0; }
+
+body.dark-mode .full-input,
+body.dark-mode .batch-entry-table input,
+body.dark-mode .modal-select {
+    background-color: #1a202c;
+    color: #f7fafc;
+    border-color: #4a5568;
+}
+
+body.dark-mode .batch-entry-table input:focus {
+    background-color: #2d3748;
+}
+
+body.dark-mode .btn-add-row-dashed {
+    background-color: #1a202c;
+    border-color: #4a5568;
+    color: #a0aec0;
+}
+body.dark-mode .btn-add-row-dashed:hover {
+    border-color: #63b3ed;
+    color: #63b3ed;
+}
+
+body.dark-mode .deck-top-info h3,
+body.dark-mode .cards-area h4 { color: #90cdf4 !important; }
+body.dark-mode .deck-top-info p { color: #e2e8f0 !important; }
+body.dark-mode .deck-divider { border-top-color: #4a5568; }
+
+body.dark-mode .card-row-display {
+    background-color: #1a202c;
+    border-color: #4a5568;
+}
+body.dark-mode .card-row-display:not(:last-child)::after { border-bottom-color: #4a5568; }
+body.dark-mode .content-text { color: #f7fafc !important; }
+body.dark-mode .meta-item { color: #cbd5e1; }
