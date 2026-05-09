@@ -43,7 +43,8 @@ create table decks (
     description text,
     createdat datetime default current_timestamp,
     constraint fk_decks_users foreign key (userid) 
-        references users(userid) on delete cascade
+        references users(userid) on delete cascade,
+	 constraint uq_user_deckname unique (userid, name) 
 ) engine=innodb;
 
 -- ==========================================
