@@ -223,7 +223,7 @@ body.dark-mode .stat-box {
     background-color: #2d3748;
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
 }
-body.dark-mode .stat-box .stat-title { color: #a0aec0; }
+body.dark-mode .stat-box .stat-title { color: #868585; }
 body.dark-mode .stat-box .stat-value { color: #63b3ed; }
 
 /* Khung chính */
@@ -266,8 +266,11 @@ body.dark-mode .vocab-table tr:hover td {
     background-color: #1a202c;
 }
 
-body.dark-mode .col-front { color: #90cdf4; }
-body.dark-mode .col-back { color: #f7fafc; }
+/* ĐÃ FIX: Tăng độ sáng cho Mặt trước và dùng !important để đè style cũ */
+body.dark-mode .col-front { 
+    color: #ffffff !important; 
+    text-shadow: 0 0 1px rgba(255,255,255,0.1);
+}body.dark-mode .col-back { color: #f7fafc; }
 body.dark-mode .col-example { color: #a0aec0; }
 body.dark-mode .col-pronun { color: #cbd5e1; }
 
