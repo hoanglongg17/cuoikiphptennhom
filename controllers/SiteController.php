@@ -61,7 +61,8 @@ class SiteController extends Controller
                     'practice', 'study-deck',
                     'ajax-create-deck', 'ajax-update-deck', 'ajax-delete-deck',
                     'ajax-delete-card', 'ajax-remove-from-deck', 'ajax-import-deck', 
-                    'ajax-assign-card-to-deck', 'ajax-save-batch-cards', 'ajax-grade-card', 'ajax-get-next-card'
+                    'ajax-assign-card-to-deck', 'ajax-save-batch-cards', 'ajax-grade-card', 'ajax-get-next-card',
+                    'ajax-update-card',
                 ],
                 'rules' => [
                     [
@@ -70,7 +71,8 @@ class SiteController extends Controller
                             'practice', 'study-deck',
                             'ajax-create-deck', 'ajax-update-deck', 'ajax-delete-deck',
                             'ajax-delete-card', 'ajax-remove-from-deck', 'ajax-import-deck', 
-                            'ajax-assign-card-to-deck', 'ajax-save-batch-cards', 'ajax-grade-card', 'ajax-get-next-card'
+                            'ajax-assign-card-to-deck', 'ajax-save-batch-cards', 'ajax-grade-card', 'ajax-get-next-card',
+                            'ajax-update-card',  
                         ],
                         'allow' => true,
                         'roles' => ['@'], // Chỉ cho phép người đã đăng nhập
@@ -404,7 +406,28 @@ class SiteController extends Controller
         }
         return ['success' => false, 'message' => 'Lỗi: Không tìm thấy thẻ hoặc không có quyền xóa.'];
     }
+    public function actionAjaxUpdateCard()
+        {
+            Yii::$app->response->format = Response::FORMAT_JSON;
+            $data = Yii::$app->request->post();
+            $userId = Yii::$app->user->id;
 
+            $model = Card::findOne(['cardid' => $data['cardid'] ?? null, 'userid' => $userId]);
+            if (!$model) return ['success' => false, 'message' => 'Không tìm thấy thẻ.'];
+
+            $model->frontcontent = trim($data['frontcontent'] ?? $model->frontcontent);
+            $model->backcontent = trim($data['backcontent'] ?? $model->backcontent);
+            $model->pronunciation = trim($data['pronunciation'] ?? $model->pronunciation);
+            $model->examplesentence = trim($data['examplesentence'] ?? $model->examplesentence);
+            $model->tags = trim($data['tags'] ?? $model->tags);
+
+            if ($model->save()) {
+                return ['success' => true, 'message' => 'Cập nhật từ vựng thành công!'];
+            }
+
+            $errorMsg = reset($model->errors)[0] ?? 'Lỗi khi cập nhật dữ liệu.';
+            return ['success' => false, 'message' => $errorMsg];
+        }
     /**
      * AJAX: GỠ THẺ KHỎI BỘ (SET DECKID = NULL)
      * Thẻ vẫn tồn tại trong kho nhưng không còn thuộc bộ bài nào.
