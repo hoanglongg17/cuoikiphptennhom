@@ -62,7 +62,7 @@ class SiteController extends Controller
                     'ajax-create-deck', 'ajax-update-deck', 'ajax-delete-deck',
                     'ajax-delete-card', 'ajax-remove-from-deck', 'ajax-import-deck', 
                     'ajax-assign-card-to-deck', 'ajax-save-batch-cards', 'ajax-grade-card', 'ajax-get-next-card',
-                    'ajax-update-card',
+                    'ajax-update-card', 'ajax-update-profile',
                 ],
                 'rules' => [
                     [
@@ -72,7 +72,7 @@ class SiteController extends Controller
                             'ajax-create-deck', 'ajax-update-deck', 'ajax-delete-deck',
                             'ajax-delete-card', 'ajax-remove-from-deck', 'ajax-import-deck', 
                             'ajax-assign-card-to-deck', 'ajax-save-batch-cards', 'ajax-grade-card', 'ajax-get-next-card',
-                            'ajax-update-card',  
+                            'ajax-update-card', 'ajax-update-profile',
                         ],
                         'allow' => true,
                         'roles' => ['@'], // Chỉ cho phép người đã đăng nhập
@@ -585,19 +585,45 @@ class SiteController extends Controller
     }
 
     /**
+     * AJAX: Test endpoint - để kiểm tra AJAX có hoạt động không
+     */
+    public function actionAjaxTest()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        Yii::info('AJAX Test called', __METHOD__);
+        return ['success' => true, 'message' => 'AJAX working!', 'time' => date('Y-m-d H:i:s')];
+    }
+
+    /**
      * AJAX: Cập nhật Profile (Họ tên, Mật khẩu, Avatar)
      */
     public function actionAjaxUpdateProfile()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
-        if (Yii::$app->user->isGuest) return ['success' => false, 'message' => 'Phiên đăng nhập hết hạn.'];
+        
+        // Debug: Log request
+        Yii::info('AJAX Update Profile called', __METHOD__);
+        
+        if (Yii::$app->user->isGuest) {
+            Yii::warning('User is guest', __METHOD__);
+            return ['success' => false, 'message' => 'Phiên đăng nhập hết hạn.'];
+        }
 
         /** @var \app\models\User $user */
         $user = Yii::$app->user->identity;
         $post = Yii::$app->request->post();
 
-        if (!empty($post['displayname'])) $user->displayname = $post['displayname'];
-        if (!empty($post['password'])) $user->setPassword($post['password']);
+        Yii::info('Update data: ' . json_encode($post), __METHOD__);
+
+        if (!empty($post['displayname'])) {
+            $user->displayname = $post['displayname'];
+            Yii::info('Updated displayname to: ' . $post['displayname'], __METHOD__);
+        }
+        
+        if (!empty($post['password'])) {
+            $user->setPassword($post['password']);
+            Yii::info('Password updated', __METHOD__);
+        }
 
         // Xử lý lưu ảnh từ chuỗi Base64
         if (!empty($post['avatar_base64'])) {
@@ -611,19 +637,25 @@ class SiteController extends Controller
                         $fileName = 'avatar_' . $user->id . '_' . time() . '.' . strtolower($type[1]);
                         if (file_put_contents($uploadPath . DIRECTORY_SEPARATOR . $fileName, $data)) {
                             $user->avatarurl = Yii::getAlias('@web/uploads/avatars/') . $fileName;
+                            Yii::info('Avatar saved: ' . $fileName, __METHOD__);
                         }
                     }
                 }
-            } catch (\Exception $e) { Yii::error($e->getMessage()); }
+            } catch (\Exception $e) { 
+                Yii::error('Avatar error: ' . $e->getMessage(), __METHOD__);
+            }
         }
 
         if ($user->save(false)) {
+            Yii::info('Profile saved successfully', __METHOD__);
             return [
                 'success' => true,
                 'displayname' => $user->displayname,
                 'avatarurl' => $user->avatarurl
             ];
         }
+        
+        Yii::error('Profile save failed. Errors: ' . json_encode($user->getErrors()), __METHOD__);
         return ['success' => false, 'message' => 'Không thể lưu thông tin.'];
     }
 

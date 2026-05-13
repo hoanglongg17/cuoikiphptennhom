@@ -59,9 +59,10 @@ $config = [
 
         'db' => $db,
         
+        
         'urlManager' => [
-            'enablePrettyUrl' => true,
-            'showScriptName' => false,
+            'enablePrettyUrl' => false,  // Tắt pretty URL để tránh issues với trailing slash
+            'showScriptName' => true,
             'rules' => [
                 // Các quy tắc định tuyến của ông
             ],

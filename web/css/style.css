@@ -1,6 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800&family=Open+Sans:wght@400;500;700;800&subset=vietnamese&display=swap');
+
 /* Reset cơ bản */
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Roboto', 'Open Sans', Tahoma, Arial, sans-serif;
   margin: 0;
   padding-top: 70px; /* chừa chỗ cho header */
   line-height: 1.6;

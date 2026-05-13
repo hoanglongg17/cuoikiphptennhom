@@ -4,6 +4,16 @@ use yii\helpers\Html;
 
 $user = Yii::$app->user->identity;
 ?>
+<!-- Biến global để JavaScript sử dụng -->
+<script>
+    // Base URL và API URLs được sinh bởi PHP
+    window.appBaseUrl = '<?= Url::base() ?>';
+    window.apiUpdateProfileUrl = '<?= Url::to(['site/ajax-update-profile'], true) ?>';
+    console.log('✓ App initialized');
+    console.log('  Base URL:', window.appBaseUrl);
+    console.log('  Profile API URL:', window.apiUpdateProfileUrl);
+</script>
+
 <aside class="sidebar" id="sidebar" data-collapsed="false">
     <ul class="menu">
         <li><a href="<?= Url::to(['site/dashboard']) ?>" class="<?= Yii::$app->controller->action->id == 'dashboard' ? 'active' : '' ?>" title="Trang chủ"><img src="<?= Yii::getAlias('@web') ?>/icons/home.png" alt=""><span>Trang chủ</span></a></li>
