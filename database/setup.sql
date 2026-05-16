@@ -14,11 +14,14 @@ create table users (
     currentstreak int default 0,
     isemailverified tinyint(1) default 0,
     verificationtoken varchar(100),
-    createdat datetime default current_timestamp
+    role varchar(50) default 'user' comment 'user: người dùng thường, admin: quản trị viên',
+    createdat datetime default current_timestamp,
+    updatedat datetime null on update current_timestamp
 ) engine=innodb;
 
 -- tạo index cho googleid
 create unique index uq_users_googleid on users(googleid);
+create index idx_users_role on users(role);
 
 -- ==========================================
 -- bảng 2: dailystats (thống kê theo ngày)
@@ -110,14 +113,61 @@ create table reviewlogs (
 ) engine=innodb;
 
 -- ==========================================
+-- bảng 8: blogposts (bài viết trên blog)
+-- ==========================================
+create table blogposts (
+    postid int auto_increment primary key,
+    userid int not null,
+    title varchar(255) not null,
+    slug varchar(255) unique,
+    content longtext not null,
+    excerpt varchar(500),
+    status varchar(20) default 'draft' comment 'draft: bản nháp, published: đã đăng, archived: lưu trữ',
+    views int default 0,
+    sharedeckid int null comment 'ID của deck được chia sẻ trong bài viết (tùy chọn)',
+    createdat datetime default current_timestamp,
+    updatedat datetime null on update current_timestamp,
+    publishedat datetime null,
+    constraint fk_blogposts_users foreign key (userid) 
+        references users(userid) on delete cascade,
+    constraint fk_blogposts_decks foreign key (sharedeckid) 
+        references decks(deckid) on delete set null
+) engine=innodb;
+
+create index idx_blogposts_status on blogposts(status);
+create index idx_blogposts_userid on blogposts(userid);
+create index idx_blogposts_publishedat on blogposts(publishedat);
+
+-- ==========================================
+-- bảng 9: blogcomments (bình luận bài viết)
+-- ==========================================
+create table blogcomments (
+    commentid int auto_increment primary key,
+    postid int not null,
+    userid int not null,
+    content text not null,
+    status varchar(20) default 'pending' comment 'pending: chưa duyệt, approved: được duyệt, rejected: từ chối',
+    createdat datetime default current_timestamp,
+    updatedat datetime null on update current_timestamp,
+    constraint fk_blogcomments_posts foreign key (postid) 
+        references blogposts(postid) on delete cascade,
+    constraint fk_blogcomments_users foreign key (userid) 
+        references users(userid) on delete cascade
+) engine=innodb;
+
+create index idx_blogcomments_postid on blogcomments(postid);
+create index idx_blogcomments_status on blogcomments(status);
+
+-- ==========================================
 -- DỮ LIỆU MẪU
 -- ==========================================
 
 -- 1. Thêm người dùng (Giữ nguyên Hash Password của bạn)
-insert into users (email, passwordhash, displayname, currentstreak, isemailverified)
+insert into users (email, passwordhash, displayname, currentstreak, isemailverified, role)
 values 
-('nguyenvana@gmail.com', '123456', 'nguyễn văn a', 3, 1), 
-('tranthib@gmail.com', '123456', 'trần thị b', 0, 1);
+('admin@andi.com', '123456', '👨‍💼 Admin Master', 3, 1, 'admin'),
+('nguyenvana@gmail.com', '123456', 'nguyễn văn a', 3, 1, 'user'), 
+('tranthib@gmail.com', '123456', 'trần thị b', 0, 1, 'user');
 
 -- 2. Thêm thống kê ngày
 insert into dailystats (userid, studydate, cardsstudied, timespentminutes)
@@ -194,3 +244,23 @@ values
 (9, 3, date_sub(now(), interval 2 day), 2000),
 (9, 3, date_sub(now(), interval 1 day), 1500),
 (10, 1, date_sub(now(), interval 1 day), 5000);
+
+-- 8. Thêm bài viết blog
+insert into blogposts (userid, title, slug, content, excerpt, status, sharedeckid, publishedat)
+values 
+(2, 'Chia sẻ bộ từ vựng TOEIC hiệu quả', 'tu-vung-toeic-hieu-qua', 
+'Học từ vựng TOEIC có thể rất khó khăn nhưng với bộ từ vựng được tuyển chọn kỹ lưỡng, bạn sẽ đạt được kết quả tốt hơn. Hôm nay mình chia sẻ bộ 100 từ vựng thường gặp nhất trong các đề thi TOEIC.', 
+'Khám phá bộ từ vựng TOEIC được tuyển chọn kỹ lưỡng', 'published', 1, now()),
+(2, 'Cách học động từ bất quy tắc dễ nhất', 'hoc-dong-tu-bat-quy-tac',
+'Động từ bất quy tắc luôn là nỗi ám ảnh của những người học tiếng Anh. Trong bài viết này, mình sẽ chia sẻ một số mẹo giúp bạn nhớ những động từ này dễ dàng hơn.', 
+'Mẹo giúp bạn dễ dàng nhớ các động từ bất quy tắc', 'published', 2, now()),
+(1, 'Chia sẻ từ được sử dụng trong y học cơ sở', 'y-hoc-co-so-andi', 
+'Sinh viên y khoa năm 1 thường gặp khó khăn trong việc học các thuật ngữ y học. Mình vừa tạo một bộ thẻ giúp ích cho việc học này.', 
+'Dành cho sinh viên y khoa năm 1', 'draft', 3, null);
+
+-- 9. Thêm bình luận blog
+insert into blogcomments (postid, userid, content, status)
+values 
+(1, 1, 'Bộ từ vựng này rất hữu ích! Cảm ơn bạn đã chia sẻ', 'approved'),
+(1, 3, 'Mình đang học TOEIC, bộ này giúp rất nhiều', 'approved'),
+(2, 1, 'Tuyệt vời! Animated giải thích rất rõ ràng', 'approved');

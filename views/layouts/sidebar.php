@@ -20,6 +20,7 @@ $user = Yii::$app->user->identity;
         <li><a href="<?= Url::to(['site/vocabset']) ?>" class="<?= Yii::$app->controller->action->id == 'vocabset' ? 'active' : '' ?>" title="Bộ thẻ"><img src="<?= Yii::getAlias('@web') ?>/icons/vocabset.png" alt=""><span>Bộ thẻ</span></a></li>            
         <li><a href="<?= Url::to(['site/vocabulary']) ?>" class="<?= Yii::$app->controller->action->id == 'vocabulary' ? 'active' : '' ?>" title="Từ vựng"><img src="<?= Yii::getAlias('@web') ?>/icons/vocabulary.png" alt=""><span>Từ vựng</span></a></li>            
         <li><a href="<?= Url::to(['site/practice']) ?>" class="<?= Yii::$app->controller->action->id == 'practice' || Yii::$app->controller->action->id == 'study-deck' ? 'active' : '' ?>" title="Luyện tập"><img src="<?= Yii::getAlias('@web') ?>/icons/practice.png" alt=""><span>Luyện tập</span></a></li>
+        <li><a href="<?= Url::to(['blog/index']) ?>" class="<?= Yii::$app->controller->id == 'blog' ? 'active' : '' ?>" title="Blog"><img src="<?= Yii::getAlias('@web') ?>/icons/blog.png" alt=""><span>Blog</span></a></li>
     </ul>
 
     <button class="toggle-btn" id="toggleSidebar" onclick="toggleSidebar()" title="Ẩn/hiện sidebar">&laquo;</button>

@@ -78,6 +78,15 @@ class User extends ActiveRecord implements IdentityInterface
     {
         $this->passwordhash = Yii::$app->security->generatePasswordHash($password);
     }
+    
+    /**
+     * Kiểm tra xem người dùng có phải Admin hay không
+     */
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
+    
     /**
      * Kiểm tra mật khẩu KHÔNG MÃ HÓA
      * So sánh trực tiếp mật khẩu nhập vào với cột passwordhash trong DB
@@ -96,6 +105,14 @@ class User extends ActiveRecord implements IdentityInterface
             // Hỗ trợ tạm thời cho các tài khoản cũ chưa kịp hash (nếu cần)
             return $this->passwordhash === $password;
         }
+    }
+    
+    /**
+     * Relationship: Lấy tất cả blog posts của user
+     */
+    public function getBlogPosts()
+    {
+        return $this->hasMany(BlogPost::class, ['userid' => 'userid']);
     }
 
     /**

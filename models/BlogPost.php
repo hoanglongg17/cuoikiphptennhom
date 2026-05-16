@@ -1,0 +1,317 @@
+<?php
+
+namespace app\models;
+
+use Yii;
+use yii\db\ActiveRecord;
+use yii\behaviors\TimestampBehavior;
+
+/**
+ * BlogPost Model - Bài viết trên blog
+ */
+class BlogPost extends ActiveRecord
+{
+    // Status constants
+    const STATUS_DRAFT = 'draft';
+    const STATUS_PUBLISHED = 'published';
+    const STATUS_ARCHIVED = 'archived';
+
+    public static function tableName()
+    {
+        return 'blogposts';
+    }
+
+    /**
+     * Định nghĩa các rule xác thực
+     */
+    public function rules()
+    {
+        return [
+            [['userid', 'title', 'content'], 'required'],
+            [['title'], 'string', 'max' => 255],
+            [['slug'], 'string', 'max' => 255],
+            [['content', 'excerpt'], 'string'],
+            [['status'], 'in', 'range' => ['draft', 'published', 'archived']],
+            [['sharedeckid', 'views'], 'integer'],
+            [['publishedat', 'createdat', 'updatedat'], 'safe'],
+            [['slug'], 'unique'],
+        ];
+    }
+
+    /**
+     * Tự động tạo slug từ title
+     */
+    public function beforeSave($insert)
+    {
+        if (parent::beforeSave($insert)) {
+            if ($insert || !$this->slug) {
+                $this->slug = $this->generateSlug($this->title);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Sinh slug từ title
+     */
+    private function generateSlug($title)
+    {
+        // Chuyển sang chữ thường
+        $slug = strtolower($title);
+        
+        // Bỏ diacritics
+        $slug = $this->removeDiacritics($slug);
+        
+        // Thay khoảng trắng bằng dấu gạch ngang
+        $slug = preg_replace('/[\s]+/', '-', trim($slug));
+        
+        // Bỏ các ký tự đặc biệt
+        $slug = preg_replace('/[^a-z0-9\-]/', '', $slug);
+        
+        // Bỏ các dấu gạch ngang liên tiếp
+        $slug = preg_replace('/-+/', '-', $slug);
+        
+        return $slug;
+    }
+
+    /**
+     * Bỏ diacritics (dấu) từ tiếng Việt
+     */
+    private function removeDiacritics($string)
+    {
+        $characters = array(
+            'à' => 'a', 'á' => 'a', 'ả' => 'a', 'ã' => 'a', 'ạ' => 'a',
+            'ă' => 'a', 'ằ' => 'a', 'ắ' => 'a', 'ẳ' => 'a', 'ẵ' => 'a', 'ặ' => 'a',
+            'â' => 'a', 'ầ' => 'a', 'ấ' => 'a', 'ẩ' => 'a', 'ẫ' => 'a', 'ậ' => 'a',
+            'đ' => 'd',
+            'è' => 'e', 'é' => 'e', 'ẻ' => 'e', 'ẽ' => 'e', 'ẹ' => 'e',
+            'ê' => 'e', 'ề' => 'e', 'ế' => 'e', 'ể' => 'e', 'ễ' => 'e', 'ệ' => 'e',
+            'ì' => 'i', 'í' => 'i', 'ỉ' => 'i', 'ĩ' => 'i', 'ị' => 'i',
+            'ò' => 'o', 'ó' => 'o', 'ỏ' => 'o', 'õ' => 'o', 'ọ' => 'o',
+            'ô' => 'o', 'ồ' => 'o', 'ố' => 'o', 'ổ' => 'o', 'ỗ' => 'o', 'ộ' => 'o',
+            'ơ' => 'o', 'ờ' => 'o', 'ớ' => 'o', 'ở' => 'o', 'ỡ' => 'o', 'ợ' => 'o',
+            'ù' => 'u', 'ú' => 'u', 'ủ' => 'u', 'ũ' => 'u', 'ụ' => 'u',
+            'ư' => 'u', 'ừ' => 'u', 'ứ' => 'u', 'ử' => 'u', 'ữ' => 'u', 'ự' => 'u',
+            'ỳ' => 'y', 'ý' => 'y', 'ỷ' => 'y', 'ỹ' => 'y', 'ỵ' => 'y',
+        );
+        
+        return strtr($string, $characters);
+    }
+
+    /**
+     * Get attribute labels cho form
+     */
+    public function attributeLabels()
+    {
+        return [
+            'postid' => 'ID Bài Viết',
+            'userid' => 'ID Người Dùng',
+            'title' => 'Tiêu Đề',
+            'slug' => 'Slug (URL)',
+            'content' => 'Nội Dung',
+            'excerpt' => 'Tóm Tắt',
+            'status' => 'Trạng Thái',
+            'views' => 'Lượt Xem',
+            'sharedeckid' => 'Bộ Thẻ Chia Sẻ',
+            'publishedat' => 'Ngày Đăng',
+            'createdat' => 'Ngày Tạo',
+            'updatedat' => 'Cập Nhật Lần Cuối',
+        ];
+    }
+
+    /**
+     * Relationship: Author của bài viết
+     */
+    public function getAuthor()
+    {
+        return $this->hasOne(User::class, ['userid' => 'userid']);
+    }
+
+    /**
+     * Relationship: Deck được chia sẻ
+     */
+    public function getSharedDeck()
+    {
+        return $this->hasOne(Deck::class, ['deckid' => 'sharedeckid']);
+    }
+
+    /**
+     * Relationship: Comments trên bài viết
+     */
+    public function getComments()
+    {
+        return $this->hasMany(BlogComment::class, ['postid' => 'postid']);
+    }
+
+    /**
+     * Lấy comments được duyệt
+     */
+    public function getApprovedComments()
+    {
+        return $this->hasMany(BlogComment::class, ['postid' => 'postid'])
+            ->where(['status' => 'approved']);
+    }
+
+    /**
+     * Kiểm tra xem bài viết có được xuất bản hay không
+     */
+    public function isPublished()
+    {
+        return $this->status === self::STATUS_PUBLISHED && !is_null($this->publishedat);
+    }
+
+    /**
+     * Tăng lượt xem
+     */
+    public function increaseViews()
+    {
+        $this->views = $this->views + 1;
+        return $this->save(false);
+    }
+
+    /**
+     * Tìm các bài viết được xuất bản (để public blog)
+     */
+    public static function findPublished()
+    {
+        return static::find()
+            ->where(['status' => self::STATUS_PUBLISHED])
+            ->orderBy(['publishedat' => SORT_DESC]);
+    }
+
+    /**
+     * Tìm bài viết theo slug
+     */
+    public static function findBySlug($slug)
+    {
+        return static::findOne(['slug' => $slug]);
+    }
+
+    /**
+     * Relationship: Category
+     */
+    public function getCategory()
+    {
+        return $this->hasOne(BlogCategory::class, ['categoryid' => 'categoryid']);
+    }
+
+    /**
+     * Relationship: Tags
+     */
+    public function getTags()
+    {
+        return $this->hasMany(BlogTag::class, ['tagid' => 'tagid'])
+            ->via('post_tags');
+    }
+
+    /**
+     * Relationship: Ratings/Likes
+     */
+    public function getRatings()
+    {
+        return $this->hasMany(BlogRating::class, ['postid' => 'postid']);
+    }
+
+    /**
+     * Relationship: Nested Comments
+     */
+    public function getNestedComments()
+    {
+        return $this->hasMany(BlogNestedComment::class, ['postid' => 'postid']);
+    }
+
+    /**
+     * Lấy approved nested comments
+     */
+    public function getApprovedNestedComments()
+    {
+        return $this->hasMany(BlogNestedComment::class, ['postid' => 'postid'])
+            ->where(['status' => BlogNestedComment::STATUS_APPROVED]);
+    }
+
+    /**
+     * Lấy top-level comments (không có parent)
+     */
+    public function getTopLevelComments()
+    {
+        return $this->hasMany(BlogNestedComment::class, ['postid' => 'postid'])
+            ->where(['status' => BlogNestedComment::STATUS_APPROVED, 'parentcommentid' => null])
+            ->orderBy(['createdat' => SORT_DESC]);
+    }
+
+    /**
+     * Lấy số lượt like
+     */
+    public function getLikeCount()
+    {
+        return BlogRating::getLikeCount($this->postid);
+    }
+
+    /**
+     * Lấy trung bình rating
+     */
+    public function getAverageRating()
+    {
+        return BlogRating::getAverageRating($this->postid);
+    }
+
+    /**
+     * Kiểm tra xem user đã like bài viết này chưa
+     */
+    public function isLikedByUser($userid)
+    {
+        return BlogRating::isLikedByUser($this->postid, $userid);
+    }
+
+    /**
+     * Thêm tag vào bài viết
+     */
+    public function addTag($tagname)
+    {
+        $tag = BlogTag::findOrCreate($tagname);
+        $postTag = new PostTag();
+        $postTag->postid = $this->postid;
+        $postTag->tagid = $tag->tagid;
+        return $postTag->save();
+    }
+
+    /**
+     * Tìm bài viết theo category
+     */
+    public static function findByCategory($categoryid)
+    {
+        return static::find()
+            ->where(['categoryid' => $categoryid, 'status' => self::STATUS_PUBLISHED])
+            ->orderBy(['publishedat' => SORT_DESC]);
+    }
+
+    /**
+     * Tìm bài viết theo tag
+     */
+    public static function findByTag($tagid)
+    {
+        return static::find()
+            ->innerJoinWith('tags')
+            ->where(['blogtags.tagid' => $tagid, 'blogposts.status' => self::STATUS_PUBLISHED])
+            ->distinct()
+            ->orderBy(['blogposts.publishedat' => SORT_DESC]);
+    }
+
+    /**
+     * Tìm kiếm bài viết (search)
+     */
+    public static function search($keyword)
+    {
+        return static::find()
+            ->where(['status' => self::STATUS_PUBLISHED])
+            ->andWhere([
+                'or',
+                ['like', 'title', $keyword],
+                ['like', 'content', $keyword],
+                ['like', 'excerpt', $keyword],
+            ])
+            ->orderBy(['publishedat' => SORT_DESC]);
+    }
+}
+

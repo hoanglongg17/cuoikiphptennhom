@@ -39,5 +39,13 @@ $user = Yii::$app->user->identity;
             <img src="<?= Yii::getAlias('@web') ?>/icons/practice.png" alt="Practice Icon">
             Luyện tập
         </a>
+        <a href="<?= Url::to(['blog/index']) ?>" class="btn-feature">
+            📝 Blog
+        </a>
+        <?php if ($user && method_exists($user, 'isAdmin') && $user->isAdmin()): ?>
+            <a href="<?= Url::to(['admin/dashboard']) ?>" class="btn-feature btn-admin">
+                🏛️ Admin Panel
+            </a>
+        <?php endif; ?>
     </div>
 </section>
