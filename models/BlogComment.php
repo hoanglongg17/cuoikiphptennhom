@@ -65,12 +65,4 @@ class BlogComment extends ActiveRecord
     {
         return $this->hasOne(User::class, ['userid' => 'userid']);
     }
-
-    /**
-     * Kiểm tra xem bình luận có được duyệt hay không
-     */
-    public function isApproved()
-    {
-        return $this->status === self::STATUS_APPROVED;
-    }
 }

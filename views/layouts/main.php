@@ -162,7 +162,12 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
                      alt="Avatar" class="nav-avatar" onerror="this.src='https://via.placeholder.com/35'">
                 
                 <a href="<?= Url::to(['site/dashboard']) ?>" class="display-name">
-                    Hi, <?= Html::encode(Yii::$app->user->identity->displayname) ?>
+                    Hi, <?php 
+                        $displayName = Yii::$app->user->identity->displayname;
+                        // Remove emoji for cleaner display
+                        $displayName = preg_replace('/[^\p{L}\p{N}\s\-]/u', '', $displayName);
+                        echo Html::encode(trim($displayName));
+                    ?>
                 </a>
                 
                 <?= Html::beginForm(['/site/logout'], 'post', ['style' => 'display: inline;']) ?>

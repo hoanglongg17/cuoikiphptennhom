@@ -238,7 +238,7 @@ body.dark-mode .sidebar .menu a.active {
 
 .banner {
   flex: 1;
-  background: orange;
+  background: linear-gradient(135deg, #1abc9c 0%, #0d9e84 100%);
   padding: 25px;
   border-radius: 12px;
   color: #fff;
@@ -624,7 +624,7 @@ body.dark-mode .sidebar .menu a.active {
     display: flex;
     align-items: center;
     gap: 12px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1abc9c 0%, #ff4081 100%);
     padding: 8px 16px;
     border-radius: 12px;
     color: #fff;
@@ -847,7 +847,7 @@ body.dark-mode .theme-switch .label-text {
 }
 
 body.dark-mode .banner {
-    background: linear-gradient(135deg, #ff8c00 0%, #ff6b35 100%);
+    background: linear-gradient(135deg, #1abc9c 0%, #ff4081 100%);
 }
 
 body.dark-mode .cover img {
@@ -865,11 +865,11 @@ body.dark-mode .banner .days .active {
 }
 
 body.dark-mode a {
-    color: #64b5f6;
+    color: #1abc9c;
 }
 
 body.dark-mode a:hover {
-    color: #90caf9;
+    color: #ff4081;
 }
 
 /* Action Buttons Styles for Profile Modal */

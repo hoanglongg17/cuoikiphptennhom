@@ -3,11 +3,8 @@
 /** @var integer $totalPosts */
 /** @var integer $publishedPosts */
 /** @var integer $draftPosts */
-/** @var integer $totalComments */
-/** @var integer $pendingCommentsCount */
-/** @var integer $totalUsers */
-/** @var app\models\BlogPost[] $recentPosts */
-/** @var app\models\BlogComment[] $pendingComments */
+
+/** @var appịmodelsịBlogPost[] $recentPosts */
 
 use yii\helpers\Url;
 use yii\helpers\Html;
@@ -50,27 +47,6 @@ $this->params['breadcrumbs'][] = 'Admin';
                 <p>Bản Nháp</p>
             </div>
         </div>
-
-        <div class="stat-card">
-            <div class="stat-icon">💬</div>
-            <div class="stat-content">
-                <h3><?= $totalComments ?></h3>
-                <p>Tổng Bình Luận</p>
-            </div>
-            <div class="stat-detail">
-                <small <?= $pendingCommentsCount > 0 ? 'style="color: #ff6b6b;"' : '' ?>>
-                    <?= $pendingCommentsCount ?> chờ duyệt
-                </small>
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-icon">👥</div>
-            <div class="stat-content">
-                <h3><?= $totalUsers ?></h3>
-                <p>Người Dùng</p>
-            </div>
-        </div>
     </div>
 
     <!-- Admin Actions -->
@@ -84,11 +60,6 @@ $this->params['breadcrumbs'][] = 'Admin';
             <a href="<?= Url::to(['admin/blog-create']) ?>" class="action-btn">
                 <span class="icon">✍️</span>
                 <span class="label">Tạo Bài Mới</span>
-            </a>
-            <a href="<?= Url::to(['admin/blog-comments']) ?>" class="action-btn" 
-               <?= $pendingCommentsCount > 0 ? 'style="border-color: #ff6b6b;"' : '' ?>>
-                <span class="icon">💬</span>
-                <span class="label">Duyệt Bình Luận<?= $pendingCommentsCount > 0 ? ' (' . $pendingCommentsCount . ')' : '' ?></span>
             </a>
         </div>
     </div>
@@ -138,38 +109,6 @@ $this->params['breadcrumbs'][] = 'Admin';
             <?php endif; ?>
         </div>
     </section>
-
-    <!-- Pending Comments -->
-    <?php if ($pendingCommentsCount > 0): ?>
-        <section class="dashboard-section alert-section">
-            <h2>⚠️ Bình Luận Chờ Duyệt (<?= count($pendingComments) ?>)</h2>
-            <div class="pending-comments">
-                <?php foreach ($pendingComments as $comment): ?>
-                    <div class="comment-card">
-                        <div class="comment-header">
-                            <strong><?= Html::encode($comment->user->displayname) ?></strong>
-                            <small class="text-muted"><?= Yii::$app->formatter->asDate($comment->createdat, 'php:d/m/Y H:i') ?></small>
-                        </div>
-                        <div class="comment-post">
-                            Trên bài: <a href="<?= Url::to(['admin/blog-edit', 'id' => $comment->post->postid]) ?>">
-                                <?= Html::encode($comment->post->title) ?>
-                            </a>
-                        </div>
-                        <div class="comment-content">
-                            <?= Html::encode(substr($comment->content, 0, 200)) ?>
-                            <?= strlen($comment->content) > 200 ? '...' : '' ?>
-                        </div>
-                        <div class="comment-actions">
-                            <a href="<?= Url::to(['admin/approve-comment', 'id' => $comment->commentid]) ?>" 
-                               class="btn btn-sm btn-success">✅ Duyệt</a>
-                            <a href="<?= Url::to(['admin/reject-comment', 'id' => $comment->commentid]) ?>" 
-                               class="btn btn-sm btn-warning">❌ Từ chối</a>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        </section>
-    <?php endif; ?>
 </div>
 
 <style>
@@ -203,7 +142,7 @@ $this->params['breadcrumbs'][] = 'Admin';
 }
 
 .stat-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1abc9c 0%, #ff4081 100%);
     color: white;
     padding: 25px;
     border-radius: 8px;
@@ -219,19 +158,19 @@ $this->params['breadcrumbs'][] = 'Admin';
 }
 
 .stat-card:nth-child(2) {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    background: linear-gradient(135deg, #1abc9c 0%, #ff4081 100%);
 }
 
 .stat-card:nth-child(3) {
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    background: linear-gradient(135deg, #1abc9c 0%, #ff4081 100%);
 }
 
 .stat-card:nth-child(4) {
-    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    background: linear-gradient(135deg, #1abc9c 0%, #ff4081 100%);
 }
 
 .stat-card:nth-child(5) {
-    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    background: linear-gradient(135deg, #1abc9c 0%, #ff4081 100%);
 }
 
 .stat-icon {
@@ -277,7 +216,7 @@ $this->params['breadcrumbs'][] = 'Admin';
 }
 
 .action-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1abc9c 0%, #ff4081 100%);
     color: white;
     padding: 20px;
     border-radius: 8px;
@@ -292,7 +231,7 @@ $this->params['breadcrumbs'][] = 'Admin';
 .action-btn:hover {
     transform: scale(1.05);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    color: white;
+    color: #333;
     text-decoration: none;
 }
 

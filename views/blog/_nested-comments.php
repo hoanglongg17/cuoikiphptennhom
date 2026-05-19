@@ -14,9 +14,6 @@ use yii\helpers\Html;
  */
 function renderCommentTree($comments, $post) {
     foreach ($comments as $comment):
-        if ($comment->status !== 'approved' && ($comment->userid != Yii::$app->user->id && !isAdmin())) {
-            continue;
-        }
         ?>
         <div class="comment-item">
             <div class="comment-header">
@@ -26,11 +23,6 @@ function renderCommentTree($comments, $post) {
                 <span class="comment-date">
                     <?= Yii::$app->formatter->asRelativeTime($comment->createdat) ?>
                 </span>
-                <?php if ($comment->status === 'pending'): ?>
-                    <span class="comment-status pending">⏳ Chờ duyệt</span>
-                <?php elseif ($comment->status === 'spam'): ?>
-                    <span class="comment-status spam">🚫 Spam</span>
-                <?php endif; ?>
             </div>
 
             <div class="comment-content">

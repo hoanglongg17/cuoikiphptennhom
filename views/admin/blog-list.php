@@ -2,6 +2,7 @@
 /** @var yii\web\View $this */
 /** @var app\models\BlogPost[] $posts */
 /** @var string $currentStatus */
+/** @var string $keyword */
 
 use yii\helpers\Url;
 use yii\helpers\Html;
@@ -24,6 +25,30 @@ $this->params['breadcrumbs'][] = 'Bài Viết';
             <?= Yii::$app->session->getFlash('success') ?>
         </div>
     <?php endif; ?>
+
+    <!-- Search Form -->
+    <div class="admin-search-section">
+        <form method="get" class="admin-search-form">
+            <div class="search-input-group">
+                <input type="text" name="q" class="form-control" placeholder="🔍 Tìm kiếm theo tiêu đề, nội dung..." 
+                       value="<?= Html::encode($keyword) ?>" />
+                <button type="submit" class="btn btn-primary">Tìm</button>
+                <?php if (!empty($keyword)): ?>
+                    <a href="<?= Url::to(['admin/blog-list']) ?>" class="btn btn-secondary">Xóa</a>
+                <?php endif; ?>
+                
+                <!-- Preserve status filter when searching -->
+                <?php if (!empty($currentStatus)): ?>
+                    <input type="hidden" name="status" value="<?= Html::encode($currentStatus) ?>" />
+                <?php endif; ?>
+            </div>
+            <?php if (!empty($keyword) && empty($currentStatus)): ?>
+                <p class="search-result-info">Kết quả tìm kiếm cho: <strong>"<?= Html::encode($keyword) ?>"</strong></p>
+            <?php elseif (!empty($keyword) && !empty($currentStatus)): ?>
+                <p class="search-result-info">Kết quả tìm kiếm cho: <strong>"<?= Html::encode($keyword) ?>"</strong> (<?= $currentStatus ?>)</p>
+            <?php endif; ?>
+        </form>
+    </div>
 
     <!-- Status Filter -->
     <div class="filter-section">
@@ -52,7 +77,15 @@ $this->params['breadcrumbs'][] = 'Bài Viết';
     <div class="blog-list-table">
         <?php if (empty($posts)): ?>
             <div class="alert alert-info">
-                <p>Không có bài viết nào<?= $currentStatus ? ' với trạng thái "' . $currentStatus . '"' : '' ?></p>
+                <p><?php 
+                    if (!empty($keyword) && empty($currentStatus)) {
+                        echo 'Không tìm thấy bài viết nào với từ khóa "' . Html::encode($keyword) . '"';
+                    } elseif (!empty($keyword) && !empty($currentStatus)) {
+                        echo 'Không tìm thấy bài viết nào với từ khóa "' . Html::encode($keyword) . '" trong trạng thái "' . $currentStatus . '"';
+                    } else {
+                        echo 'Không có bài viết nào' . ($currentStatus ? ' với trạng thái "' . $currentStatus . '"' : '');
+                    }
+                ?></p>
             </div>
         <?php else: ?>
             <table class="table">
@@ -107,6 +140,15 @@ $this->params['breadcrumbs'][] = 'Bài Viết';
                                            class="btn btn-sm btn-success" title="Xuất bản">📤</a>
                                     <?php endif; ?>
                                     
+                                    <?php if ($post->isPublished()): ?>
+                                        <button class="btn btn-sm btn-pin" 
+                                                onclick="togglePin(this, <?= $post->postid ?>)"
+                                                title="<?= $post->is_pinned ? 'Bỏ ghim' : 'Ghim bài viết' ?>"
+                                                data-pinned="<?= $post->is_pinned ? 'true' : 'false' ?>">
+                                            <?= $post->is_pinned ? '📌' : '📍' ?>
+                                        </button>
+                                    <?php endif; ?>
+                                    
                                     <a href="<?= Url::to(['admin/blog-edit', 'id' => $post->postid]) ?>" 
                                        class="btn btn-sm btn-warning" title="Chỉnh sửa">✏️</a>
                                     
@@ -146,6 +188,57 @@ $this->params['breadcrumbs'][] = 'Bài Viết';
 
 .page-header h1 {
     margin: 0;
+}
+
+/* Admin Search Form Styles */
+.admin-search-section {
+    background: #f0f8ff;
+    border: 1px solid #b3d9ff;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.admin-search-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.search-input-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.search-input-group .form-control {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.95em;
+}
+
+.search-input-group .form-control:focus {
+    outline: none;
+    border-color: #0066cc;
+    box-shadow: 0 0 5px rgba(0, 102, 204, 0.3);
+}
+
+.search-input-group .btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.3s;
+}
+
+.search-result-info {
+    font-size: 0.9em;
+    color: #666;
+    margin: 0;
+    padding: 0 0 0 2px;
 }
 
 .filter-section {
@@ -296,6 +389,22 @@ $this->params['breadcrumbs'][] = 'Bài Viết';
     color: #721c24;
 }
 
+.btn-pin {
+    background: #fff9c4;
+    color: #f57c00;
+    transition: all 0.3s;
+}
+
+.btn-pin:hover {
+    background: #ffd54f;
+    color: #e65100;
+}
+
+.btn-pin[data-pinned="true"] {
+    background: #ffc107;
+    color: #fff;
+}
+
 .text-muted {
     color: #888;
 }
@@ -326,3 +435,33 @@ $this->params['breadcrumbs'][] = 'Bài Viết';
     }
 }
 </style>
+
+<script>
+function togglePin(button, postId) {
+    const csrfToken = '<?= Yii::$app->request->csrfToken ?>';
+    const isPinned = button.getAttribute('data-pinned') === 'true';
+    
+    fetch('<?= Url::to(['/admin/blog-pin']) ?>&id=' + postId, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-Token': csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const newPinned = data.isPinned;
+            button.setAttribute('data-pinned', newPinned ? 'true' : 'false');
+            button.textContent = newPinned ? '📌' : '📍';
+            button.title = newPinned ? 'Bỏ ghim' : 'Ghim bài viết';
+            alert(data.message);
+        } else {
+            alert('Lỗi: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Có lỗi xảy ra');
+    });
+}
+</script>

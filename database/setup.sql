@@ -128,6 +128,7 @@ create table blogposts (
     createdat datetime default current_timestamp,
     updatedat datetime null on update current_timestamp,
     publishedat datetime null,
+    is_pinned boolean default false comment 'Bài viết có được ghim hay không',
     constraint fk_blogposts_users foreign key (userid) 
         references users(userid) on delete cascade,
     constraint fk_blogposts_decks foreign key (sharedeckid) 
@@ -137,6 +138,114 @@ create table blogposts (
 create index idx_blogposts_status on blogposts(status);
 create index idx_blogposts_userid on blogposts(userid);
 create index idx_blogposts_publishedat on blogposts(publishedat);
+
+-- ==========================================
+-- bảng 8b: blogcategories (danh mục blog)
+-- ==========================================
+create table blogcategories (
+    categoryid int auto_increment primary key,
+    name varchar(100) not null unique,
+    slug varchar(100) unique,
+    description text,
+    color varchar(20) default '#0066cc',
+    createdat datetime default current_timestamp
+) engine=innodb;
+
+create index idx_blogcategories_slug on blogcategories(slug);
+
+-- ==========================================
+-- bảng 8c: blogtags (nhãn cho bài viết)
+-- ==========================================
+create table blogtags (
+    tagid int auto_increment primary key,
+    name varchar(50) not null unique,
+    slug varchar(50) unique,
+    usagecount int default 0,
+    createdat datetime default current_timestamp
+) engine=innodb;
+
+create index idx_blogtags_slug on blogtags(slug);
+
+-- ==========================================
+-- bảng 8d: post_tags (liên kết post và tags)
+-- ==========================================
+create table post_tags (
+    postid int not null,
+    tagid int not null,
+    primary key (postid, tagid),
+    constraint fk_post_tags_posts foreign key (postid) 
+        references blogposts(postid) on delete cascade,
+    constraint fk_post_tags_tags foreign key (tagid) 
+        references blogtags(tagid) on delete cascade
+) engine=innodb;
+
+-- ==========================================
+-- bảng 8e: blogratings (đánh giá/like bài viết)
+-- ==========================================
+create table blogratings (
+    ratingid int auto_increment primary key,
+    postid int not null,
+    userid int not null,
+    rating tinyint not null comment '1-5 stars, hoặc 1 cho like',
+    createdat datetime default current_timestamp,
+    constraint fk_blogratings_posts foreign key (postid) 
+        references blogposts(postid) on delete cascade,
+    constraint fk_blogratings_users foreign key (userid) 
+        references users(userid) on delete cascade
+) engine=innodb;
+
+create index idx_blogratings_postid on blogratings(postid);
+create index idx_blogratings_userid on blogratings(userid);
+create unique index uq_blogratings_postuser on blogratings(postid, userid);
+
+-- ==========================================
+-- bảng 8f: blog_nested_comments (bình luận lồng)
+-- ==========================================
+create table blog_nested_comments (
+    commentid int auto_increment primary key,
+    postid int not null,
+    userid int not null,
+    parentcommentid int null comment 'ID của comment cha (null nếu là top-level)',
+    content text not null,
+    status varchar(20) default 'pending' comment 'pending, approved, rejected',
+    createdat datetime default current_timestamp,
+    updatedat datetime null on update current_timestamp,
+    constraint fk_blog_nested_comments_posts foreign key (postid) 
+        references blogposts(postid) on delete cascade,
+    constraint fk_blog_nested_comments_users foreign key (userid) 
+        references users(userid) on delete cascade,
+    constraint fk_blog_nested_comments_parent foreign key (parentcommentid) 
+        references blog_nested_comments(commentid) on delete cascade
+) engine=innodb;
+
+create index idx_blog_nested_comments_postid on blog_nested_comments(postid);
+create index idx_blog_nested_comments_status on blog_nested_comments(status);
+
+-- ==========================================
+-- bảng 8g: email_notifications (lịch sử thông báo email)
+-- ==========================================
+create table email_notifications (
+    notificationid int auto_increment primary key,
+    userid int not null,
+    type varchar(50) not null comment 'comment_on_post, reply_on_comment, post_published',
+    relatedpostid int null,
+    relatedcommentid int null,
+    subject varchar(255) not null,
+    status varchar(20) default 'pending' comment 'pending, sent, failed',
+    sendattempts int default 0,
+    createdat datetime default current_timestamp,
+    sentat datetime null,
+    constraint fk_email_notifications_users foreign key (userid) 
+        references users(userid) on delete cascade
+) engine=innodb;
+
+create index idx_email_notifications_status on email_notifications(status);
+create index idx_email_notifications_type on email_notifications(type);
+
+-- Thêm cột categoryid vào blogposts
+alter table blogposts add column categoryid int null after sharedeckid;
+alter table blogposts add constraint fk_blogposts_categories foreign key (categoryid) 
+    references blogcategories(categoryid) on delete set null;
 
 -- ==========================================
 -- bảng 9: blogcomments (bình luận bài viết)
@@ -264,3 +373,28 @@ values
 (1, 1, 'Bộ từ vựng này rất hữu ích! Cảm ơn bạn đã chia sẻ', 'approved'),
 (1, 3, 'Mình đang học TOEIC, bộ này giúp rất nhiều', 'approved'),
 (2, 1, 'Tuyệt vời! Animated giải thích rất rõ ràng', 'approved');
+
+-- 10. Thêm danh mục blog
+insert into blogcategories (name, slug, description, color)
+values 
+('Từ Vựng Tiếng Anh', 'tu-voc-tieng-anh', 'Học từ vựng tiếng Anh cơ bản và nâng cao', '#FF6B6B'),
+('Mẹo Học Tập', 'meo-hoc-tap', 'Chia sẻ mẹo và kỹ thuật học tập hiệu quả', '#4ECDC4'),
+('Chia Sẻ Kinh Nghiệm', 'chia-se-kinh-nghiem', 'Chia sẻ kinh nghiệm học tập cá nhân', '#45B7D1');
+
+-- 11. Thêm nhãn blog
+insert into blogtags (name, slug, usagecount)
+values 
+('TOEIC', 'toeic', 1),
+('English', 'english', 1),
+('Learning Tips', 'learning-tips', 1);
+
+-- 12. Cập nhật bài viết với danh mục
+update blogposts set categoryid = 1 where postid = 1;
+update blogposts set categoryid = 2 where postid = 2;
+update blogposts set categoryid = 1 where postid = 3;
+
+-- 13. Liên kết bài viết với nhãn
+insert into post_tags (postid, tagid) values 
+(1, 1), (1, 2),  -- Bài viết 1 có tag TOEIC và English
+(2, 3),           -- Bài viết 2 có tag Learning Tips
+(3, 2);           -- Bài viết 3 có tag English

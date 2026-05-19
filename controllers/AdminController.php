@@ -10,7 +10,6 @@ use yii\web\NotFoundHttpException;
 use yii\web\ForbiddenHttpException;
 use app\models\BlogPost;
 use app\models\BlogComment;
-use app\models\BlogNestedComment;
 use app\models\User;
 use yii\data\Pagination;
 
@@ -30,10 +29,10 @@ class AdminController extends Controller
         return [
             'access' => [
                 'class' => AccessControl::class,
-                'only' => ['dashboard', 'blog-list', 'blog-edit', 'blog-create', 'blog-delete', 'blog-comments'],
+                'only' => ['dashboard', 'blog-list', 'blog-edit', 'blog-create', 'blog-delete', 'blog-pin'],
                 'rules' => [
                     [
-                        'actions' => ['dashboard', 'blog-list', 'blog-edit', 'blog-create', 'blog-delete', 'blog-comments'],
+                        'actions' => ['dashboard', 'blog-list', 'blog-edit', 'blog-create', 'blog-delete', 'blog-pin'],
                         'allow' => true,
                         'roles' => ['@'],  // Phải đăng nhập
                         'matchCallback' => function ($rule, $action) {
@@ -50,6 +49,7 @@ class AdminController extends Controller
                 'actions' => [
                     'blog-delete' => ['POST', 'DELETE'],
                     'blog-publish' => ['POST'],
+                    'blog-pin' => ['POST'],
                 ],
             ],
         ];
@@ -64,19 +64,9 @@ class AdminController extends Controller
         $totalPosts = BlogPost::find()->count();
         $publishedPosts = BlogPost::find()->where(['status' => BlogPost::STATUS_PUBLISHED])->count();
         $draftPosts = BlogPost::find()->where(['status' => BlogPost::STATUS_DRAFT])->count();
-        $totalComments = BlogComment::find()->count();
-        $pendingComments = BlogComment::find()->where(['status' => BlogComment::STATUS_PENDING])->count();
-        $totalUsers = User::find()->count();
 
         // Lấy 5 bài viết mới nhất
         $recentPosts = BlogPost::find()
-            ->orderBy(['createdat' => SORT_DESC])
-            ->limit(5)
-            ->all();
-
-        // Lấy bình luận chờ duyệt
-        $pendingComments = BlogComment::find()
-            ->where(['status' => BlogComment::STATUS_PENDING])
             ->orderBy(['createdat' => SORT_DESC])
             ->limit(5)
             ->all();
@@ -85,11 +75,7 @@ class AdminController extends Controller
             'totalPosts' => $totalPosts,
             'publishedPosts' => $publishedPosts,
             'draftPosts' => $draftPosts,
-            'totalComments' => $totalComments,
-            'pendingCommentsCount' => BlogComment::find()->where(['status' => BlogComment::STATUS_PENDING])->count(),
-            'totalUsers' => $totalUsers,
             'recentPosts' => $recentPosts,
-            'pendingComments' => $pendingComments,
         ]);
     }
 
@@ -99,11 +85,21 @@ class AdminController extends Controller
     public function actionBlogList()
     {
         $status = Yii::$app->request->get('status', '');
+        $keyword = Yii::$app->request->get('q', '');
         
         $query = BlogPost::find();
         
         if ($status) {
             $query->where(['status' => $status]);
+        }
+
+        if (!empty($keyword)) {
+            $query->andWhere([
+                'or',
+                ['like', 'title', $keyword],
+                ['like', 'content', $keyword],
+                ['like', 'excerpt', $keyword],
+            ]);
         }
 
         $posts = $query->orderBy(['createdat' => SORT_DESC])
@@ -112,6 +108,7 @@ class AdminController extends Controller
         return $this->render('blog-list', [
             'posts' => $posts,
             'currentStatus' => $status,
+            'keyword' => $keyword,
         ]);
     }
 
@@ -124,9 +121,18 @@ class AdminController extends Controller
         $model->userid = Yii::$app->user->id;
         $model->status = BlogPost::STATUS_DRAFT;
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            Yii::$app->session->setFlash('success', 'Bài viết được tạo thành công!');
-            return $this->redirect(['blog-list']);
+        if ($model->load(Yii::$app->request->post())) {
+            // Nếu admin chọn xuất bản ngay, đặt publishedat
+            if ($model->status === BlogPost::STATUS_PUBLISHED && is_null($model->publishedat)) {
+                $model->publishedat = date('Y-m-d H:i:s');
+            } elseif ($model->status === BlogPost::STATUS_DRAFT) {
+                $model->publishedat = null;
+            }
+            
+            if ($model->save()) {
+                Yii::$app->session->setFlash('success', 'Bài viết được tạo thành công!');
+                return $this->redirect(['blog-list']);
+            }
         }
 
         return $this->render('blog-form', [
@@ -142,9 +148,18 @@ class AdminController extends Controller
     {
         $model = $this->findBlogPost($id);
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            Yii::$app->session->setFlash('success', 'Bài viết được cập nhật thành công!');
-            return $this->redirect(['blog-list']);
+        if ($model->load(Yii::$app->request->post())) {
+            // Nếu chuyển từ draft sang published, đặt publishedat
+            if ($model->status === BlogPost::STATUS_PUBLISHED && is_null($model->publishedat)) {
+                $model->publishedat = date('Y-m-d H:i:s');
+            } elseif ($model->status === BlogPost::STATUS_DRAFT) {
+                $model->publishedat = null;
+            }
+            
+            if ($model->save()) {
+                Yii::$app->session->setFlash('success', 'Bài viết được cập nhật thành công!');
+                return $this->redirect(['blog-list']);
+            }
         }
 
         return $this->render('blog-form', [
@@ -187,140 +202,30 @@ class AdminController extends Controller
     }
 
     /**
-     * Quản lý bình luận blog
+     * Ghim/Bỏ ghim bài viết
      */
-    public function actionBlogComments()
+    public function actionBlogPin($id)
     {
-        $status = Yii::$app->request->get('status', '');
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         
-        $query = BlogComment::find();
+        $model = $this->findBlogPost($id);
+        $model->is_pinned = !$model->is_pinned;
         
-        if ($status) {
-            $query->where(['status' => $status]);
+        if ($model->save()) {
+            return [
+                'success' => true,
+                'isPinned' => $model->is_pinned,
+                'message' => $model->is_pinned ? 'Bài viết đã được ghim' : 'Bài viết đã được bỏ ghim',
+            ];
         }
-
-        $comments = $query->orderBy(['createdat' => SORT_DESC])
-            ->all();
-
-        return $this->render('blog-comments', [
-            'comments' => $comments,
-            'currentStatus' => $status,
-        ]);
-    }
-
-    /**
-     * Quản lý bình luận blog (nested comments)
-     */
-    public function actionComments()
-    {
-        $statusFilter = Yii::$app->request->get('status', '');
         
-        $query = BlogNestedComment::find()->with('user', 'post');
-        
-        if ($statusFilter) {
-            $query->where(['status' => $statusFilter]);
-        }
-
-        $countQuery = clone $query;
-        $pagination = new Pagination([
-            'totalCount' => $countQuery->count(),
-            'pageSize' => 20,
-        ]);
-
-        $comments = $query->orderBy(['createdat' => SORT_DESC])
-            ->offset($pagination->offset)
-            ->limit($pagination->limit)
-            ->all();
-
-        // Get stats
-        $pendingCount = BlogNestedComment::find()->where(['status' => 'pending'])->count();
-        $approvedCount = BlogNestedComment::find()->where(['status' => 'approved'])->count();
-        $spamCount = BlogNestedComment::find()->where(['status' => 'spam'])->count();
-
-        return $this->render('comments', [
-            'pendingComments' => $comments,
-            'pagination' => $pagination,
-            'statusFilter' => $statusFilter,
-            'pendingCount' => $pendingCount,
-            'approvedCount' => $approvedCount,
-            'spamCount' => $spamCount,
-        ]);
+        return [
+            'success' => false,
+            'message' => 'Có lỗi xảy ra',
+        ];
     }
 
-    /**
-     * Duyệt bình luận nested
-     */
-    public function actionApproveComment($id)
-    {
-        $comment = BlogNestedComment::findOne($id);
 
-        if ($comment === null) {
-            throw new NotFoundHttpException('Bình luận không tồn tại.');
-        }
-
-        $comment->status = BlogNestedComment::STATUS_APPROVED;
-        if ($comment->save()) {
-            Yii::$app->session->setFlash('success', 'Bình luận được duyệt thành công!');
-        }
-
-        return $this->redirect(['admin/comments']);
-    }
-
-    /**
-     * Từ chối bình luận nested
-     */
-    public function actionRejectComment($id)
-    {
-        $comment = BlogNestedComment::findOne($id);
-
-        if ($comment === null) {
-            throw new NotFoundHttpException('Bình luận không tồn tại.');
-        }
-
-        $comment->status = BlogNestedComment::STATUS_REJECTED;
-        if ($comment->save()) {
-            Yii::$app->session->setFlash('success', 'Bình luận bị từ chối.');
-        }
-
-        return $this->redirect(['admin/comments']);
-    }
-
-    /**
-     * Đánh dấu spam
-     */
-    public function actionMarkSpam($id)
-    {
-        $comment = BlogNestedComment::findOne($id);
-
-        if ($comment === null) {
-            throw new NotFoundHttpException('Bình luận không tồn tại.');
-        }
-
-        $comment->status = 'spam';
-        if ($comment->save()) {
-            Yii::$app->session->setFlash('success', 'Bình luận được đánh dấu là spam.');
-        }
-
-        return $this->redirect(['admin/comments']);
-    }
-
-    /**
-     * Xóa bình luận nested
-     */
-    public function actionDeleteComment($id)
-    {
-        $comment = BlogNestedComment::findOne($id);
-
-        if ($comment === null) {
-            throw new NotFoundHttpException('Bình luận không tồn tại.');
-        }
-
-        if ($comment->delete()) {
-            Yii::$app->session->setFlash('success', 'Bình luận được xóa thành công!');
-        }
-
-        return $this->redirect(['admin/comments']);
-    }
 
     /**
      * Tìm model BlogPost dựa trên ID

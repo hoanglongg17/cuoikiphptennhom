@@ -4,6 +4,7 @@ namespace app\controllers;
 
 use Yii;
 use yii\web\Controller;
+use yii\web\Response;
 use yii\filters\AccessControl;
 use yii\web\NotFoundHttpException;
 use app\models\BlogPost;
@@ -38,7 +39,7 @@ class BlogController extends Controller
                         'roles' => ['?', '@'],  // Public và logged-in users
                     ],
                     [
-                        'actions' => ['create', 'edit', 'delete', 'my-posts', 'add-comment'],
+                        'actions' => ['create', 'edit', 'delete', 'my-posts', 'add-comment', 'like'],
                         'allow' => true,
                         'roles' => ['@'],  // Chỉ logged-in users
                     ],
@@ -52,7 +53,16 @@ class BlogController extends Controller
      */
     public function actionIndex()
     {
-        $query = BlogPost::findPublished();
+        $keyword = Yii::$app->request->get('q', '');
+        
+        if (!empty($keyword)) {
+            $query = BlogPost::search($keyword);
+            $featuredPosts = [];
+        } else {
+            $query = BlogPost::findPublished();
+            // Lấy bài viết nổi bật (nhiều like nhất)
+            $featuredPosts = BlogPost::findFeatured(5)->all();
+        }
 
         $countQuery = clone $query;
         $pagination = new Pagination([
@@ -67,6 +77,8 @@ class BlogController extends Controller
         return $this->render('index', [
             'posts' => $posts,
             'pagination' => $pagination,
+            'keyword' => $keyword,
+            'featuredPosts' => $featuredPosts,
         ]);
     }
 
@@ -124,10 +136,10 @@ class BlogController extends Controller
         // Xử lý bình luận mới
         if ($commentModel->load(Yii::$app->request->post())) {
             $commentModel->userid = Yii::$app->user->id;
-            $commentModel->status = BlogComment::STATUS_PENDING;  // Chờ duyệt
+            $commentModel->status = BlogComment::STATUS_APPROVED;  // Tự động phê duyệt
 
             if ($commentModel->save()) {
-                Yii::$app->session->setFlash('success', 'Bình luận của bạn đã được gửi và chờ duyệt!');
+                Yii::$app->session->setFlash('success', 'Bình luận của bạn đã được đăng!');
                 return $this->redirect(['view', 'slug' => $slug]);
             }
         }
@@ -149,16 +161,26 @@ class BlogController extends Controller
         $model->status = BlogPost::STATUS_DRAFT;
 
         if ($model->load(Yii::$app->request->post()) && $model->validate()) {
-            // Kiểm tra xem user có phải admin (admin có thể publish ngay, user phải chờ duyệt)
+            // Kiểm tra xem user có phải admin
             /** @var \app\models\User $user */
             $user = Yii::$app->user->identity;
             $isAdmin = $user && method_exists($user, 'isAdmin') && $user->isAdmin();
+            
             if (!$isAdmin) {
-                $model->status = BlogPost::STATUS_DRAFT;  // Users tạo bài viết nháp
+                $model->status = BlogPost::STATUS_DRAFT;  // Users bình thường chỉ có thể tạo draft
+                $model->publishedat = null;
+            } elseif ($model->status === BlogPost::STATUS_PUBLISHED && is_null($model->publishedat)) {
+                // Admin có thể publish ngay, đặt publishedat
+                $model->publishedat = date('Y-m-d H:i:s');
             }
 
             if ($model->save()) {
-                Yii::$app->session->setFlash('success', 'Bài viết được tạo thành công! (Admin sẽ duyệt)');
+                $message = $isAdmin 
+                    ? ($model->status === BlogPost::STATUS_PUBLISHED 
+                        ? 'Bài viết được xuất bản thành công!' 
+                        : 'Bài viết được tạo thành công!')
+                    : 'Bài viết được tạo thành công! (Admin sẽ duyệt)';
+                Yii::$app->session->setFlash('success', $message);
                 return $this->redirect(['my-posts']);
             }
         }
@@ -184,9 +206,18 @@ class BlogController extends Controller
             throw new NotFoundHttpException('Bạn không có quyền sửa bài viết này.');
         }
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            Yii::$app->session->setFlash('success', 'Bài viết được cập nhật thành công!');
-            return $this->redirect(['my-posts']);
+        if ($model->load(Yii::$app->request->post())) {
+            // Nếu chuyển từ draft sang published, đặt publishedat
+            if ($model->status === BlogPost::STATUS_PUBLISHED && is_null($model->publishedat)) {
+                $model->publishedat = date('Y-m-d H:i:s');
+            } elseif ($model->status === BlogPost::STATUS_DRAFT) {
+                $model->publishedat = null;
+            }
+            
+            if ($model->save()) {
+                Yii::$app->session->setFlash('success', 'Bài viết được cập nhật thành công!');
+                return $this->redirect(['my-posts']);
+            }
         }
 
         return $this->render('form', [
@@ -252,37 +283,51 @@ class BlogController extends Controller
     /**
      * Like bài viết (AJAX)
      */
-    public function actionLike($id)
+    public function actionLike()
     {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        
         if (Yii::$app->user->isGuest) {
-            return $this->asJson(['success' => false, 'message' => 'Vui lòng đăng nhập']);
+            return ['success' => false, 'message' => 'Vui lòng đăng nhập'];
         }
 
-        $post = $this->findBlogPost($id);
-        $userid = Yii::$app->user->id;
+        try {
+            $id = Yii::$app->request->get('id');
+            if (!$id) {
+                return ['success' => false, 'message' => 'ID bài viết không hợp lệ'];
+            }
+            
+            $post = $this->findBlogPost($id);
+            $userid = Yii::$app->user->id;
 
-        // Kiểm tra xem đã like chưa
-        $existing = BlogRating::findOne(['postid' => $id, 'userid' => $userid]);
+            // Kiểm tra xem đã like chưa
+            $existing = BlogRating::findOne(['postid' => $id, 'userid' => $userid]);
 
-        if ($existing) {
-            // Bỏ like
-            $existing->delete();
-            $liked = false;
-        } else {
-            // Thêm like
-            $rating = new BlogRating();
-            $rating->postid = $id;
-            $rating->userid = $userid;
-            $rating->rating = 1;
-            $rating->save();
-            $liked = true;
+            if ($existing) {
+                // Bỏ like
+                $existing->delete();
+                $liked = false;
+            } else {
+                // Thêm like
+                $rating = new BlogRating();
+                $rating->postid = $id;
+                $rating->userid = $userid;
+                $rating->rating = 1;
+                $rating->save();
+                $liked = true;
+            }
+
+            return [
+                'success' => true,
+                'liked' => $liked,
+                'likeCount' => BlogRating::getLikeCount($id),
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Lỗi: ' . $e->getMessage(),
+            ];
         }
-
-        return $this->asJson([
-            'success' => true,
-            'liked' => $liked,
-            'likeCount' => BlogRating::getLikeCount($id),
-        ]);
     }
 
     /**
@@ -304,7 +349,7 @@ class BlogController extends Controller
         $comment->postid = $postid;
         $comment->userid = Yii::$app->user->id;
         $comment->parentcommentid = $parentcommentid;
-        $comment->status = BlogNestedComment::STATUS_PENDING;
+        $comment->status = BlogNestedComment::STATUS_APPROVED;
 
         if ($comment->load(Yii::$app->request->post()) && $comment->save()) {
             // Send email notification based on comment type

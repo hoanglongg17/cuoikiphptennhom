@@ -40,7 +40,7 @@ $user = Yii::$app->user->identity;
             Luyện tập
         </a>
         <a href="<?= Url::to(['blog/index']) ?>" class="btn-feature">
-            📝 Blog
+            📖 Blog
         </a>
         <?php if ($user && method_exists($user, 'isAdmin') && $user->isAdmin()): ?>
             <a href="<?= Url::to(['admin/dashboard']) ?>" class="btn-feature btn-admin">

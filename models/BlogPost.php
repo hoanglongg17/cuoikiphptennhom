@@ -33,6 +33,7 @@ class BlogPost extends ActiveRecord
             [['content', 'excerpt'], 'string'],
             [['status'], 'in', 'range' => ['draft', 'published', 'archived']],
             [['sharedeckid', 'views'], 'integer'],
+            [['is_pinned'], 'boolean'],
             [['publishedat', 'createdat', 'updatedat'], 'safe'],
             [['slug'], 'unique'],
         ];
@@ -171,13 +172,27 @@ class BlogPost extends ActiveRecord
     }
 
     /**
-     * Tìm các bài viết được xuất bản (để public blog)
+     * Tìm các bài viết được xuất bản (để public blog) - sắp xếp theo ngày mới nhất trước
      */
     public static function findPublished()
     {
         return static::find()
             ->where(['status' => self::STATUS_PUBLISHED])
             ->orderBy(['publishedat' => SORT_DESC]);
+    }
+    
+    /**
+     * Tìm các bài viết nổi bật (nhiều like nhất)
+     */
+    public static function findFeatured($limit = 5)
+    {
+        return static::find()
+            ->leftJoin(BlogRating::tableName(), 'blogratings.postid = blogposts.postid')
+            ->where(['blogposts.status' => self::STATUS_PUBLISHED])
+            ->groupBy(['blogposts.postid'])
+            ->select(['blogposts.*', 'COUNT(blogratings.postid) as like_count'])
+            ->orderBy(['like_count' => SORT_DESC, 'blogposts.publishedat' => SORT_DESC])
+            ->limit($limit);
     }
 
     /**
@@ -299,7 +314,7 @@ class BlogPost extends ActiveRecord
     }
 
     /**
-     * Tìm kiếm bài viết (search)
+     * Tìm kiếm bài viết (search) - sắp xếp theo ngày mới nhất
      */
     public static function search($keyword)
     {

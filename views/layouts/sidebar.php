@@ -20,7 +20,10 @@ $user = Yii::$app->user->identity;
         <li><a href="<?= Url::to(['site/vocabset']) ?>" class="<?= Yii::$app->controller->action->id == 'vocabset' ? 'active' : '' ?>" title="Bộ thẻ"><img src="<?= Yii::getAlias('@web') ?>/icons/vocabset.png" alt=""><span>Bộ thẻ</span></a></li>            
         <li><a href="<?= Url::to(['site/vocabulary']) ?>" class="<?= Yii::$app->controller->action->id == 'vocabulary' ? 'active' : '' ?>" title="Từ vựng"><img src="<?= Yii::getAlias('@web') ?>/icons/vocabulary.png" alt=""><span>Từ vựng</span></a></li>            
         <li><a href="<?= Url::to(['site/practice']) ?>" class="<?= Yii::$app->controller->action->id == 'practice' || Yii::$app->controller->action->id == 'study-deck' ? 'active' : '' ?>" title="Luyện tập"><img src="<?= Yii::getAlias('@web') ?>/icons/practice.png" alt=""><span>Luyện tập</span></a></li>
-        <li><a href="<?= Url::to(['blog/index']) ?>" class="<?= Yii::$app->controller->id == 'blog' ? 'active' : '' ?>" title="Blog"><img src="<?= Yii::getAlias('@web') ?>/icons/blog.png" alt=""><span>Blog</span></a></li>
+        <li><a href="<?= Url::to(['blog/index']) ?>" class="<?= Yii::$app->controller->action->id == 'blog' ? 'active' : '' ?>" title="Blog"><img src="<?= Yii::getAlias('@web') ?>/icons/blog.png" alt=""><span>Blog</span></a></li>
+        <?php if ($user && method_exists($user, 'isAdmin') && $user->isAdmin()): ?>
+        <li><a href="<?= Url::to(['admin/dashboard']) ?>" class="<?= Yii::$app->controller->action->id == 'admin' ? 'active' : '' ?>" title="Admin Panel"><img src="<?= Yii::getAlias('@web') ?>/icons/admin.png" alt=""><span>Admin Panel</span></a></li>
+        <?php endif; ?>
     </ul>
 
     <button class="toggle-btn" id="toggleSidebar" onclick="toggleSidebar()" title="Ẩn/hiện sidebar">&laquo;</button>
@@ -30,7 +33,12 @@ $user = Yii::$app->user->identity;
             <img src="<?= $user->avatarurl ?: Yii::getAlias('@web/images/andi-avatar.png') ?>" alt="User Avatar">
         </div>
         <!-- Nhấn vào tên để hiện popup -->
-        <p class="username" onclick="toggleProfileModal()"><?= Html::encode($user->displayname) ?></p>
+        <p class="username" onclick="toggleProfileModal()"><?php 
+            $displayName = $user->displayname;
+            // Remove emoji for cleaner display
+            $displayName = preg_replace('/[^\p{L}\p{N}\s\-]/u', '', $displayName);
+            echo Html::encode(trim($displayName));
+        ?></p>
         <div class="profile-actions">
             <!-- Nút Xem hồ sơ kích hoạt popup -->
             <button class="btn-profile" onclick="toggleProfileModal()">Xem hồ sơ</button>
@@ -59,7 +67,12 @@ $user = Yii::$app->user->identity;
                 <img id="profileAvatarDisplay" src="<?= $user->avatarurl ?: Yii::getAlias('@web/images/andi-avatar.png') ?>" alt="User Avatar">
             </div>
 
-            <h3 id="profileNameDisplay"><?= Html::encode($user->displayname) ?></h3>
+            <h3 id="profileNameDisplay"><?php 
+                $displayName = $user->displayname;
+                // Remove emoji for cleaner display
+                $displayName = preg_replace('/[^\p{L}\p{N}\s\-]/u', '', $displayName);
+                echo Html::encode(trim($displayName));
+            ?></h3>
 
             <div class="info-section">
                 <p><strong>Email:</strong> <?= Html::encode($user->email) ?></p>
