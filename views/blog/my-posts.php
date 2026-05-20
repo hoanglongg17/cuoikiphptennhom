@@ -4,6 +4,7 @@
 
 use yii\helpers\Url;
 use yii\helpers\Html;
+use app\models\BlogPost;
 
 $this->title = 'Bài Viết Của Tôi';
 $this->params['breadcrumbs'][] = ['label' => 'Blog', 'url' => ['blog/index']];
@@ -51,12 +52,19 @@ $this->params['breadcrumbs'][] = 'Bài Viết Của Tôi';
                             <td>
                                 <?php 
                                 $statusLabels = [
-                                    'draft' => '<span class="badge badge-warning">Nháp</span>',
-                                    'published' => '<span class="badge badge-success">Đã Đăng</span>',
-                                    'archived' => '<span class="badge badge-secondary">Lưu Trữ</span>',
+                                    BlogPost::STATUS_DRAFT => '<span class="badge badge-warning">Nháp</span>',
+                                    BlogPost::STATUS_PENDING => '<span class="badge badge-info">Chờ Duyệt</span>',
+                                    BlogPost::STATUS_PUBLISHED => '<span class="badge badge-success">Đã Đăng</span>',
+                                    BlogPost::STATUS_ARCHIVED => '<span class="badge badge-secondary">Lưu Trữ</span>',
+                                    BlogPost::STATUS_DENIED => '<span class="badge badge-danger">Từ Chối</span>',
                                 ];
-                                echo isset($statusLabels[$post->status]) ? $statusLabels[$post->status] : $post->status;
+                                echo isset($statusLabels[$post->status]) ? $statusLabels[$post->status] : Html::encode($post->status);
                                 ?>
+                                <?php if ($post->isDenied() && $post->getRejectionReason()): ?>
+                                    <div class="text-muted" style="margin-top: 6px; font-size: 0.85em; max-width: 250px;">
+                                        <strong>Lý do:</strong> <?= Html::encode($post->getRejectionReason()) ?>
+                                    </div>
+                                <?php endif; ?>
                             </td>
                             <td>👁️ <?= $post->views ?></td>
                             <td>
@@ -76,11 +84,12 @@ $this->params['breadcrumbs'][] = 'Bài Viết Của Tôi';
                                             👁️
                                         </a>
                                     <?php endif; ?>
-                                    
-                                    <a href="<?= Url::to(['blog/edit', 'id' => $post->postid]) ?>" 
-                                       class="btn btn-sm btn-warning" title="Chỉnh sửa">
-                                        ✏️
-                                    </a>
+                                    <?php if (!$post->isPublished() && $post->status !== BlogPost::STATUS_ARCHIVED): ?>
+                                        <a href="<?= Url::to(['blog/edit', 'id' => $post->postid]) ?>" 
+                                           class="btn btn-sm btn-warning" title="Chỉnh sửa">
+                                            ✏️
+                                        </a>
+                                    <?php endif; ?>
                                     
                                     <?= Html::beginForm(['blog/delete', 'id' => $post->postid], 'post', 
                                         ['style' => 'display: inline;']) ?>
@@ -156,25 +165,44 @@ $this->params['breadcrumbs'][] = 'Bài Viết Của Tôi';
 
 .badge {
     display: inline-block;
-    padding: 5px 10px;
-    border-radius: 4px;
+    padding: 5px 12px;
+    border-radius: 999px;
     font-size: 0.85em;
-    font-weight: 500;
+    font-weight: 600;
+    line-height: 1;
+    min-width: 70px;
+    text-align: center;
+    border: 1px solid transparent;
 }
 
 .badge-warning {
     background: #fff3cd;
     color: #856404;
+    border-color: #ffeeba;
 }
 
 .badge-success {
     background: #d4edda;
     color: #155724;
+    border-color: #c3e6cb;
 }
 
 .badge-secondary {
     background: #e2e3e5;
     color: #383d41;
+    border-color: #d6d8db;
+}
+
+.badge-info {
+    background: #d1ecf1;
+    color: #0c5460;
+    border-color: #bee5eb;
+}
+
+.badge-danger {
+    background: #f8d7da;
+    color: #721c24;
+    border-color: #f5c6cb;
 }
 
 .action-buttons {

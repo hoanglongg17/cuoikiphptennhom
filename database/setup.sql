@@ -122,18 +122,22 @@ create table blogposts (
     slug varchar(255) unique,
     content longtext not null,
     excerpt varchar(500),
-    status varchar(20) default 'draft' comment 'draft: bản nháp, published: đã đăng, archived: lưu trữ',
+    status varchar(20) default 'draft' comment 'draft: bản nháp, pending: chờ duyệt, published: đã đăng, archived: lưu trữ, denied: từ chối',
     views int default 0,
     sharedeckid int null comment 'ID của deck được chia sẻ trong bài viết (tùy chọn)',
     createdat datetime default current_timestamp,
     updatedat datetime null on update current_timestamp,
     publishedat datetime null,
+    rejectionreason text null,
     is_pinned boolean default false comment 'Bài viết có được ghim hay không',
     constraint fk_blogposts_users foreign key (userid) 
         references users(userid) on delete cascade,
     constraint fk_blogposts_decks foreign key (sharedeckid) 
         references decks(deckid) on delete set null
 ) engine=innodb;
+--ALTER TABLE blogposts
+--ADD COLUMN rejectionreason TEXT NULL
+--thêm hai dòng trên để thêm cột rejectionreason vào bảng blogposts nếu chưa có
 
 create index idx_blogposts_status on blogposts(status);
 create index idx_blogposts_userid on blogposts(userid);
@@ -246,6 +250,8 @@ create index idx_email_notifications_type on email_notifications(type);
 alter table blogposts add column categoryid int null after sharedeckid;
 alter table blogposts add constraint fk_blogposts_categories foreign key (categoryid) 
     references blogcategories(categoryid) on delete set null;
+
+alter table blogposts add column if not exists rejectionreason text null after publishedat;
 
 -- ==========================================
 -- bảng 9: blogcomments (bình luận bài viết)

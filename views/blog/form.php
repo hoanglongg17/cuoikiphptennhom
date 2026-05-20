@@ -7,6 +7,7 @@ use yii\helpers\Url;
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 use app\models\Deck;
+use app\models\BlogPost;
 
 $this->title = $isNew ? 'Viết Bài Blog Mới' : 'Chỉnh Sửa Bài Blog';
 $this->params['breadcrumbs'][] = ['label' => 'Blog', 'url' => ['blog/index']];
@@ -63,11 +64,34 @@ $this->params['breadcrumbs'][] = $this->title;
                 if ($isAdminUser): ?>
                     <div class="form-group col-md-6">
                         <?= $form->field($model, 'status')->dropDownList([
-                            'draft' => 'Bản Nháp',
-                            'published' => 'Xuất Bản',
-                            'archived' => 'Lưu Trữ',
+                            'draft' => '📋 Nháp',
+                            'pending' => '⏳ Chờ Duyệt',
+                            'published' => '✅ Xuất Bản',
+                            'archived' => '🗂️ Lưu Trữ',
+                            'denied' => '❌ Từ Chối',
                         ]) ?>
                     </div>
+                    <div class="form-group col-md-6">
+                        <?= $form->field($model, 'rejectionreason')->textarea([
+                            'rows' => 4,
+                            'class' => 'form-control',
+                        ])->hint('Chỉ dùng khi từ chối bài viết') ?>
+                    </div>
+                <?php else: ?>
+                    <?php if ($isNew || in_array($model->status, [BlogPost::STATUS_DRAFT, BlogPost::STATUS_DENIED], true)): ?>
+                        <div class="form-group col-md-6">
+                            <?= $form->field($model, 'status')->dropDownList([
+                                BlogPost::STATUS_DRAFT => '📋 Bản Nháp',
+                                BlogPost::STATUS_PUBLISHED => '⏳ Gửi Duyệt',
+                            ]) ?>
+                        </div>
+                    <?php elseif ($model->status === BlogPost::STATUS_PENDING): ?>
+                        <div class="form-group col-md-6">
+                            <label class="control-label">Trạng Thái</label>
+                            <div class="form-control-static">⏳ Chờ Duyệt</div>
+                            <?= Html::activeHiddenInput($model, 'status') ?>
+                        </div>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
 

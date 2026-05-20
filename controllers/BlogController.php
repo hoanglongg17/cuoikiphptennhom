@@ -68,6 +68,7 @@ class BlogController extends Controller
             $pinnedPagination = new Pagination([
                 'totalCount' => $pinnedQuery->count(),
                 'pageSize' => 3,
+                'pageParam' => 'pinned-page',
             ]);
             $pinnedPosts = $pinnedQuery
                 ->offset($pinnedPagination->offset)
@@ -82,6 +83,7 @@ class BlogController extends Controller
         $pagination = new Pagination([
             'totalCount' => $countQuery->count(),
             'pageSize' => 10,
+            'pageParam' => 'page',
         ]);
 
         $posts = $query->offset($pagination->offset)
@@ -183,8 +185,13 @@ class BlogController extends Controller
             $isAdmin = $user && method_exists($user, 'isAdmin') && $user->isAdmin();
             
             if (!$isAdmin) {
-                $model->status = BlogPost::STATUS_DRAFT;  // Users bình thường chỉ có thể tạo draft
+                if ($model->status === BlogPost::STATUS_PUBLISHED) {
+                    $model->status = BlogPost::STATUS_PENDING;
+                } else {
+                    $model->status = BlogPost::STATUS_DRAFT;
+                }
                 $model->publishedat = null;
+                $model->rejectionreason = null;
             } elseif ($model->status === BlogPost::STATUS_PUBLISHED && is_null($model->publishedat)) {
                 // Admin có thể publish ngay, đặt publishedat
                 $model->publishedat = date('Y-m-d H:i:s');
@@ -195,7 +202,9 @@ class BlogController extends Controller
                     ? ($model->status === BlogPost::STATUS_PUBLISHED 
                         ? 'Bài viết được xuất bản thành công!' 
                         : 'Bài viết được tạo thành công!')
-                    : 'Bài viết được tạo thành công! (Admin sẽ duyệt)';
+                    : ($model->status === BlogPost::STATUS_PENDING 
+                        ? 'Bài viết đã được gửi duyệt. Vui lòng chờ admin duyệt.' 
+                        : 'Bài viết nháp đã được lưu!');
                 Yii::$app->session->setFlash('success', $message);
                 return $this->redirect(['my-posts']);
             }
@@ -222,12 +231,31 @@ class BlogController extends Controller
             throw new NotFoundHttpException('Bạn không có quyền sửa bài viết này.');
         }
 
+        if (!$isAdmin && in_array($model->status, [BlogPost::STATUS_PUBLISHED, BlogPost::STATUS_ARCHIVED], true)) {
+            throw new NotFoundHttpException('Bạn không thể chỉnh sửa bài viết đã được đăng hoặc lưu trữ.');
+        }
+
+        $originalStatus = $model->status;
+
         if ($model->load(Yii::$app->request->post())) {
-            // Nếu chuyển từ draft sang published, đặt publishedat
-            if ($model->status === BlogPost::STATUS_PUBLISHED && is_null($model->publishedat)) {
-                $model->publishedat = date('Y-m-d H:i:s');
-            } elseif ($model->status === BlogPost::STATUS_DRAFT) {
+            if (!$isAdmin) {
+                if ($originalStatus === BlogPost::STATUS_PENDING) {
+                    // Người dùng không thể đổi từ pending về draft hoặc published quá sớm
+                    $model->status = BlogPost::STATUS_PENDING;
+                } elseif ($model->status === BlogPost::STATUS_PUBLISHED) {
+                    $model->status = BlogPost::STATUS_PENDING;
+                    $model->rejectionreason = null;
+                } elseif ($model->status !== BlogPost::STATUS_DRAFT) {
+                    $model->status = BlogPost::STATUS_DRAFT;
+                }
                 $model->publishedat = null;
+            } else {
+                if ($model->status === BlogPost::STATUS_PUBLISHED && is_null($model->publishedat)) {
+                    $model->publishedat = date('Y-m-d H:i:s');
+                }
+                if ($model->status !== BlogPost::STATUS_DENIED) {
+                    $model->rejectionreason = null;
+                }
             }
             
             if ($model->save()) {

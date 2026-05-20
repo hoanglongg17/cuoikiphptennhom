@@ -13,8 +13,10 @@ class BlogPost extends ActiveRecord
 {
     // Status constants
     const STATUS_DRAFT = 'draft';
+    const STATUS_PENDING = 'pending';
     const STATUS_PUBLISHED = 'published';
     const STATUS_ARCHIVED = 'archived';
+    const STATUS_DENIED = 'denied';
 
     public static function tableName()
     {
@@ -30,8 +32,8 @@ class BlogPost extends ActiveRecord
             [['userid', 'title', 'content'], 'required'],
             [['title'], 'string', 'max' => 255],
             [['slug'], 'string', 'max' => 255],
-            [['content', 'excerpt'], 'string'],
-            [['status'], 'in', 'range' => ['draft', 'published', 'archived']],
+            [['content', 'excerpt', 'rejectionreason'], 'string'],
+            [['status'], 'in', 'range' => ['draft', 'pending', 'published', 'archived', 'denied']],
             [['sharedeckid', 'views'], 'integer'],
             [['is_pinned'], 'boolean'],
             [['publishedat', 'createdat', 'updatedat'], 'safe'],
@@ -113,6 +115,7 @@ class BlogPost extends ActiveRecord
             'content' => 'Nội Dung',
             'excerpt' => 'Tóm Tắt',
             'status' => 'Trạng Thái',
+            'rejectionreason' => 'Lý Do Từ Chối',
             'views' => 'Lượt Xem',
             'sharedeckid' => 'Bộ Thẻ Chia Sẻ',
             'publishedat' => 'Ngày Đăng',
@@ -160,6 +163,38 @@ class BlogPost extends ActiveRecord
     public function isPublished()
     {
         return $this->status === self::STATUS_PUBLISHED && !is_null($this->publishedat);
+    }
+
+    /**
+     * Kiểm tra xem bài viết đang chờ duyệt
+     */
+    public function isPending()
+    {
+        return $this->status === self::STATUS_PENDING;
+    }
+
+    /**
+     * Kiểm tra xem bài viết bị từ chối
+     */
+    public function isDenied()
+    {
+        return $this->status === self::STATUS_DENIED;
+    }
+
+    /**
+     * Kiểm tra xem chủ bài viết có thể chỉnh sửa bài này hay không
+     */
+    public function canBeEditedByOwner()
+    {
+        return in_array($this->status, [self::STATUS_DRAFT, self::STATUS_PENDING, self::STATUS_DENIED], true);
+    }
+
+    /**
+     * Lấy lý do từ chối
+     */
+    public function getRejectionReason()
+    {
+        return trim($this->rejectionreason ?? '');
     }
 
     /**

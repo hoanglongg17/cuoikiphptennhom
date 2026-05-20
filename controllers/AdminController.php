@@ -30,10 +30,10 @@ class AdminController extends Controller
         return [
             'access' => [
                 'class' => AccessControl::class,
-                'only' => ['dashboard', 'blog-list', 'blog-edit', 'blog-create', 'blog-delete', 'blog-pin', 'blog-comments', 'approve-comment', 'reject-comment', 'delete-comment'],
+                'only' => ['dashboard', 'blog-list', 'blog-edit', 'blog-create', 'blog-delete', 'blog-pin', 'blog-approve', 'blog-reject', 'blog-archive', 'blog-unarchive', 'blog-comments', 'approve-comment', 'reject-comment', 'delete-comment'],
                 'rules' => [
                         [
-                            'actions' => ['dashboard', 'blog-list', 'blog-edit', 'blog-create', 'blog-delete', 'blog-pin', 'blog-comments', 'approve-comment', 'reject-comment', 'delete-comment'],
+                            'actions' => ['dashboard', 'blog-list', 'blog-edit', 'blog-create', 'blog-delete', 'blog-pin', 'blog-approve', 'blog-reject', 'blog-archive', 'blog-unarchive', 'blog-comments', 'approve-comment', 'reject-comment', 'delete-comment'],
                         'allow' => true,
                         'roles' => ['@'],  // Phải đăng nhập
                         'matchCallback' => function ($rule, $action) {
@@ -50,6 +50,10 @@ class AdminController extends Controller
                 'actions' => [
                     'blog-delete' => ['POST', 'DELETE'],
                     'blog-publish' => ['POST'],
+                    'blog-approve' => ['POST'],
+                    'blog-reject' => ['POST'],
+                    'blog-archive' => ['POST'],
+                    'blog-unarchive' => ['POST'],
                     'blog-pin' => ['POST'],
                     'delete-comment' => ['POST'],
                 ],
@@ -67,8 +71,9 @@ class AdminController extends Controller
         $publishedPosts = BlogPost::find()->where(['status' => BlogPost::STATUS_PUBLISHED])->count();
         $draftPosts = BlogPost::find()->where(['status' => BlogPost::STATUS_DRAFT])->count();
 
-        // Lấy 5 bài viết mới nhất
+        // Lấy 5 bài viết mới nhất đã xuất bản
         $recentPosts = BlogPost::find()
+            ->where(['status' => BlogPost::STATUS_PUBLISHED])
             ->orderBy(['createdat' => SORT_DESC])
             ->limit(5)
             ->all();
@@ -90,9 +95,14 @@ class AdminController extends Controller
         $keyword = Yii::$app->request->get('q', '');
         
         $query = BlogPost::find();
-        
-        if ($status) {
+
+        if ($status === BlogPost::STATUS_DRAFT) {
+            // Admin không xem bài draft của user
+            $query->where(['postid' => 0]);
+        } elseif ($status) {
             $query->where(['status' => $status]);
+        } else {
+            $query->where(['not', ['status' => BlogPost::STATUS_DRAFT]]);
         }
 
         if (!empty($keyword)) {
@@ -183,6 +193,101 @@ class AdminController extends Controller
             
             if ($model->save()) {
                 Yii::$app->session->setFlash('success', 'Bài viết được xuất bản thành công!');
+            }
+        }
+
+        return $this->redirect(['blog-list']);
+    }
+
+    /**
+     * Duyệt bài viết chờ duyệt
+     */
+    public function actionBlogApprove($id)
+    {
+        $model = $this->findBlogPost($id);
+
+        if (in_array($model->status, [BlogPost::STATUS_PENDING, BlogPost::STATUS_DENIED], true)) {
+            $model->status = BlogPost::STATUS_PUBLISHED;
+            if (is_null($model->publishedat)) {
+                $model->publishedat = date('Y-m-d H:i:s');
+            }
+            $model->rejectionreason = null;
+            if ($model->save()) {
+                Yii::$app->session->setFlash('success', 'Bài viết đã được duyệt và xuất bản.');
+            }
+        }
+
+        return $this->redirect(['blog-list']);
+    }
+
+    /**
+     * Từ chối bài viết
+     */
+    public function actionBlogReject($id)
+    {
+        $model = $this->findBlogPost($id);
+        $reason = Yii::$app->request->post('rejectionreason', '');
+        $isAjax = Yii::$app->request->isAjax;
+
+        if (in_array($model->status, [BlogPost::STATUS_PENDING, BlogPost::STATUS_DRAFT, BlogPost::STATUS_DENIED], true)) {
+            $model->status = BlogPost::STATUS_DENIED;
+            $model->publishedat = null;
+            $model->rejectionreason = trim($reason);
+
+            if ($model->save()) {
+                Yii::$app->session->setFlash('success', 'Bài viết đã bị từ chối.');
+                if ($isAjax) {
+                    Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+                    return [
+                        'success' => true,
+                        'message' => 'Bài viết đã bị từ chối.',
+                    ];
+                }
+            }
+        }
+
+        if ($isAjax) {
+            Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+            return [
+                'success' => false,
+                'message' => 'Không thể từ chối bài viết.',
+            ];
+        }
+
+        return $this->redirect(['blog-list']);
+    }
+
+    /**
+     * Lưu trữ bài viết
+     */
+    public function actionBlogArchive($id)
+    {
+        $model = $this->findBlogPost($id);
+
+        if ($model->status === BlogPost::STATUS_PUBLISHED) {
+            $model->status = BlogPost::STATUS_ARCHIVED;
+            if ($model->save()) {
+                Yii::$app->session->setFlash('success', 'Bài viết đã được lưu trữ.');
+            }
+        }
+
+        return $this->redirect(['blog-list']);
+    }
+
+    /**
+     * Khôi phục bài viết lưu trữ về xuất bản
+     */
+    public function actionBlogUnarchive($id)
+    {
+        $model = $this->findBlogPost($id);
+
+        if ($model->status === BlogPost::STATUS_ARCHIVED) {
+            $model->status = BlogPost::STATUS_PUBLISHED;
+            if (is_null($model->publishedat)) {
+                $model->publishedat = date('Y-m-d H:i:s');
+            }
+            if ($model->save()) {
+                Yii::$app->session->setFlash('success', 'Bài viết đã được đưa về trạng thái xuất bản.');
             }
         }
 

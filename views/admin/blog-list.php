@@ -6,6 +6,7 @@
 
 use yii\helpers\Url;
 use yii\helpers\Html;
+use app\models\BlogPost;
 
 $this->title = 'Quản Lý Bài Viết Blog';
 $this->params['breadcrumbs'][] = ['label' => 'Admin', 'url' => ['admin/dashboard']];
@@ -58,17 +59,21 @@ $this->params['breadcrumbs'][] = 'Bài Viết';
                class="btn <?= empty($currentStatus) ? 'btn-primary' : 'btn-outline' ?>">
                 Tất Cả
             </a>
-            <a href="<?= Url::to(['admin/blog-list', 'status' => 'published']) ?>" 
-               class="btn <?= $currentStatus === 'published' ? 'btn-primary' : 'btn-outline' ?>">
+            <a href="<?= Url::to(['admin/blog-list', 'status' => BlogPost::STATUS_PENDING]) ?>" 
+               class="btn <?= $currentStatus === BlogPost::STATUS_PENDING ? 'btn-primary' : 'btn-outline' ?>">
+                ⏳ Chờ Duyệt
+            </a>
+            <a href="<?= Url::to(['admin/blog-list', 'status' => BlogPost::STATUS_PUBLISHED]) ?>" 
+               class="btn <?= $currentStatus === BlogPost::STATUS_PUBLISHED ? 'btn-primary' : 'btn-outline' ?>">
                 ✅ Đã Đăng
             </a>
-            <a href="<?= Url::to(['admin/blog-list', 'status' => 'draft']) ?>" 
-               class="btn <?= $currentStatus === 'draft' ? 'btn-primary' : 'btn-outline' ?>">
-                📋 Bản Nháp
-            </a>
-            <a href="<?= Url::to(['admin/blog-list', 'status' => 'archived']) ?>" 
-               class="btn <?= $currentStatus === 'archived' ? 'btn-primary' : 'btn-outline' ?>">
+            <a href="<?= Url::to(['admin/blog-list', 'status' => BlogPost::STATUS_ARCHIVED]) ?>" 
+               class="btn <?= $currentStatus === BlogPost::STATUS_ARCHIVED ? 'btn-primary' : 'btn-outline' ?>">
                 🗂️ Lưu Trữ
+            </a>
+            <a href="<?= Url::to(['admin/blog-list', 'status' => BlogPost::STATUS_DENIED]) ?>" 
+               class="btn <?= $currentStatus === BlogPost::STATUS_DENIED ? 'btn-primary' : 'btn-outline' ?>">
+                ❌ Từ Chối
             </a>
         </div>
     </div>
@@ -113,12 +118,18 @@ $this->params['breadcrumbs'][] = 'Bài Viết';
                             <td>
                                 <?php 
                                 $statusLabels = [
-                                    'draft' => '<span class="badge badge-warning">📋 Nháp</span>',
-                                    'published' => '<span class="badge badge-success">✅ Đã Đăng</span>',
-                                    'archived' => '<span class="badge badge-secondary">🗂️ Lưu Trữ</span>',
+                                    BlogPost::STATUS_PENDING => '<span class="badge badge-warning">⏳ Chờ Duyệt</span>',
+                                    BlogPost::STATUS_PUBLISHED => '<span class="badge badge-success">✅ Đã Đăng</span>',
+                                    BlogPost::STATUS_ARCHIVED => '<span class="badge badge-secondary">🗂️ Lưu Trữ</span>',
+                                    BlogPost::STATUS_DENIED => '<span class="badge badge-danger">❌ Từ Chối</span>',
                                 ];
-                                echo isset($statusLabels[$post->status]) ? $statusLabels[$post->status] : $post->status;
+                                echo isset($statusLabels[$post->status]) ? $statusLabels[$post->status] : Html::encode($post->status);
                                 ?>
+                                <?php if ($post->isDenied() && $post->getRejectionReason()): ?>
+                                    <div class="text-muted" style="margin-top: 6px; font-size: 0.85em; max-width: 250px;">
+                                        <strong>Lý do:</strong> <?= Html::encode($post->getRejectionReason()) ?>
+                                    </div>
+                                <?php endif; ?>
                             </td>
                             <td>👁️ <?= $post->views ?></td>
                             <td>
@@ -135,14 +146,25 @@ $this->params['breadcrumbs'][] = 'Bài Viết';
                                     <?php if ($post->isPublished()): ?>
                                         <a href="<?= Url::to(['blog/view', 'slug' => $post->slug]) ?>" 
                                            class="btn btn-sm btn-info" title="Xem" target="_blank">👁️</a>
-                                    <?php elseif ($post->status === 'draft'): ?>
-                                        <?= Html::beginForm(['admin/blog-publish', 'id' => $post->postid], 'post', ['style' => 'display:inline;']) ?>
-                                            <?= Html::submitButton('📤', [
-                                                'class' => 'btn btn-sm btn-success',
-                                                'title' => 'Xuất bản',
-                                                'onclick' => 'return confirm("Bạn có chắc muốn xuất bản bài viết này?");'
-                                            ]) ?>
-                                        <?= Html::endForm() ?>
+                                        <form method="post" action="<?= Url::to(['admin/blog-archive', 'id' => $post->postid]) ?>" style="display:inline;">
+                                            <input type="hidden" name="_csrf" value="<?= Yii::$app->request->csrfToken ?>" />
+                                            <button type="submit" class="btn btn-sm btn-secondary" title="Lưu trữ">🗂️</button>
+                                        </form>
+                                    <?php elseif ($post->status === BlogPost::STATUS_ARCHIVED): ?>
+                                        <form method="post" action="<?= Url::to(['admin/blog-unarchive', 'id' => $post->postid]) ?>" style="display:inline;">
+                                            <input type="hidden" name="_csrf" value="<?= Yii::$app->request->csrfToken ?>" />
+                                            <button type="submit" class="btn btn-sm btn-success" title="Đưa về xuất bản">✅</button>
+                                        </form>
+                                    <?php elseif ($post->status === BlogPost::STATUS_PENDING): ?>
+                                        <form method="post" action="<?= Url::to(['admin/blog-approve', 'id' => $post->postid]) ?>" style="display:inline;">
+                                            <input type="hidden" name="_csrf" value="<?= Yii::$app->request->csrfToken ?>" />
+                                            <button type="submit" class="btn btn-sm btn-success" title="Duyệt">✅</button>
+                                        </form>
+                                        <form id="reject-form-<?= $post->postid ?>" method="post" action="<?= Url::to(['admin/blog-reject', 'id' => $post->postid]) ?>" style="display:inline;">
+                                            <input type="hidden" name="_csrf" value="<?= Yii::$app->request->csrfToken ?>" />
+                                            <input type="hidden" name="rejectionreason" value="" />
+                                            <button type="button" class="btn btn-sm btn-danger" onclick="rejectPost(<?= $post->postid ?>)" title="Từ chối">❌</button>
+                                        </form>
                                     <?php endif; ?>
                                     
                                     <?php if ($post->isPublished()): ?>
@@ -468,5 +490,31 @@ function togglePin(button, postId) {
         console.error('Error:', error);
         alert('Có lỗi xảy ra');
     });
+}
+
+function rejectPost(postId) {
+    const reason = prompt('Nhập lý do từ chối bài viết này:');
+    if (reason === null) {
+        return;
+    }
+    if (reason.trim() === '') {
+        alert('Vui lòng nhập lý do từ chối.');
+        return;
+    }
+
+    const form = document.getElementById('reject-form-' + postId);
+    if (!form) {
+        alert('Không tìm thấy form từ chối. Vui lòng thử lại.');
+        return;
+    }
+
+    const reasonField = form.querySelector('input[name="rejectionreason"]');
+    if (!reasonField) {
+        alert('Không tìm thấy trường lý do từ chối.');
+        return;
+    }
+
+    reasonField.value = reason;
+    form.submit();
 }
 </script>
