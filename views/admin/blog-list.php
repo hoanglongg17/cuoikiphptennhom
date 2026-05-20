@@ -136,8 +136,13 @@ $this->params['breadcrumbs'][] = 'Bài Viết';
                                         <a href="<?= Url::to(['blog/view', 'slug' => $post->slug]) ?>" 
                                            class="btn btn-sm btn-info" title="Xem" target="_blank">👁️</a>
                                     <?php elseif ($post->status === 'draft'): ?>
-                                        <a href="<?= Url::to(['admin/blog-publish', 'id' => $post->postid]) ?>" 
-                                           class="btn btn-sm btn-success" title="Xuất bản">📤</a>
+                                        <?= Html::beginForm(['admin/blog-publish', 'id' => $post->postid], 'post', ['style' => 'display:inline;']) ?>
+                                            <?= Html::submitButton('📤', [
+                                                'class' => 'btn btn-sm btn-success',
+                                                'title' => 'Xuất bản',
+                                                'onclick' => 'return confirm("Bạn có chắc muốn xuất bản bài viết này?");'
+                                            ]) ?>
+                                        <?= Html::endForm() ?>
                                     <?php endif; ?>
                                     
                                     <?php if ($post->isPublished()): ?>

@@ -3,6 +3,8 @@
 /** @var app\models\BlogPost[] $posts */
 /** @var app\models\BlogPost[] $featuredPosts */
 /** @var yii\data\Pagination $pagination */
+/** @var yii\widgets\LinkPager|null $pinnedPagination */
+/** @var app\models\BlogPost[] $pinnedPosts */
 /** @var string $keyword */
 
 use yii\helpers\Url;
@@ -53,6 +55,43 @@ $this->params['breadcrumbs'][] = 'Blog';
             </div>
         <?php endif; ?>
     </div>
+
+    <?php if (empty($keyword) && !empty($pinnedPosts)): ?>
+        <div class="pinned-posts-section">
+            <h2>📌 Bài Viết Được Ghim</h2>
+            <div class="pinned-posts-list">
+                <?php foreach ($pinnedPosts as $post): ?>
+                    <article class="pinned-post-card">
+                        <h3>
+                            <a href="<?= Url::to(['blog/view', 'slug' => $post->slug]) ?>">
+                                <?= Html::encode($post->title) ?>
+                            </a>
+                        </h3>
+                        <div class="pinned-meta">
+                            <span>👤 <?= Html::encode($post->author->displayname) ?></span>
+                            <span>📅 <?= Yii::$app->formatter->asDate($post->publishedat, 'php:d/m/Y') ?></span>
+                        </div>
+                        <p><?= Html::encode($post->excerpt ?: substr(strip_tags($post->content), 0, 140)) ?></p>
+                        <a href="<?= Url::to(['blog/view', 'slug' => $post->slug]) ?>" class="btn btn-link">
+                            Đọc ngay →
+                        </a>
+                    </article>
+                <?php endforeach; ?>
+            </div>
+
+            <?php if ($pinnedPagination && $pinnedPagination->getPageCount() > 1): ?>
+                <div class="pinned-pagination-wrap">
+                    <?= LinkPager::widget([
+                        'pagination' => $pinnedPagination,
+                        'options' => ['class' => 'pagination justify-content-center'],
+                        'linkOptions' => ['class' => 'page-link'],
+                        'activePageCssClass' => 'active',
+                        'disabledPageCssClass' => 'disabled',
+                    ]) ?>
+                </div>
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
 
     <!-- Featured Posts Section (only show when not searching) -->
     <?php if (empty($keyword) && !empty($featuredPosts)): ?>
@@ -258,6 +297,70 @@ $this->params['breadcrumbs'][] = 'Blog';
     padding: 30px;
     margin-bottom: 40px;
     border-left: 5px solid #ffc107;
+}
+
+.pinned-posts-section {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 30px;
+    border: 1px solid #e7edf3;
+}
+
+.pinned-posts-section h2 {
+    font-size: 1.9em;
+    color: #1f4068;
+    margin-bottom: 10px;
+}
+
+.pinned-subtitle {
+    color: #6b7280;
+    margin-bottom: 18px;
+}
+
+.pinned-posts-list {
+    display: grid;
+    gap: 18px;
+}
+
+.pinned-post-card {
+    background: #f8fbff;
+    border: 1px solid #d9e2ec;
+    border-radius: 10px;
+    padding: 18px;
+    transition: box-shadow 0.25s ease;
+}
+
+.pinned-post-card:hover {
+    box-shadow: 0 6px 16px rgba(31, 64, 104, 0.08);
+}
+
+.pinned-post-card h3 {
+    margin: 0 0 10px;
+    font-size: 1.2em;
+}
+
+.pinned-post-card a {
+    color: #0b61a4;
+    text-decoration: none;
+}
+
+.pinned-post-card a:hover {
+    text-decoration: underline;
+}
+
+.pinned-meta {
+    font-size: 0.9em;
+    color: #4b5563;
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.pinned-pagination-wrap {
+    margin-top: 20px;
+    text-align: center;
 }
 
 .featured-posts-section h2 {

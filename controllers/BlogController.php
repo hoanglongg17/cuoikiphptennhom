@@ -55,11 +55,25 @@ class BlogController extends Controller
     {
         $keyword = Yii::$app->request->get('q', '');
         
+        $pinnedPosts = [];
+        $pinnedPagination = null;
+
         if (!empty($keyword)) {
             $query = BlogPost::search($keyword);
             $featuredPosts = [];
         } else {
             $query = BlogPost::findPublished();
+            // Lấy các bài ghim và phân trang riêng cho chúng
+            $pinnedQuery = BlogPost::findPinned();
+            $pinnedPagination = new Pagination([
+                'totalCount' => $pinnedQuery->count(),
+                'pageSize' => 3,
+            ]);
+            $pinnedPosts = $pinnedQuery
+                ->offset($pinnedPagination->offset)
+                ->limit($pinnedPagination->limit)
+                ->all();
+
             // Lấy bài viết nổi bật (nhiều like nhất)
             $featuredPosts = BlogPost::findFeatured(5)->all();
         }
@@ -79,6 +93,8 @@ class BlogController extends Controller
             'pagination' => $pagination,
             'keyword' => $keyword,
             'featuredPosts' => $featuredPosts,
+            'pinnedPosts' => $pinnedPosts,
+            'pinnedPagination' => $pinnedPagination,
         ]);
     }
 

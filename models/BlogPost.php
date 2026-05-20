@@ -180,6 +180,16 @@ class BlogPost extends ActiveRecord
             ->where(['status' => self::STATUS_PUBLISHED])
             ->orderBy(['publishedat' => SORT_DESC]);
     }
+
+    /**
+     * Tìm các bài viết được ghim bởi admin
+     */
+    public static function findPinned()
+    {
+        return static::find()
+            ->where(['status' => self::STATUS_PUBLISHED, 'is_pinned' => 1])
+            ->orderBy(['publishedat' => SORT_DESC]);
+    }
     
     /**
      * Tìm các bài viết nổi bật (nhiều like nhất)
