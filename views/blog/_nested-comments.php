@@ -38,11 +38,12 @@ function renderCommentTree($comments, $post) {
                 $currentUser = Yii::$app->user->identity;
                 $canDelete = $comment->userid == Yii::$app->user->id || ($currentUser && method_exists($currentUser, 'isAdmin') && $currentUser->isAdmin());
                 if ($canDelete): ?>
-                    <a href="<?= Url::to(['blog/delete-comment', 'id' => $comment->commentid]) ?>" 
-                       class="btn-delete" 
-                       onclick="return confirm('Xác nhận xóa bình luận?')">
-                        🗑️ Xóa
-                    </a>
+                    <?= Html::beginForm(['blog/delete-comment', 'id' => $comment->commentid], 'post', ['style' => 'display:inline;']) ?>
+                        <?= Html::submitButton('🗑️ Xóa', [
+                            'class' => 'btn-delete',
+                            'onclick' => 'return confirm("Xác nhận xóa bình luận?");'
+                        ]) ?>
+                    <?= Html::endForm() ?>
                 <?php endif; ?>
             </div>
 
@@ -82,7 +83,10 @@ function isAdmin(): bool {
 ?>
 
 <div class="blog-comments-section">
-    <h3>💬 Bình luận (<?= count($comments) ?>)</h3>
+    <?php $totalComments = \app\models\BlogNestedComment::find()
+        ->where(['postid' => $post->postid, 'status' => \app\models\BlogNestedComment::STATUS_APPROVED])
+        ->count(); ?>
+    <h3>💬 Bình luận (<?= $totalComments ?>)</h3>
 
     <!-- Comment form -->
     <?php if (!Yii::$app->user->isGuest): ?>
@@ -196,6 +200,15 @@ function isAdmin(): bool {
     margin-top: 20px;
 }
 
+/* Force comments and nested containers to be block-level and full-width
+   to avoid global styles (e.g. .comment-item { display:flex }) producing
+   horizontal wrapping when replies are many. */
+.comments-list,
+.nested-comments {
+    display: block;
+    width: 100%;
+}
+
 .no-comments {
     color: #999;
     text-align: center;
@@ -204,6 +217,9 @@ function isAdmin(): bool {
 }
 
 .comment-item {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
     background: #fff;
     border: 1px solid #e0e0e0;
     border-radius: 8px;

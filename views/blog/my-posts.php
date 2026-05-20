@@ -61,8 +61,8 @@ $this->params['breadcrumbs'][] = 'Bài Viết Của Tôi';
                             <td>👁️ <?= $post->views ?></td>
                             <td>
                                 💬 <?php 
-                                $commentCount = \app\models\BlogComment::find()
-                                    ->where(['postid' => $post->postid])
+                                $commentCount = \app\models\BlogNestedComment::find()
+                                    ->where(['postid' => $post->postid, 'status' => \app\models\BlogNestedComment::STATUS_APPROVED])
                                     ->count();
                                 echo $commentCount;
                                 ?>

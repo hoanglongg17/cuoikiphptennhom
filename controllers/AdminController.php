@@ -10,6 +10,7 @@ use yii\web\NotFoundHttpException;
 use yii\web\ForbiddenHttpException;
 use app\models\BlogPost;
 use app\models\BlogComment;
+use app\models\BlogNestedComment;
 use app\models\User;
 use yii\data\Pagination;
 
@@ -29,10 +30,10 @@ class AdminController extends Controller
         return [
             'access' => [
                 'class' => AccessControl::class,
-                'only' => ['dashboard', 'blog-list', 'blog-edit', 'blog-create', 'blog-delete', 'blog-pin'],
+                'only' => ['dashboard', 'blog-list', 'blog-edit', 'blog-create', 'blog-delete', 'blog-pin', 'blog-comments', 'approve-comment', 'reject-comment', 'delete-comment'],
                 'rules' => [
-                    [
-                        'actions' => ['dashboard', 'blog-list', 'blog-edit', 'blog-create', 'blog-delete', 'blog-pin'],
+                        [
+                            'actions' => ['dashboard', 'blog-list', 'blog-edit', 'blog-create', 'blog-delete', 'blog-pin', 'blog-comments', 'approve-comment', 'reject-comment', 'delete-comment'],
                         'allow' => true,
                         'roles' => ['@'],  // Phải đăng nhập
                         'matchCallback' => function ($rule, $action) {
@@ -50,6 +51,7 @@ class AdminController extends Controller
                     'blog-delete' => ['POST', 'DELETE'],
                     'blog-publish' => ['POST'],
                     'blog-pin' => ['POST'],
+                    'delete-comment' => ['POST'],
                 ],
             ],
         ];
@@ -199,6 +201,30 @@ class AdminController extends Controller
         }
 
         return $this->redirect(['blog-list']);
+    }
+
+    /**
+     * Xóa bình luận (admin)
+     */
+    public function actionDeleteComment($id)
+    {
+        // Only admin reaches here due to access rules
+        $nested = BlogNestedComment::findOne($id);
+        if ($nested) {
+            $nested->delete();
+            Yii::$app->session->setFlash('success', 'Bình luận đã được xóa');
+            return $this->redirect(['blog-comments']);
+        }
+
+        $comment = BlogComment::findOne($id);
+        if ($comment) {
+            $comment->delete();
+            Yii::$app->session->setFlash('success', 'Bình luận đã được xóa');
+            return $this->redirect(['blog-comments']);
+        }
+
+        Yii::$app->session->setFlash('error', 'Bình luận không tồn tại');
+        return $this->redirect(['blog-comments']);
     }
 
     /**

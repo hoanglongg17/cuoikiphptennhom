@@ -39,7 +39,7 @@ class BlogController extends Controller
                         'roles' => ['?', '@'],  // Public và logged-in users
                     ],
                     [
-                        'actions' => ['create', 'edit', 'delete', 'my-posts', 'add-comment', 'like'],
+                        'actions' => ['create', 'edit', 'delete', 'my-posts', 'add-comment', 'delete-comment', 'like'],
                         'allow' => true,
                         'roles' => ['@'],  // Chỉ logged-in users
                     ],
@@ -390,6 +390,40 @@ class BlogController extends Controller
         }
 
         return $this->redirect(['view', 'slug' => $post->slug]);
+    }
+
+    /**
+     * Xóa bình luận (user owner hoặc admin)
+     */
+    public function actionDeleteComment($id)
+    {
+        $user = Yii::$app->user->identity;
+
+        // Try nested comment first
+        $nested = BlogNestedComment::findOne($id);
+        if ($nested) {
+            if ($nested->userid != Yii::$app->user->id && !($user && method_exists($user, 'isAdmin') && $user->isAdmin())) {
+                throw new NotFoundHttpException('Bạn không có quyền xóa bình luận này.');
+            }
+            $post = BlogPost::findOne($nested->postid);
+            $nested->delete();
+            Yii::$app->session->setFlash('success', 'Bình luận đã được xóa');
+            return $this->redirect(['view', 'slug' => $post->slug]);
+        }
+
+        // Try top-level comment
+        $comment = BlogComment::findOne($id);
+        if ($comment) {
+            if ($comment->userid != Yii::$app->user->id && !($user && method_exists($user, 'isAdmin') && $user->isAdmin())) {
+                throw new NotFoundHttpException('Bạn không có quyền xóa bình luận này.');
+            }
+            $post = BlogPost::findOne($comment->postid);
+            $comment->delete();
+            Yii::$app->session->setFlash('success', 'Bình luận đã được xóa');
+            return $this->redirect(['view', 'slug' => $post->slug]);
+        }
+
+        throw new NotFoundHttpException('Bình luận không tồn tại.');
     }
 
     /**
