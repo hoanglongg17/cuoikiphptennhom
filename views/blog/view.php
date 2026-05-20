@@ -6,6 +6,7 @@ use yii\helpers\Url;
 use yii\helpers\Html;
 
 // Register CSS
+$this->registerCssFile('@web/css/dashboard.css', ['depends' => [\app\assets\AppAsset::class]]);
 $this->registerCssFile('@web/css/blog-view.css', ['depends' => [\yii\bootstrap5\BootstrapAsset::class]]);
 
 // Set page title and breadcrumbs
@@ -44,8 +45,8 @@ $this->params['breadcrumbs'][] = $post->title;
                             <div class="deck-info-name"><?= Html::encode($post->sharedDeck->name) ?></div>
                             <div class="deck-info-desc"><?= Html::encode($post->sharedDeck->description) ?></div>
                             <div class="deck-actions">
-                                <button type="button" class="btn-deck-view" id="import-deck-btn" data-deck-id="<?= $post->sharedDeck->deckid ?>">
-                                    📚 Lưu Bộ Thẻ
+                                <button type="button" class="btn-deck-view" onclick="openDeckModal(<?= $post->sharedDeck->deckid ?>)">
+                                    📚 Xem Bộ Thẻ
                                 </button>
                                 <button type="button" class="btn-deck-copy" id="copy-deck-code" data-deck-id="<?= $post->sharedDeck->deckid ?>">
                                     📋 Sao Chép Mã
@@ -174,6 +175,51 @@ $this->params['breadcrumbs'][] = $post->title;
     </div>
 </div>
 
+<?php if ($post->sharedeckid): ?>
+<div id="modalDeckView-<?= $post->sharedDeck->deckid ?>" class="modal-overlay" onclick="closeDeckModal(this)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h2>Chi tiết bộ thẻ (ID: <?= $post->sharedDeck->deckid ?>)</h2>
+            <button class="btn-close-modal" onclick="closeDeckModal(document.getElementById('modalDeckView-<?= $post->sharedDeck->deckid ?>'))">&times;</button>
+        </div>
+        
+        <div class="deck-top-info">
+            <h3 style="margin: 0 0 10px 0; font-size: 22px; color: #2b6cb0;">
+                <span class="deck-info-label">Tên bộ thẻ:</span> <?= Html::encode($post->sharedDeck->name) ?>
+            </h3>
+            <p style="margin: 0; color: #4a5568; font-size: 16px; line-height: 1.6;">
+                <span class="deck-info-label">Mô tả:</span> <?= Html::encode($post->sharedDeck->description) ?: 'Chưa có mô tả cho bộ thẻ này.' ?>
+            </p>
+        </div>
+
+        <hr class="deck-divider">
+
+        <div class="cards-area">
+            <h4 style="margin-top: 0; margin-bottom: 20px; color: #2d3748; font-size: 18px;">
+                Danh sách thẻ từ vựng (<span id="cardCount-<?= $post->sharedDeck->deckid ?>"><?= count($post->sharedDeck->cards) ?></span> thẻ)
+            </h4>
+            
+            <?php if (empty($post->sharedDeck->cards)): ?>
+                <p style="text-align: center; color: #a0aec0; padding: 20px;">Không có từ vựng nào trong bộ thẻ này.</p>
+            <?php else: ?>
+                <?php foreach($post->sharedDeck->cards as $card): ?>
+                    <div class="card-row-display" id="card-row-<?= $card->cardid ?>">
+                        <div class="card-main-content">
+                            <div class="content-part"><label>Mặt trước</label><div class="content-text" style="color:#3182ce;"><?= Html::encode($card->frontcontent) ?></div></div>
+                            <div class="content-part"><label>Mặt sau</label><div class="content-text"><?= Html::encode($card->backcontent) ?></div></div>
+                        </div>
+                        <div class="card-meta-info">
+                            <div class="meta-item"><strong>Phiên âm:</strong> <?= Html::encode($card->pronunciation) ?: 'N/A' ?></div>
+                            <div style="width:100%; margin-top:5px;"><strong>Ví dụ:</strong> <em style="color: #718096;">"<?= Html::encode($card->examplesentence) ?: 'Chưa có ví dụ' ?>"</em></div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <script>
 // Handle Copy Deck Code button
 document.addEventListener('DOMContentLoaded', function() {
@@ -199,36 +245,31 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
-
-    // Import/Add deck to user's decks via AJAX
-    const importButton = document.getElementById('import-deck-btn');
-    if (importButton) {
-        importButton.addEventListener('click', function() {
-            const deckId = this.getAttribute('data-deck-id');
-            const url = '<?= Url::to(['site/ajax-import-deck']) ?>';
-            const csrfParam = '<?= Yii::$app->request->csrfParam ?>';
-            const csrfToken = '<?= Yii::$app->request->csrfToken ?>';
-
-            fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({ deckId: deckId, [csrfParam]: csrfToken })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    alert(data.message || 'Đã thêm bộ thẻ.');
-                } else {
-                    alert(data.message || 'Có lỗi xảy ra.');
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                alert('Lỗi kết nối: ' + err.message);
-            });
-        });
-    }
 });
+
+// Modal functions for deck view
+function openDeckModal(deckId) {
+    const modal = document.getElementById('modalDeckView-' + deckId);
+    if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        const mainContent = document.querySelector('.blog-main-content');
+        const sidebar = document.querySelector('.blog-sidebar');
+        if (mainContent) mainContent.classList.add('blurred');
+        if (sidebar) sidebar.classList.add('blurred');
+    }
+}
+
+function closeDeckModal(element) {
+    if (element.classList && element.classList.contains('modal-overlay')) {
+        element.style.display = 'none';
+        document.body.style.overflow = 'auto';
+        const mainContent = document.querySelector('.blog-main-content');
+        const sidebar = document.querySelector('.blog-sidebar');
+        if (mainContent) mainContent.classList.remove('blurred');
+        if (sidebar) sidebar.classList.remove('blurred');
+    }
+}
 
 // Handle Like/Rating functionality
 function toggleLike(button, postId) {
