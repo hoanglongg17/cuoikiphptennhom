@@ -5,26 +5,10 @@ namespace app\models;
 use Yii;
 use yii\db\ActiveRecord;
 
-/**
- * Đây là lớp Model cho bảng "cards".
- *
- * @property int $cardid
- * @property int $deckid
- * @property string $frontcontent
- * @property string $backcontent
- * @property string|null $pronunciation
- * @property string|null $audiourl
- * @property string|null $examplesentence
- * @property string|null $tags
- * @property string|null $createdat
- *
- * @property Deck $deck
- */
+
 class Card extends ActiveRecord
 {
-    /**
-     * Tên bảng trong database
-     */
+    
     public static function tableName()
     {
         return 'cards';

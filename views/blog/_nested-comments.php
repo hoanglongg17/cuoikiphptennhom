@@ -1,17 +1,16 @@
 <?php
+
+
+
+
 /** @var yii\web\View $this */
-/** @var app\models\BlogPost $post */
 /** @var app\models\BlogNestedComment[] $comments */
+/** @var app\models\BlogPost $post */
 
 use yii\helpers\Url;
 use yii\helpers\Html;
 
-/**
- * Render nested comments tree recursively
- * @param array $comments
- * @param \app\models\BlogPost $post
- * @return void
- */
+
 function renderCommentTree($comments, $post) {
     foreach ($comments as $comment):
         ?>
@@ -34,7 +33,7 @@ function renderCommentTree($comments, $post) {
                     💬 Trả lời
                 </button>
                 <?php
-                /** @var \app\models\User|null $currentUser */
+                
                 $currentUser = Yii::$app->user->identity;
                 $canDelete = $comment->userid == Yii::$app->user->id || ($currentUser && method_exists($currentUser, 'isAdmin') && $currentUser->isAdmin());
                 if ($canDelete): ?>
@@ -47,7 +46,7 @@ function renderCommentTree($comments, $post) {
                 <?php endif; ?>
             </div>
 
-            <!-- Reply form -->
+            
             <div class="reply-form-container" id="reply-form-<?= $comment->commentid ?>" style="display: none;">
                 <form action="<?= Url::to(['blog/add-comment', 'postid' => $post->postid]) ?>" method="post" class="nested-comment-form">
                     <?= Html::hiddenInput('BlogNestedComment[parentcommentid]', $comment->commentid) ?>
@@ -60,7 +59,7 @@ function renderCommentTree($comments, $post) {
                 </form>
             </div>
 
-            <!-- Nested replies -->
+            
             <?php if (!empty($comment->replies)): ?>
                 <div class="nested-comments">
                     <?php renderCommentTree($comment->replies, $post) ?>
@@ -71,12 +70,9 @@ function renderCommentTree($comments, $post) {
     endforeach;
 }
 
-/**
- * Check if current user is admin
- * @return bool
- */
+
 function isAdmin(): bool {
-    /** @var \app\models\User|null $user */
+    
     $user = Yii::$app->user->identity;
     return $user && method_exists($user, 'isAdmin') && $user->isAdmin();
 }
@@ -88,7 +84,7 @@ function isAdmin(): bool {
         ->count(); ?>
     <h3>💬 Bình luận (<?= $totalComments ?>)</h3>
 
-    <!-- Comment form -->
+    
     <?php if (!Yii::$app->user->isGuest): ?>
         <div class="comment-form-wrapper">
             <h4>Để lại bình luận</h4>
@@ -104,7 +100,7 @@ function isAdmin(): bool {
         </div>
     <?php endif; ?>
 
-    <!-- Comments list -->
+    
     <div class="comments-list">
         <?php if (empty($comments)): ?>
             <p class="no-comments">Chưa có bình luận nào. Hãy là người đầu tiên bình luận!</p>
@@ -200,9 +196,7 @@ function isAdmin(): bool {
     margin-top: 20px;
 }
 
-/* Force comments and nested containers to be block-level and full-width
-   to avoid global styles (e.g. .comment-item { display:flex }) producing
-   horizontal wrapping when replies are many. */
+
 .comments-list,
 .nested-comments {
     display: block;

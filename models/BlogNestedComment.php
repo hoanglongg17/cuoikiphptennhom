@@ -5,9 +5,7 @@ namespace app\models;
 use Yii;
 use yii\db\ActiveRecord;
 
-/**
- * BlogNestedComment Model - Bình luận lồng (có trả lời)
- */
+
 class BlogNestedComment extends ActiveRecord
 {
     public static function tableName()
@@ -53,26 +51,20 @@ class BlogNestedComment extends ActiveRecord
         return $this->hasOne(User::class, ['userid' => 'userid']);
     }
 
-    /**
-     * Lấy comment cha (nếu là reply)
-     */
+    
     public function getParentComment()
     {
         return $this->hasOne(self::class, ['commentid' => 'parentcommentid']);
     }
 
-    /**
-     * Lấy tất cả replies cho comment này
-     */
+    
     public function getReplies()
     {
         return $this->hasMany(self::class, ['parentcommentid' => 'commentid'])
             ->where(['status' => self::STATUS_APPROVED]);
     }
 
-    /**
-     * Lấy count replies
-     */
+    
     public function getReplyCount()
     {
         return $this->hasMany(self::class, ['parentcommentid' => 'commentid'])
@@ -80,17 +72,13 @@ class BlogNestedComment extends ActiveRecord
             ->count();
     }
 
-    /**
-     * Kiểm tra approved status
-     */
+    
     public function isApproved()
     {
         return $this->status === self::STATUS_APPROVED;
     }
 
-    /**
-     * Lấy top-level comments (không có parent)
-     */
+    
     public static function findTopLevel($postid)
     {
         return static::find()

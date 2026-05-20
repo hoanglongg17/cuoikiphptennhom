@@ -7,10 +7,7 @@ use yii\db\ActiveRecord;
 use yii\web\IdentityInterface;
 use app\models\ReviewLog;
 
-/**
- * User model kết nối trực tiếp với bảng users
- * Chế độ: So khớp mật khẩu không mã hóa (Plain Text) và Google Login
- */
+
 class User extends ActiveRecord implements IdentityInterface
 {
     public static function tableName()
@@ -18,57 +15,43 @@ class User extends ActiveRecord implements IdentityInterface
         return 'users';
     }
 
-    /**
-     * Tìm danh tính dựa trên ID - Dùng để duy trì đăng nhập qua Session
-     */
+    
     public static function findIdentity($id)
     {
         return static::findOne($id);
     }
 
-    /**
-     * Không sử dụng Access Token trong phiên bản này
-     */
+    
     public static function findIdentityByAccessToken($token, $type = null)
     {
         return null;
     }
 
-    /**
-     * Tìm người dùng bằng Email - Dùng cho logic LoginForm thường
-     */
+    
     public static function findByEmail($email)
     {
         return static::findOne(['email' => $email]);
     }
 
-    /**
-     * Tìm người dùng bằng Google ID - Dùng cho đăng nhập Google
-     */
+    
     public static function findByGoogleId($googleId)
     {
         return static::findOne(['googleid' => $googleId]);
     }
 
-    /**
-     * Trả về ID người dùng (primary key)
-     */
+    
     public function getId()
     {
         return $this->userid;
     }
 
-    /**
-     * Trả về Auth Key - Dùng cho chức năng "Ghi nhớ đăng nhập" (Remember Me)
-     */
+    
     public function getAuthKey()
     {
         return 'auth_key_' . $this->userid;
     }
 
-    /**
-     * Kiểm tra Auth Key khi người dùng quay lại bằng Cookie
-     */
+    
     public function validateAuthKey($authKey)
     {
         return $this->getAuthKey() === $authKey;
@@ -79,46 +62,36 @@ class User extends ActiveRecord implements IdentityInterface
         $this->passwordhash = Yii::$app->security->generatePasswordHash($password);
     }
     
-    /**
-     * Kiểm tra xem người dùng có phải Admin hay không
-     */
+    
     public function isAdmin()
     {
         return $this->role === 'admin';
     }
     
-    /**
-     * Kiểm tra mật khẩu KHÔNG MÃ HÓA
-     * So sánh trực tiếp mật khẩu nhập vào với cột passwordhash trong DB
-     */
+    
     public function validatePassword($password)
     {
-        // Nếu passwordhash trống (ví dụ: dùng Google Login), không cho phép đăng nhập bằng pass
+        
         if (empty($this->passwordhash)) {
             return false;
         }
         
-        // So khớp mật khẩu thuần với mã hash trong database
+        
         try {
             return Yii::$app->security->validatePassword($password, $this->passwordhash);
         } catch (\Exception $e) {
-            // Hỗ trợ tạm thời cho các tài khoản cũ chưa kịp hash (nếu cần)
+            
             return $this->passwordhash === $password;
         }
     }
     
-    /**
-     * Relationship: Lấy tất cả blog posts của user
-     */
+    
     public function getBlogPosts()
     {
         return $this->hasMany(BlogPost::class, ['userid' => 'userid']);
     }
 
-    /**
-     * Lấy chuỗi ngày học liên tiếp hiện tại (chỉ tính khi có ít nhất 1 thẻ học hôm nay)
-     * Nếu hôm nay không học, chuỗi sẽ reset.
-     */
+    
     public function getCurrentStreak()
     {
         $today = date('Y-m-d');
@@ -147,9 +120,7 @@ class User extends ActiveRecord implements IdentityInterface
         return $streak;
     }
 
-    /**
-     * Logic tạo người dùng mới hoặc cập nhật khi đăng nhập Google
-     */
+    
     public static function loginWithGoogle($attributes)
     {
         $googleId = (string)$attributes['id'];

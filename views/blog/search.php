@@ -1,8 +1,13 @@
 <?php
+
+
+
+
+
 /** @var yii\web\View $this */
+/** @var string $keyword */
 /** @var app\models\BlogPost[] $posts */
 /** @var yii\data\Pagination $pagination */
-/** @var string $keyword */
 
 use yii\helpers\Url;
 use yii\helpers\Html;
@@ -82,7 +87,7 @@ $this->params['breadcrumbs'][] = 'Tìm kiếm';
         <?php endif; ?>
     </div>
 
-    <!-- Pagination -->
+    
     <?php if ($pagination && $pagination->pageCount > 1): ?>
         <div class="pagination-wrap">
             <?= LinkPager::widget([

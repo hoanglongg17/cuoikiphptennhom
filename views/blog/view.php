@@ -1,15 +1,18 @@
 <?php
+
+
+
 /** @var yii\web\View $this */
 /** @var app\models\BlogPost $post */
 
 use yii\helpers\Url;
 use yii\helpers\Html;
 
-// Register CSS
+
 $this->registerCssFile('@web/css/dashboard.css', ['depends' => [\app\assets\AppAsset::class]]);
 $this->registerCssFile('@web/css/blog-view.css', ['depends' => [\yii\bootstrap5\BootstrapAsset::class]]);
 
-// Set page title and breadcrumbs
+
 $this->title = $post->title;
 $this->params['breadcrumbs'][] = ['label' => 'Blog', 'url' => ['blog/index']];
 $this->params['breadcrumbs'][] = $post->title;
@@ -17,9 +20,9 @@ $this->params['breadcrumbs'][] = $post->title;
 
 <div class="blog-view-container">
     <div class="blog-main-content">
-        <!-- Main Content -->
+        
         <div class="post-card">
-            <!-- Post Header with Gradient -->
+            
             <div class="post-header-section">
                 <div class="post-header-content">
                     <h1 class="post-title"><?= Html::encode($post->title) ?></h1>
@@ -57,38 +60,39 @@ $this->params['breadcrumbs'][] = $post->title;
                 </div>
             </div>
 
-            <!-- Post Body -->
+            
             <div class="post-body-section">
                 <?= $post->content ?>
             </div>
 
-            <!-- Rating Section -->
+            
             <div class="rating-section">
                 <?= $this->render('_rating-widget', ['post' => $post]) ?>
             </div>
 
-            <!-- Post Actions (Edit/Delete) -->
+            
             <?php
-            /** @var \app\models\User|null $user */
+            
             $user = Yii::$app->user->identity;
             $isPostOwner = $user && Yii::$app->user->id === $post->userid;
             $isAdminUser = $user && method_exists($user, 'isAdmin') && $user->isAdmin();
             if ($user && ($isPostOwner || $isAdminUser)): ?>
                 <div class="post-actions">
-                    <a href="<?= Url::to(['blog/edit', 'id' => $post->postid]) ?>" class="btn-edit">
-                        ✏️ Chỉnh sửa
-                    </a>
-                    <?= Html::beginForm(['blog/delete', 'id' => $post->postid], 'post', ['style' => 'display: inline;']) ?>
-                        <?= Html::submitButton('🗑️ Xóa', ['class' => 'btn-delete', 'onclick' => 'return confirm("Bạn chắc chắn muốn xóa bài viết này?");']) ?>
+                    <?= Html::beginForm(['blog/delete', 'id' => $post->postid], 'post', ['style' => 'width: 100%; display: flex; justify-content: center;']) ?>
+                        <?= Html::submitButton('🗑️ Xóa', [
+                            'class' => 'btn-delete',
+                            'style' => 'width: 90%; max-width: 420px; justify-content: center;',
+                            'onclick' => 'return confirm("Bạn chắc chắn muốn xóa bài viết này?");'
+                        ]) ?>
                     <?= Html::endForm() ?>
                 </div>
             <?php endif; ?>
 
-            <!-- Comments Section -->
+            
             <div class="comments-section">
                 <h4 class="comments-title">💬 Bình Luận</h4>
                 <?php
-                // Fetch top-level comments
+                
                 $topLevelComments = \app\models\BlogNestedComment::find()
                     ->where(['postid' => $post->postid, 'parentcommentid' => null])
                     ->with('user', 'replies')
@@ -99,16 +103,16 @@ $this->params['breadcrumbs'][] = $post->title;
             </div>
         </div>
 
-        <!-- Sidebar -->
+        
         <aside class="blog-sidebar">
-            <!-- Author Info Widget -->
+            
             <div class="sidebar-widget author-info-widget">
                 <img src="<?= Html::encode($post->author->avatarurl ?? 'https://via.placeholder.com/80') ?>" alt="Author" class="author-avatar">
                 <div class="author-name"><?= Html::encode($post->author->displayname) ?></div>
                 <div class="author-role">Người viết</div>
             </div>
 
-            <!-- Related Posts Widget -->
+            
             <div class="sidebar-widget">
                 <h5>📄 Bài Viết Khác</h5>
                 <ul class="related-posts">
@@ -137,7 +141,7 @@ $this->params['breadcrumbs'][] = $post->title;
                 </ul>
             </div>
 
-            <!-- Tags Widget -->
+            
             <?php if (!empty($post->tags)): ?>
             <div class="sidebar-widget">
                 <h5>🏷️ Nhãn</h5>
@@ -157,7 +161,7 @@ $this->params['breadcrumbs'][] = $post->title;
             </div>
             <?php endif; ?>
 
-            <!-- Category Badge -->
+            
             <?php if ($post->categoryid): ?>
             <div class="sidebar-widget">
                 <h5>📁 Danh Mục</h5>
@@ -221,21 +225,21 @@ $this->params['breadcrumbs'][] = $post->title;
 <?php endif; ?>
 
 <script>
-// Handle Copy Deck Code button
+
 document.addEventListener('DOMContentLoaded', function() {
     const copyButton = document.getElementById('copy-deck-code');
     if (copyButton) {
         copyButton.addEventListener('click', function() {
             const deckId = this.getAttribute('data-deck-id');
             
-            // Copy deckId to clipboard
+            
             navigator.clipboard.writeText(deckId).then(function() {
-                // Show success message
+                
                 const originalText = copyButton.textContent;
                 copyButton.textContent = '✓ Đã Sao Chép!';
                 copyButton.style.background = '#28a745';
                 
-                // Reset button after 2 seconds
+                
                 setTimeout(function() {
                     copyButton.textContent = originalText;
                     copyButton.style.background = '';
@@ -247,7 +251,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Modal functions for deck view
+
 function openDeckModal(deckId) {
     const modal = document.getElementById('modalDeckView-' + deckId);
     if (modal) {
@@ -271,7 +275,7 @@ function closeDeckModal(element) {
     }
 }
 
-// Handle Like/Rating functionality
+
 function toggleLike(button, postId) {
     const url = '<?= Url::to(['blog/like'], true) ?>' + '&id=' + postId;
     const csrfToken = '<?= Yii::$app->request->csrfToken ?>';

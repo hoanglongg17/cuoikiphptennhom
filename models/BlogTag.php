@@ -5,9 +5,7 @@ namespace app\models;
 use Yii;
 use yii\db\ActiveRecord;
 
-/**
- * BlogTag Model - Nhãn cho bài viết
- */
+
 class BlogTag extends ActiveRecord
 {
     public static function tableName()

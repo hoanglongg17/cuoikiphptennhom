@@ -5,12 +5,10 @@ namespace app\models;
 use Yii;
 use yii\db\ActiveRecord;
 
-/**
- * BlogComment Model - Bình luận bài viết
- */
+
 class BlogComment extends ActiveRecord
 {
-    // Status constants
+    
     const STATUS_PENDING = 'pending';
     const STATUS_APPROVED = 'approved';
     const STATUS_REJECTED = 'rejected';
@@ -20,9 +18,7 @@ class BlogComment extends ActiveRecord
         return 'blogcomments';
     }
 
-    /**
-     * Định nghĩa các rule xác thực
-     */
+    
     public function rules()
     {
         return [
@@ -34,9 +30,7 @@ class BlogComment extends ActiveRecord
         ];
     }
 
-    /**
-     * Get attribute labels cho form
-     */
+    
     public function attributeLabels()
     {
         return [
@@ -50,17 +44,13 @@ class BlogComment extends ActiveRecord
         ];
     }
 
-    /**
-     * Relationship: Bài viết mà bình luận thuộc về
-     */
+    
     public function getPost()
     {
         return $this->hasOne(BlogPost::class, ['postid' => 'postid']);
     }
 
-    /**
-     * Relationship: Người dùng tức là tác giả bình luận
-     */
+    
     public function getUser()
     {
         return $this->hasOne(User::class, ['userid' => 'userid']);

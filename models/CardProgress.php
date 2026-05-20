@@ -37,25 +37,19 @@ class CardProgress extends ActiveRecord
         ];
     }
 
-    /**
-     * Quan hệ: Một tiến độ thuộc về một thẻ
-     */
+    
     public function getCard()
     {
         return $this->hasOne(Card::class, ['cardid' => 'cardid']);
     }
 
-    /**
-     * Kiểm tra thẻ có cần ôn hôm nay không
-     */
+    
     public function isDue()
     {
         return strtotime($this->duedate) <= strtotime('now');
     }
 
-    /**
-     * Lấy trạng thái bằng tiếng Việt
-     */
+    
     public function getStatusLabel()
     {
         $labels = [

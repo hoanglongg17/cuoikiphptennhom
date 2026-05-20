@@ -1,7 +1,11 @@
 <?php
+
+
+
+
 /** @var yii\web\View $this */
 /** @var app\models\BlogPost $model */
-/** @var boolean $isNew */
+/** @var bool $isNew */
 
 use yii\helpers\Url;
 use yii\helpers\Html;
@@ -58,7 +62,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 </div>
 
                 <?php
-                /** @var \app\models\User|null $user */
+                
                 $user = Yii::$app->user->identity;
                 $isAdminUser = $user && method_exists($user, 'isAdmin') && $user->isAdmin();
                 if ($isAdminUser): ?>

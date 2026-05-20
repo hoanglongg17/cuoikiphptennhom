@@ -1,7 +1,10 @@
 <?php
 
+
+
+
+
 /** @var yii\web\View $this */
-/** @var yii\bootstrap5\ActiveForm $form */
 /** @var app\models\SignupForm $model */
 
 use yii\bootstrap5\ActiveForm;
@@ -10,9 +13,9 @@ use yii\helpers\Url;
 
 $this->title = 'Đăng ký tài khoản - Andi';
 
-// Nhúng Font Inter
+
 $this->registerCssFile('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-// Sử dụng chung file CSS với Login
+
 $this->registerCssFile('@web/css/login.css', ['depends' => [\yii\bootstrap5\BootstrapAsset::class]]);
 ?>
 

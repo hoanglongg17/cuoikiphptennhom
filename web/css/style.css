@@ -1,10 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;800&family=Open+Sans:wght@400;500;700;800&subset=vietnamese&display=swap');
 
-/* Reset cơ bản */
+
 body {
   font-family: 'Roboto', 'Open Sans', Tahoma, Arial, sans-serif;
   margin: 0;
-  padding-top: 70px; /* chừa chỗ cho header */
+  padding-top: 70px; 
   line-height: 1.6;
   background: #fff;
   color: #333;
@@ -33,8 +33,8 @@ header .logo {
 }
 
 header .logo img {
-  height: 40px;       /* chỉnh kích thước logo */
-  margin-right: 10px; /* khoảng cách giữa logo và chữ */
+  height: 40px;       
+  margin-right: 10px; 
 }
 
 header .logo span {
@@ -46,7 +46,7 @@ header .logo span {
 header nav {
   display: flex;
   align-items: center;
-  margin-right: 20px; /* đẩy nav vào trong một chút */
+  margin-right: 20px; 
 }
 
 header nav a {
@@ -69,10 +69,10 @@ header nav a.login:hover {
 }
 
 header nav a.signup {
-  background: #009688;   /* xanh ngọc */
+  background: #009688;   
   color: #fff;
   padding: 10px 20px;
-  border-radius: 30px;   /* bo tròn */
+  border-radius: 30px;   
   font-weight: bold;
   text-decoration: none;
   transition: background 0.3s ease;
@@ -81,7 +81,7 @@ header nav a.signup {
 header nav a.signup:hover {
   background: #00796b;
 }
-/* Hero section */
+
 .hero {
   padding: 100px 40px 60px;
   background: linear-gradient(135deg, rgba(26, 188, 156, 0.08), #fff);
@@ -102,63 +102,63 @@ header nav a.signup:hover {
 }
 
 .hero-text h1 {
-  font-size: 48px;       /* tiêu đề to hơn */
+  font-size: 48px;       
   line-height: 1.3;
   margin-bottom: 30px;
   color: #333;
 }
 .hero-text .subtitle {
-  font-size: 20px;       /* nhỏ hơn tiêu đề */
+  font-size: 20px;       
   color: #555;
   margin-bottom: 30px;
 }
 .hero-text .highlight {
-  color: #ff4081;        /* highlight màu hồng */
+  color: #ff4081;        
   font-weight: bold;
 }
 
 .hero-buttons {
   display: flex;
   align-items: center;
-  gap: 30px;             /* khoảng cách giữa 2 nút */
+  gap: 30px;             
 }
 
 .btn-primary {
-  background: #009688;   /* xanh ngọc */
+  background: #009688;   
   color: #fff;
   border: none;
   padding: 14px 28px;
   font-size: 18px;
   cursor: pointer;
-  border-radius: 30px;   /* bo tròn */
+  border-radius: 30px;   
   font-weight: bold;
   white-space: nowrap;
   transition: background 0.3s ease;
 }
 
 .btn-primary:hover {
-  background: #00796b;   /* xanh ngọc đậm hơn khi hover */
+  background: #00796b;   
 }
 
 .btn-secondary {
   display: inline-block;
-  background: #fff;              /* nền trắng */
-  color: #000000;                /* chữ đen */
-  border: 2px solid #ff4081;     /* viền hồng */
+  background: #fff;              
+  color: #000000;                
+  border: 2px solid #ff4081;     
   padding: 12px 24px;
   font-size: 16px;
   font-weight: bold;
-  border-radius: 30px;           /* bo tròn */
+  border-radius: 30px;           
   text-decoration: none;
   transition: all 0.3s ease;
 }
 
 .btn-secondary:hover {
-  background: #ff4081;           /* hover nền hồng */
+  background: #ff4081;           
   color: #fff; 
 }
 
-/* Hero image */
+
 .hero-image {
   flex: 1;
   min-width: 300px;
@@ -168,11 +168,11 @@ header nav a.signup:hover {
 .hero-image img {
   max-width: 100%;
   height: auto;
-  border-radius: 20px;   /* bo góc tròn */
+  border-radius: 20px;   
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
-/* Sections */
+
 .features {
   padding: 80px 20px;
   text-align: center;
@@ -180,19 +180,19 @@ header nav a.signup:hover {
 }
 
 .features-header h2 {
-  font-size: 40px;       /* dòng to */
+  font-size: 40px;       
   color: #ff4081;
   margin-bottom: 10px;
 }
 
 .features-header .subtitle {
-  font-size: 22px;       /* dòng nhỏ hơn */
+  font-size: 22px;       
   color: #333;
   margin-bottom: 5px;
 }
 
 .features-header .sub-subtitle {
-  font-size: 18px;       /* dòng nhỏ nhất */
+  font-size: 18px;       
   color: #666;
   margin-bottom: 40px;
 }
@@ -226,7 +226,7 @@ header nav a.signup:hover {
   font-size: 20px;
   color: #333;
 }
-/*WHY*/
+
 .why {
   padding: 80px 20px;
   text-align: center;
@@ -234,13 +234,13 @@ header nav a.signup:hover {
 }
 
 .why-header h2 {
-  font-size: 40px;       /* dòng to */
-  color: #ff4081;        /* highlight màu hồng */
+  font-size: 40px;       
+  color: #ff4081;        
   margin-bottom: 10px;
 }
 
 .why-header .subtitle {
-  font-size: 24px;       /* dòng nhỏ hơn */
+  font-size: 24px;       
   color: #333;
   margin-bottom: 40px;
 }
@@ -275,7 +275,7 @@ header nav a.signup:hover {
   color: #333;
 }
 
-/* FAQ */
+
 .faq {
   padding: 80px 20px;
   background: #fff;
@@ -284,8 +284,8 @@ header nav a.signup:hover {
 }
 
 .faq-header h2 {
-  font-size: 40px;       /* tiêu đề to */
-  color: #ff4081;        /* màu hồng nổi bật */
+  font-size: 40px;       
+  color: #ff4081;        
   text-align: center;
   margin-bottom: 40px;
 }
@@ -314,7 +314,7 @@ header nav a.signup:hover {
   color: #555;
   line-height: 1.5;
 }
-/* CTA section */
+
 .cta {
   padding: 80px 20px;
   text-align: center;
@@ -341,7 +341,7 @@ header nav a.signup:hover {
 .cta-content .btn-primary:hover {
   background: #ff4081;
 }
-/* Footer */
+
 footer {
   background: #333;
   color: white;
@@ -423,10 +423,10 @@ footer {
 }
 
 .footer-links-right a:hover {
-  color: #ff4081; /* đổi sang hồng khi hover */
+  color: #ff4081; 
 }
 
-/* Hiệu ứng cuộn */
+
 .animate {
   opacity: 0;
   transform: translateY(50px);

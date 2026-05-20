@@ -1,4 +1,9 @@
 <?php
+
+
+
+
+
 /** @var yii\web\View $this */
 /** @var app\models\BlogCategory $category */
 /** @var app\models\BlogPost[] $posts */
@@ -94,7 +99,7 @@ $this->params['breadcrumbs'][] = $category->name;
         <?php endif; ?>
     </div>
 
-    <!-- Pagination -->
+    
     <?php if ($pagination && $pagination->pageCount > 1): ?>
         <div class="pagination-wrap">
             <?= LinkPager::widget([

@@ -1,10 +1,16 @@
 <?php
+
+
+
+
+
+
+
 /** @var yii\web\View $this */
 /** @var app\models\Deck $deck */
 /** @var app\models\Card $currentCard */
 /** @var int $cardIndex */
 /** @var int $totalCards */
-/** @var array $priorityQueue */
 
 use yii\helpers\Url;
 use yii\helpers\Html;
@@ -17,7 +23,7 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
 ?>
 
 <div class="study-deck-container">
-    <!-- Header -->
+    
     <div class="study-header">
         <div class="study-deck-name">
             <a href="<?= Url::to(['site/practice']) ?>" class="back-btn">← Quay lại</a>
@@ -31,11 +37,11 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
         </div>
     </div>
 
-    <!-- Flashcard -->
+    
     <div class="study-content">
         <?php $cardType = $currentCard->cardtype ?? 1; ?>
         
-        <!-- LOẠI 1: CƠ BẢN (Lật thẻ) -->
+        
         <?php if ($cardType == 1): ?>
         <div id="flashcard" class="flashcard" data-flipped="false" data-cardid="<?= $currentCard->cardid ?>" data-card-status="<?= $currentCard->progress ? $currentCard->progress->status : 0 ?>" data-card-interval="<?= $currentCard->progress ? $currentCard->progress->intervaldays : 0 ?>" data-card-repetitions="<?= $currentCard->progress ? $currentCard->progress->repetitions : 0 ?>" data-card-easefactor="<?= $currentCard->progress ? $currentCard->progress->easefactor : 2.5 ?>">
             <div class="card-inner">
@@ -62,7 +68,7 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
             </div>
         </div>
         
-        <!-- LOẠI 2: ĐẢO NGƯỢC (Cả 2 mặt) -->
+        
         <?php elseif ($cardType == 2): ?>
         <div id="flashcard" class="flashcard flashcard-reverse" data-flipped="false" data-cardid="<?= $currentCard->cardid ?>" data-card-status="<?= $currentCard->progress ? $currentCard->progress->status : 0 ?>" data-card-interval="<?= $currentCard->progress ? $currentCard->progress->intervaldays : 0 ?>" data-card-repetitions="<?= $currentCard->progress ? $currentCard->progress->repetitions : 0 ?>" data-card-easefactor="<?= $currentCard->progress ? $currentCard->progress->easefactor : 2.5 ?>">
             <div class="card-reverse-container">
@@ -88,7 +94,7 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
             </div>
         </div>
         
-        <!-- LOẠI 3: NHẬP LIỆU -->
+        
         <?php elseif ($cardType == 3): ?>
         <div id="flashcard" class="flashcard flashcard-input" data-cardid="<?= $currentCard->cardid ?>" data-card-status="<?= $currentCard->progress ? $currentCard->progress->status : 0 ?>" data-card-interval="<?= $currentCard->progress ? $currentCard->progress->intervaldays : 0 ?>" data-card-repetitions="<?= $currentCard->progress ? $currentCard->progress->repetitions : 0 ?>" data-card-easefactor="<?= $currentCard->progress ? $currentCard->progress->easefactor : 2.5 ?>">
             <div id="inputPhase1" class="input-phase">
@@ -125,11 +131,11 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
         </div>
         <?php endif; ?>
 
-        <!-- Control Buttons -->
+        
         <div class="study-controls">
             <?php $cardType = $currentCard->cardtype ?? 1; ?>
             
-            <!-- LOẠI 1: CƠ BẢN - Nút Tiếp theo (lật) -->
+            
             <?php if ($cardType == 1): ?>
             <div id="nextButtonContainer" class="next-button-container">
                 <button class="btn-next" onclick="flipCard()">
@@ -137,7 +143,7 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
                 </button>
             </div>
             
-            <!-- LOẠI 2: ĐẢO NGƯỢC - Nút Tiếp theo (xem đáp án) -->
+            
             <?php elseif ($cardType == 2): ?>
             <div id="nextButtonContainer" class="next-button-container">
                 <button class="btn-next" onclick="showGradeButtons()">
@@ -145,7 +151,7 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
                 </button>
             </div>
             
-            <!-- LOẠI 3: NHẬP LIỆU - Không cần nút ở đây (có submitAnswer) -->
+            
             <?php elseif ($cardType == 3): ?>
             <div id="nextButtonContainer" class="next-button-container" style="display: none;">
                 <button class="btn-next" onclick="showGradeButtons()">
@@ -154,7 +160,7 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
             </div>
             <?php endif; ?>
 
-            <!-- Nút đánh giá (hiện sau khi lật hoặc submit) -->
+            
             <div id="gradeButtonContainer" class="grade-buttons-container" style="display: none;">
                 <p class="flip-hint" style="margin-bottom: 20px;">Chọn độ khó</p>
                 <div class="grade-buttons">
@@ -182,7 +188,7 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
             </div>
         </div>
 
-        <!-- Card Info -->
+        
         <div class="card-info">
             <div class="info-row">
                 <span class="label">Loại thẻ:</span>
@@ -212,11 +218,11 @@ function flipCard() {
     const nextContainer = document.getElementById('nextButtonContainer');
     const gradeContainer = document.getElementById('gradeButtonContainer');
     
-    // Lật thẻ
+    
     flashcard.classList.toggle('flipped');
     flashcard.setAttribute('data-flipped', 'true');
     
-    // Ẩn nút Tiếp theo, hiện nút đánh giá
+    
     nextContainer.style.display = 'none';
     gradeContainer.style.display = 'block';
 }
@@ -226,7 +232,7 @@ function gradeCard(grade, gradeName) {
     const currentCardId = flashcard.getAttribute('data-cardid');
     const gradeBtn = event.target.closest('.btn-grade');
     
-    // LƯU label/desc trước khi tay lên spinner
+    
     const gradeLabel = gradeBtn.querySelector('.grade-label');
     const gradeDesc = gradeBtn.querySelector('.grade-desc');
     const savedLabel = gradeLabel ? gradeLabel.textContent : gradeName;
@@ -235,7 +241,7 @@ function gradeCard(grade, gradeName) {
     gradeBtn.disabled = true;
     gradeBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
 
-    // 1. Submit grade
+    
     fetch('<?= Url::to(['site/ajax-grade-card']) ?>', {
         method: 'POST',
         headers: {
@@ -250,7 +256,7 @@ function gradeCard(grade, gradeName) {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            // 2. Get next card
+            
             return fetch('<?= Url::to(['site/ajax-get-next-card']) ?>', {
                 method: 'POST',
                 headers: {
@@ -269,13 +275,13 @@ function gradeCard(grade, gradeName) {
     .then(res => res.json())
     .then(data => {
         if (data.finished) {
-            // Hết thẻ, quay lại practice
+            
             alert(data.message);
             window.location.href = '<?= Url::to(['site/practice']) ?>';
         } else if (data.success) {
-            // Update UI với thẻ tiếp theo
+            
             updateCard(data.card);
-            // RESTORE button text AFTER updateCard
+            
             setTimeout(() => {
                 gradeBtn.innerHTML = '<span class="grade-label">' + savedLabel + '</span><span class="grade-desc">' + savedDesc + '</span>';
             }, 0);
@@ -296,10 +302,10 @@ function updateCard(cardData) {
     const nextContainer = document.getElementById('nextButtonContainer');
     const gradeContainer = document.getElementById('gradeButtonContainer');
     
-    // Update card data attributes
+    
     flashcard.setAttribute('data-cardid', cardData.cardid);
     
-    // Update SM2 progress attributes (if provided from server)
+    
     if (cardData.status !== undefined) {
         flashcard.setAttribute('data-card-status', cardData.status);
     }
@@ -313,18 +319,18 @@ function updateCard(cardData) {
         flashcard.setAttribute('data-card-easefactor', cardData.easefactor);
     }
     
-    // Reset flip state
+    
     flashcard.classList.remove('flipped');
     flashcard.setAttribute('data-flipped', 'false');
     
-    // Determine card type
+    
     const cardType = cardData.cardtype || 1;
     const typeNames = ['Cơ bản', 'Đảo ngược', 'Nhập liệu'];
     
-    // Update card type display
+    
     document.getElementById('cardTypeValue').textContent = typeNames[cardData.cardtype - 1] || 'Không xác định';
     
-    // Update tags
+    
     if (cardData.tags) {
         document.getElementById('cardTagsValue').textContent = cardData.tags;
         var tagsRow = document.getElementById('cardTagsRow');
@@ -334,9 +340,9 @@ function updateCard(cardData) {
         if (tagsRow) tagsRow.style.display = 'none';
     }
     
-    // Update UI based on card type
+    
     if (cardType == 1) {
-        // LOẠI 1: CƠ BẢN
+        
         if (document.getElementById('cardFrontText')) {
             document.getElementById('cardFrontText').innerHTML = cardData.frontcontent;
         }
@@ -352,23 +358,23 @@ function updateCard(cardData) {
             document.getElementById('cardExample').style.display = 'block';
         }
     } else if (cardType == 2) {
-        // LOẠI 2: ĐẢO NGƯỢC - cái này cần render lại từ server nên reload page
+        
         window.location.reload();
     } else if (cardType == 3) {
-        // LOẠI 3: NHẬP LIỆU - cái này cũng cần reload
+        
         window.location.reload();
     }
     
-    // Reset buttons and containers
+    
     nextContainer.style.display = 'block';
     gradeContainer.style.display = 'none';
     
-    // Reset grade buttons
+    
     document.querySelectorAll('.btn-grade').forEach(btn => {
         btn.disabled = false;
     });
     
-    // UPDATE PROGRESS BAR
+    
     const progressBar = document.querySelector('.progress-fill');
     const progressText = document.querySelector('.progress-text');
     if (progressBar && cardData.cardIndex !== undefined && cardData.totalCards !== undefined) {
@@ -377,17 +383,17 @@ function updateCard(cardData) {
         progressText.textContent = 'Thẻ ' + cardData.cardIndex + ' / ' + cardData.totalCards;
     }
     
-    // Cập nhật thời gian review dự kiến sau khi card được load
+    
     updateGradeTimings();
 }
 
-// LOẠI 2: ĐẢO NGƯỢC - Toggle hiển thị 2 mặt
+
 function toggleReverse() {
     const flashcard = document.getElementById('flashcard');
     flashcard.classList.toggle('reversed');
 }
 
-// LOẠI 3: NHẬP LIỆU - Submit đáp án
+
 function submitAnswer() {
     const userAnswer = document.getElementById('userAnswer');
     if (!userAnswer || !userAnswer.value.trim()) {
@@ -395,27 +401,27 @@ function submitAnswer() {
         return;
     }
     
-    // Hiển thị phase 2 (so sánh)
+    
     const phase1 = document.getElementById('inputPhase1');
     const phase2 = document.getElementById('inputPhase2');
     
     if (phase1) phase1.style.display = 'none';
     if (phase2) phase2.style.display = 'block';
     
-    // Hiển thị đáp án của user
+    
     const userAnswerDisplay = document.querySelector('.user-answer-display');
     if (userAnswerDisplay) {
         userAnswerDisplay.innerHTML = userAnswer.value;
     }
     
-    // Ẩn nút Tiếp theo, hiện nút đánh giá
+    
     const nextContainer = document.getElementById('nextButtonContainer');
     const gradeContainer = document.getElementById('gradeButtonContainer');
     if (nextContainer) nextContainer.style.display = 'none';
     if (gradeContainer) gradeContainer.style.display = 'block';
 }
 
-// LOẠI 2 & 3: Hiển thị nút đánh giá
+
 function showGradeButtons() {
     const nextContainer = document.getElementById('nextButtonContainer');
     const gradeContainer = document.getElementById('gradeButtonContainer');
@@ -426,7 +432,7 @@ function showGradeButtons() {
     updateGradeTimings();
 }
 
-// Tính toán và hiển thị thời gian review dự kiến cho mỗi nút
+
 function updateGradeTimings() {
     const flashcard = document.getElementById('flashcard');
     if (!flashcard) return;
@@ -436,20 +442,20 @@ function updateGradeTimings() {
     const repetitions = parseInt(flashcard.dataset.cardRepetitions, 10) || 0;
     const easefactor = parseFloat(flashcard.dataset.cardEasefactor) || 2.5;
     
-    // SM2 Constants
-    const LEARNING_STEPS = [1, 10]; // phút
-    const GRADUATING_INTERVAL = 1; // ngày
-    const EASY_INTERVAL = 4; // ngày
-    const RELEARNING_STEPS = [10]; // phút
     
-    // Tính nextReview cho mỗi grade
+    const LEARNING_STEPS = [1, 10]; 
+    const GRADUATING_INTERVAL = 1; 
+    const EASY_INTERVAL = 4; 
+    const RELEARNING_STEPS = [10]; 
+    
+    
     const timings = {};
     for (let grade = 1; grade <= 4; grade++) {
         const result = calculateSM2(grade, status, repetitions, interval, easefactor, LEARNING_STEPS, GRADUATING_INTERVAL, EASY_INTERVAL, RELEARNING_STEPS);
         timings[grade] = formatTime(result.nextReview);
     }
     
-    // Cập nhật UI
+    
     document.querySelectorAll('.btn-grade').forEach(btn => {
         const grade = parseInt(btn.dataset.grade, 10);
         const timeSpan = btn.querySelector('.grade-time');
@@ -459,7 +465,7 @@ function updateGradeTimings() {
     });
 }
 
-// Tính SM2 dựa trên grade
+
 function calculateSM2(grade, status, repetitions, interval, easefactor, LEARNING_STEPS, GRADUATING_INTERVAL, EASY_INTERVAL, RELEARNING_STEPS) {
     grade = Math.max(1, Math.min(4, parseInt(grade, 10)));
     easefactor = Math.max(1.3, easefactor);
@@ -471,57 +477,57 @@ function calculateSM2(grade, status, repetitions, interval, easefactor, LEARNING
     let newRepetitions = repetitions;
     
     if (grade === 1) {
-        // Again - Lapse: back to relearning for 10 minutes
-        nextReviewMinutes = RELEARNING_STEPS[0]; // 10
-        newStatus = 1; // Back to learning/relearning
+        
+        nextReviewMinutes = RELEARNING_STEPS[0]; 
+        newStatus = 1; 
     } else if (status === 0) {
-        // New card
+        
         if (grade === 4) {
             newStatus = 2;
             newRepetitions = 1;
-            nextReviewDays = EASY_INTERVAL; // 4 days
+            nextReviewDays = EASY_INTERVAL; 
             easefactor = easefactor + 0.1;
         } else {
-            // grade 2 or 3 - Move to learning
+            
             newStatus = 1;
             newRepetitions = 0;
-            nextReviewMinutes = LEARNING_STEPS[0]; // 1 minute
+            nextReviewMinutes = LEARNING_STEPS[0]; 
         }
     } else if (status === 1) {
-        // Learning/Relearning card
+        
         if (grade === 4) {
-            // Easy - skip to review
+            
             newStatus = 2;
             newRepetitions = 1;
-            nextReviewDays = EASY_INTERVAL; // 4 days
+            nextReviewDays = EASY_INTERVAL; 
             easefactor = easefactor + 0.1;
         } else if (grade === 2) {
-            // Hard - repeat current step (1 minute)
-            nextReviewMinutes = LEARNING_STEPS[0]; // 1 minute
+            
+            nextReviewMinutes = LEARNING_STEPS[0]; 
         } else if (grade === 3) {
-            // Good - move to next learning step or graduate
+            
             if (newRepetitions < LEARNING_STEPS.length - 1) {
-                // More learning steps to complete
+                
                 newRepetitions++;
-                nextReviewMinutes = LEARNING_STEPS[newRepetitions]; // 10 minutes for step 2
+                nextReviewMinutes = LEARNING_STEPS[newRepetitions]; 
             } else {
-                // All learning steps completed - Graduate to review
+                
                 newStatus = 2;
                 newRepetitions = 1;
-                nextReviewDays = GRADUATING_INTERVAL; // 1 day
+                nextReviewDays = GRADUATING_INTERVAL; 
             }
         }
     } else if (status === 2) {
-        // Review card - Apply SM-2 algorithm
+        
         let newInterval = interval;
         if (grade === 2) {
-            // Hard - reduce interval by 40%
+            
             newInterval = Math.max(1, Math.round(interval * 0.6));
         } else if (grade === 3) {
-            // Good - multiply by easeFactor
+            
             newInterval = Math.round(interval * easefactor);
         } else if (grade === 4) {
-            // Easy - multiply by easeFactor + 10%
+            
             newInterval = Math.round(interval * (easefactor + 0.1));
             easefactor = easefactor + 0.1;
         }
@@ -529,13 +535,13 @@ function calculateSM2(grade, status, repetitions, interval, easefactor, LEARNING
         newRepetitions = repetitions + 1;
     }
     
-    // Calculate easeFactor using SM-2 formula
-    // EF' = EF + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02))
+    
+    
     const q = grade;
     easefactor = easefactor + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02));
     easefactor = Math.max(1.3, easefactor);
     
-    // Set actual nextReviewDate
+    
     if (nextReviewMinutes > 0) {
         nextReviewDate.setMinutes(nextReviewDate.getMinutes() + nextReviewMinutes);
     }
@@ -546,29 +552,29 @@ function calculateSM2(grade, status, repetitions, interval, easefactor, LEARNING
     return { nextReview: nextReviewDate, status: newStatus, repetitions: newRepetitions };
 }
 
-// Format thời gian thành chuỗi viết tắt
+
 function formatTime(date) {
     const now = new Date();
     const diffMs = date.getTime() - now.getTime();
     const diffMins = Math.ceil(diffMs / 60000);
     const diffDays = Math.ceil(diffMs / (24 * 60 * 60 * 1000));
     
-    // Nếu < 60 phút, hiển thị phút
+    
     if (diffMins < 60 && diffMins > 0) {
         return diffMins + 'ph';
     } 
-    // Nếu < 30 ngày, hiển thị ngày
+    
     else if (diffDays >= 0 && diffDays < 30) {
         return Math.max(1, diffDays) + 'ng';
     } 
-    // Nếu >= 30 ngày, hiển thị tháng
+    
     else {
         const diffMonths = Math.ceil(diffDays / 30);
         return diffMonths + 'th';
     }
 }
 
-// Gọi khi trang load hoặc khi hiển thị grade buttons
+
 document.addEventListener('DOMContentLoaded', function() {
     updateGradeTimings();
 });

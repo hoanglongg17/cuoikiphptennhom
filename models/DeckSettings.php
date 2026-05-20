@@ -30,9 +30,7 @@ class DeckSettings extends ActiveRecord
         ];
     }
 
-    /**
-     * Quan hệ: Một cài đặt thuộc về một bộ thẻ
-     */
+    
     public function getDeck()
     {
         return $this->hasOne(Deck::class, ['deckid' => 'deckid']);

@@ -1,11 +1,19 @@
 <?php
+
+
+
+
+
+
+
+
 /** @var yii\web\View $this */
-/** @var app\models\BlogPost[] $posts */
-/** @var app\models\BlogPost[] $featuredPosts */
-/** @var yii\data\Pagination $pagination */
-/** @var yii\widgets\LinkPager|null $pinnedPagination */
-/** @var app\models\BlogPost[] $pinnedPosts */
 /** @var string $keyword */
+/** @var yii\data\Pagination|null $pinnedPagination */
+/** @var app\models\BlogPost[] $pinnedPosts */
+/** @var app\models\BlogPost[] $featuredPosts */
+/** @var app\models\BlogPost[] $posts */
+/** @var yii\data\Pagination|null $pagination */
 
 use yii\helpers\Url;
 use yii\helpers\Html;
@@ -20,7 +28,7 @@ $this->params['breadcrumbs'][] = 'Blog';
         <h1>📝 Blog Andi - Chia Sẻ Kinh Nghiệm Học Tập</h1>
         <p>Khám phá các bộ thẻ hay, mẹo học tập và kinh nghiệm từ cộng đồng</p>
         
-        <!-- Search Form -->
+        
         <div class="blog-search">
             <?php $form = \yii\widgets\ActiveForm::begin([
                 'method' => 'get',
@@ -93,7 +101,7 @@ $this->params['breadcrumbs'][] = 'Blog';
         </div>
     <?php endif; ?>
 
-    <!-- Featured Posts Section (only show when not searching) -->
+    
     <?php if (empty($keyword) && !empty($featuredPosts)): ?>
         <div class="featured-posts-section">
             <h2>⭐ Bài Viết Nổi Bật</h2>
@@ -186,7 +194,7 @@ $this->params['breadcrumbs'][] = 'Blog';
         <?php endif; ?>
     </div>
 
-    <!-- Pagination -->
+    
     <div class="pagination-wrap">
         <?= LinkPager::widget([
             'pagination' => $pagination,
@@ -290,7 +298,7 @@ $this->params['breadcrumbs'][] = 'Blog';
     margin: 0 10px;
 }
 
-/* Featured Posts Section */
+
 .featured-posts-section {
     background: linear-gradient(135deg, #fff5e1 0%, #fffde7 100%);
     border-radius: 12px;

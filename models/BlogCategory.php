@@ -5,9 +5,7 @@ namespace app\models;
 use Yii;
 use yii\db\ActiveRecord;
 
-/**
- * BlogCategory Model - Danh mục bài viết
- */
+
 class BlogCategory extends ActiveRecord
 {
     public static function tableName()

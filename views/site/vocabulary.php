@@ -1,23 +1,29 @@
 <?php
+
+
+
+
+
+
+
 /** @var yii\web\View $this */
-/** @var app\models\Deck[] $decks */
-/** @var app\models\Card[] $cards */
-/** @var int $currentDeckId */
-/** @var array $stats */
 /** @var array $srsByLevel */
+/** @var app\models\Deck[] $decks */
+/** @var int $currentDeckId */
+/** @var app\models\Card[] $cards */
 
 use yii\helpers\Url;
 use yii\helpers\Html;
 
 $this->title = 'Từ vựng - Andi';
 
-// Lấy thông tin người dùng đang đăng nhập
+
 $user = Yii::$app->user->identity;
 
 $this->registerCssFile('@web/css/dashboard.css', ['depends' => [\app\assets\AppAsset::class]]);
 $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\AppAsset::class]]);
 ?>
-<!-- SRS LEVEL DISTRIBUTION -->
+
 <section class="srs-section">
     <h2>📚 Phân bố từ vựng theo cấp độ</h2>
     <p class="srs-description">Lịch ôn tập theo Hệ thống Lặp lại Ngắt quãng (SRS)</p>
@@ -89,7 +95,7 @@ $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\App
                         <td style="font-family: monospace;"><?= Html::encode($card->pronunciation) ?></td>
                         <td class="col-action">
                              <div style="display: flex; justify-content: center; gap: 8px; align-items: center; min-width: 120px;">
-                                <!-- NÚT SỬA THẺ (✏️) -->
+                                
                                 <button class="btn-action-edit" 
                                         onclick="openEditCardModal(<?= htmlspecialchars(json_encode($card->attributes)) ?>)" 
                                         title="Sửa từ vựng" 
@@ -97,7 +103,7 @@ $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\App
                                     ✏️
                                 </button>
                                 
-                                <!-- NÚT THÊM VÀO BỘ (➕) -->
+                                
                                 <button class="btn-action-add" 
                                         onclick="openAssignModal(<?= $card->cardid ?>)" 
                                         title="Thêm vào bộ"
@@ -105,7 +111,7 @@ $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\App
                                     ➕
                                 </button>
 
-                                <!-- NÚT XÓA (×) -->
+                                
                                 <button class="btn-delete-card-table" 
                                         onclick="deleteCard(<?= $card->cardid ?>)" 
                                         title="Xóa vĩnh viễn"
@@ -120,7 +126,7 @@ $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\App
         </tbody>
     </table>
 </div>
-<!-- POP-UP 1: THÊM THẺ HÀNG LOẠT -->
+
 <div id="modalAddBatch" class="modal-overlay" onclick="this.style.display='none'">
     <div class="modal-content-huge" onclick="event.stopPropagation()">
         <div class="modal-header-add">
@@ -178,7 +184,7 @@ $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\App
     </div>
 </div>
 
-<!-- POP-UP 2: CHỌN BỘ THẺ ĐỂ GẮN VÀO -->
+
 <div id="modalAssignDeck" class="modal-overlay" onclick="this.style.display='none'">
     <div class="modal-content" style="max-width: 400px; text-align: center;" onclick="event.stopPropagation()">
         <h2 style="margin-bottom: 20px; font-size: 20px;">Thêm thẻ vào bộ</h2>
@@ -238,10 +244,10 @@ $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\App
 </div>
 
 <script>
-// --- CÁC HÀM XỬ LÝ SỬA THẺ TỪ VỰNG ---
+
 
 function openEditCardModal(cardData) {
-    // Đổ dữ liệu vào các ô input trong popup
+    
     document.getElementById('editCardId').value = cardData.cardid;
     document.getElementById('editFront').value = cardData.frontcontent;
     document.getElementById('editBack').value = cardData.backcontent;
@@ -249,7 +255,7 @@ function openEditCardModal(cardData) {
     document.getElementById('editExample').value = cardData.examplesentence || '';
     document.getElementById('editTags').value = cardData.tags || '';
     
-    // Hiển thị popup
+    
     document.getElementById('modalEditCard').style.display = 'flex';
 }
 
@@ -282,7 +288,7 @@ function updateCardData() {
     .then(data => {
         if(data.success) {
             alert('Đã cập nhật từ vựng thành công!');
-            location.reload(); // Tải lại trang để thấy dữ liệu mới
+            location.reload(); 
         } else {
             alert('Lỗi: ' + data.message);
         }

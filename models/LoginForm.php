@@ -6,16 +6,15 @@ use Yii;
 use yii\base\Model;
 use app\models\User;
 
-/**
- * LoginForm xử lý logic đăng nhập bằng Email
- */
+
 class LoginForm extends Model
 {
     public $email;
     public $password;
     public $rememberMe = true;
 
-    private $_user = false;
+    /** @var User|null */
+    private ?User $_user = null;
 
     public function rules()
     {
@@ -40,7 +39,7 @@ class LoginForm extends Model
     {
         if (!$this->hasErrors()) {
             $user = $this->getUser();
-            // Kiểm tra user tồn tại và mật khẩu khớp
+            
             if (!$user || !$user->validatePassword($this->password)) {
                 $this->addError($attribute, 'Email hoặc mật khẩu không chính xác.');
             }
@@ -50,16 +49,15 @@ class LoginForm extends Model
     public function login()
     {
         if ($this->validate()) {
-            // Thực hiện đăng nhập và lưu session
+            
             return Yii::$app->user->login($this->getUser(), $this->rememberMe ? 3600 * 24 * 30 : 0);
         }
         return false;
     }
 
-    protected function getUser()
+    protected function getUser(): ?User
     {
-        if ($this->_user === false) {
-            // Tìm kiếm user theo email đã nhập
+        if ($this->_user === null) {
             $this->_user = User::findByEmail($this->email);
         }
         return $this->_user;

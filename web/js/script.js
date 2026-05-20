@@ -12,5 +12,5 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   window.addEventListener("scroll", revealOnScroll);
-  revealOnScroll(); // chạy ngay khi load
+  revealOnScroll(); 
 });

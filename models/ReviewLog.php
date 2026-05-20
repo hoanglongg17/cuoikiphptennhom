@@ -32,17 +32,13 @@ class ReviewLog extends ActiveRecord
         ];
     }
 
-    /**
-     * Quan hệ: Một log thuộc về một thẻ
-     */
+    
     public function getCard()
     {
         return $this->hasOne(Card::class, ['cardid' => 'cardid']);
     }
 
-    /**
-     * Quan hệ: Một log có một CardProgress (trên cùng thẻ)
-     */
+    
     public function getCardProgress()
     {
         return $this->hasOne(CardProgress::class, ['cardid' => 'cardid']);

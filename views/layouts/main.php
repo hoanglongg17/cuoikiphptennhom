@@ -27,7 +27,7 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
     <title><?= Html::encode($this->title) ?></title>
     <?php $this->head() ?>
     <style>
-        /* ==================== HEADER STYLES ==================== */
+        
         header {
             display: flex;
             justify-content: space-between;
@@ -131,7 +131,7 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
             color: #fff;
         }
         
-        /* Adjust body and dashboard to account for fixed header */
+        
         body {
             padding-top: 0 !important;
         }
@@ -164,7 +164,7 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
                 <a href="<?= Url::to(['site/dashboard']) ?>" class="display-name">
                     Hi, <?php 
                         $displayName = Yii::$app->user->identity->displayname;
-                        // Remove emoji for cleaner display
+                        
                         $displayName = preg_replace('/[^\p{L}\p{N}\s\-]/u', '', $displayName);
                         echo Html::encode(trim($displayName));
                     ?>

@@ -1,6 +1,4 @@
-/* ============================================
-   TRANG LUYỆN TẬP - PRACTICE.PHP
-   ============================================ */
+
 
 .practice-container {
     padding: 30px 20px;
@@ -24,7 +22,7 @@
     margin: 0;
 }
 
-/* Thống kê tổng quan */
+
 .practice-stats-row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -63,7 +61,7 @@
     color: #1abc9c;
 }
 
-/* Bảng danh sách bộ thẻ */
+
 .decks-grid {
     background: #fff;
     border-radius: 12px;
@@ -193,7 +191,7 @@
     margin: 0 0 20px;
 }
 
-/* Responsive */
+
 @media (max-width: 1024px) {
     .decks-table-header,
     .deck-study-card {

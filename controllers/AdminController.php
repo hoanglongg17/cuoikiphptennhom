@@ -14,17 +14,12 @@ use app\models\BlogNestedComment;
 use app\models\User;
 use yii\data\Pagination;
 
-/**
- * AdminController - Quản lý Admin Panel
- * Chỉ cho Admin truy cập
- */
+
 class AdminController extends Controller
 {
     public $layout = 'main';
 
-    /**
-     * Quy tắc kiểm soát truy cập
-     */
+    
     public function behaviors()
     {
         return [
@@ -35,10 +30,10 @@ class AdminController extends Controller
                         [
                             'actions' => ['dashboard', 'blog-list', 'blog-edit', 'blog-create', 'blog-delete', 'blog-pin', 'blog-approve', 'blog-reject', 'blog-archive', 'blog-unarchive', 'blog-comments', 'approve-comment', 'reject-comment', 'delete-comment'],
                         'allow' => true,
-                        'roles' => ['@'],  // Phải đăng nhập
+                        'roles' => ['@'],  
                         'matchCallback' => function ($rule, $action) {
-                            // Kiểm tra xem người dùng có phải là admin không
-                            /** @var \app\models\User $user */
+                            
+                            
                             $user = Yii::$app->user->identity;
                             return $user && method_exists($user, 'isAdmin') && $user->isAdmin();
                         }
@@ -61,17 +56,15 @@ class AdminController extends Controller
         ];
     }
 
-    /**
-     * Admin Dashboard - Trang chủ quản lý
-     */
+    
     public function actionDashboard()
     {
-        // Lấy thống kê cơ bản
+        
         $totalPosts = BlogPost::find()->count();
         $publishedPosts = BlogPost::find()->where(['status' => BlogPost::STATUS_PUBLISHED])->count();
-        $draftPosts = BlogPost::find()->where(['status' => BlogPost::STATUS_DRAFT])->count();
+        $pendingPosts = BlogPost::find()->where(['status' => BlogPost::STATUS_PENDING])->count();
 
-        // Lấy 5 bài viết mới nhất đã xuất bản
+        
         $recentPosts = BlogPost::find()
             ->where(['status' => BlogPost::STATUS_PUBLISHED])
             ->orderBy(['createdat' => SORT_DESC])
@@ -81,14 +74,13 @@ class AdminController extends Controller
         return $this->render('dashboard', [
             'totalPosts' => $totalPosts,
             'publishedPosts' => $publishedPosts,
-            'draftPosts' => $draftPosts,
+            'pendingPosts' => $pendingPosts,
+            'draftPosts' => $pendingPosts,
             'recentPosts' => $recentPosts,
         ]);
     }
 
-    /**
-     * Danh sách các bài viết blog
-     */
+    
     public function actionBlogList()
     {
         $status = Yii::$app->request->get('status', '');
@@ -97,7 +89,7 @@ class AdminController extends Controller
         $query = BlogPost::find();
 
         if ($status === BlogPost::STATUS_DRAFT) {
-            // Admin không xem bài draft của user
+            
             $query->where(['postid' => 0]);
         } elseif ($status) {
             $query->where(['status' => $status]);
@@ -124,9 +116,7 @@ class AdminController extends Controller
         ]);
     }
 
-    /**
-     * Tạo bài viết blog mới
-     */
+    
     public function actionBlogCreate()
     {
         $model = new BlogPost();
@@ -134,7 +124,7 @@ class AdminController extends Controller
         $model->status = BlogPost::STATUS_DRAFT;
 
         if ($model->load(Yii::$app->request->post())) {
-            // Nếu admin chọn xuất bản ngay, đặt publishedat
+            
             if ($model->status === BlogPost::STATUS_PUBLISHED && is_null($model->publishedat)) {
                 $model->publishedat = date('Y-m-d H:i:s');
             } elseif ($model->status === BlogPost::STATUS_DRAFT) {
@@ -153,15 +143,13 @@ class AdminController extends Controller
         ]);
     }
 
-    /**
-     * Chỉnh sửa bài viết blog
-     */
+    
     public function actionBlogEdit($id)
     {
         $model = $this->findBlogPost($id);
 
         if ($model->load(Yii::$app->request->post())) {
-            // Nếu chuyển từ draft sang published, đặt publishedat
+            
             if ($model->status === BlogPost::STATUS_PUBLISHED && is_null($model->publishedat)) {
                 $model->publishedat = date('Y-m-d H:i:s');
             } elseif ($model->status === BlogPost::STATUS_DRAFT) {
@@ -180,9 +168,7 @@ class AdminController extends Controller
         ]);
     }
 
-    /**
-     * Xuất bản bài viết
-     */
+    
     public function actionBlogPublish($id)
     {
         $model = $this->findBlogPost($id);
@@ -199,9 +185,7 @@ class AdminController extends Controller
         return $this->redirect(['blog-list']);
     }
 
-    /**
-     * Duyệt bài viết chờ duyệt
-     */
+    
     public function actionBlogApprove($id)
     {
         $model = $this->findBlogPost($id);
@@ -220,9 +204,7 @@ class AdminController extends Controller
         return $this->redirect(['blog-list']);
     }
 
-    /**
-     * Từ chối bài viết
-     */
+    
     public function actionBlogReject($id)
     {
         $model = $this->findBlogPost($id);
@@ -257,9 +239,7 @@ class AdminController extends Controller
         return $this->redirect(['blog-list']);
     }
 
-    /**
-     * Lưu trữ bài viết
-     */
+    
     public function actionBlogArchive($id)
     {
         $model = $this->findBlogPost($id);
@@ -274,9 +254,7 @@ class AdminController extends Controller
         return $this->redirect(['blog-list']);
     }
 
-    /**
-     * Khôi phục bài viết lưu trữ về xuất bản
-     */
+    
     public function actionBlogUnarchive($id)
     {
         $model = $this->findBlogPost($id);
@@ -294,9 +272,7 @@ class AdminController extends Controller
         return $this->redirect(['blog-list']);
     }
 
-    /**
-     * Xóa bài viết blog
-     */
+    
     public function actionBlogDelete($id)
     {
         $model = $this->findBlogPost($id);
@@ -308,12 +284,10 @@ class AdminController extends Controller
         return $this->redirect(['blog-list']);
     }
 
-    /**
-     * Xóa bình luận (admin)
-     */
+    
     public function actionDeleteComment($id)
     {
-        // Only admin reaches here due to access rules
+        
         $nested = BlogNestedComment::findOne($id);
         if ($nested) {
             $nested->delete();
@@ -332,9 +306,7 @@ class AdminController extends Controller
         return $this->redirect(['blog-comments']);
     }
 
-    /**
-     * Ghim/Bỏ ghim bài viết
-     */
+    
     public function actionBlogPin($id)
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
@@ -358,9 +330,7 @@ class AdminController extends Controller
 
 
 
-    /**
-     * Tìm model BlogPost dựa trên ID
-     */
+    
     protected function findBlogPost($id)
     {
         $model = BlogPost::findOne($id);

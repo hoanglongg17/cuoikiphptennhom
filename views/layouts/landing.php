@@ -19,7 +19,7 @@ AppAsset::register($this);
     <?php $this->head() ?>
     <link rel="stylesheet" href="<?= Yii::getAlias('@web') ?>/css/style.css">
     <style>
-        /* CSS cho Header để xử lý hiển thị */
+        
         header {
             display: flex;
             justify-content: space-between;
@@ -46,7 +46,7 @@ AppAsset::register($this);
         }
         .btn-signup:hover { background: #e73370; }
         
-        /* Hiển thị User khi đã đăng nhập */
+        
         .user-nav-info { display: flex; align-items: center; gap: 12px; }
         .nav-avatar {
             width: 35px;
@@ -63,7 +63,7 @@ AppAsset::register($this);
         }
         .btn-logout-nav:hover { background: #ff4757; color: #fff; }
 
-        body { padding-top: 70px; } /* Để nội dung không bị Header đè lên */
+        body { padding-top: 70px; } 
     </style>
 </head>
 <body>
@@ -79,14 +79,14 @@ AppAsset::register($this);
     
     <nav>
         <?php if (Yii::$app->user->isGuest): ?>
-            <!-- CHƯA ĐĂNG NHẬP -->
+            
             <a href="<?= Url::to(['site/login']) ?>" class="btn-login">Đăng nhập</a>
-            <!-- ĐÃ SỬA: Thay site/login bằng site/signup -->
+            
             <a href="<?= Url::to(['site/signup']) ?>" class="btn-signup">Đăng ký</a>
         <?php else: ?>
-            <!-- ĐÃ ĐĂNG NHẬP -->
+            
             <div class="user-nav-info">
-                <!-- Hiển thị Avatar (giống trang Profile) -->
+                
                 <img src="<?= Yii::$app->user->identity->avatarurl ? Yii::$app->user->identity->avatarurl : Yii::getAlias('@web/images/andi-avatar.png') ?>" 
                      alt="Avatar" class="nav-avatar" onerror="this.src='https://via.placeholder.com/35'">
                 

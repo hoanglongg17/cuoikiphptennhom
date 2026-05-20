@@ -1,8 +1,14 @@
 <?php
+
+
+
+
+
 /** @var yii\web\View $this */
-/** @var app\models\BlogPost[] $posts */
-/** @var string $currentStatus */
 /** @var string $keyword */
+/** @var string $currentStatus */
+/** @var app\models\BlogPost[] $posts */
+/** @var yii\data\Pagination $pagination */
 
 use yii\helpers\Url;
 use yii\helpers\Html;
@@ -27,7 +33,7 @@ $this->params['breadcrumbs'][] = 'Bài Viết';
         </div>
     <?php endif; ?>
 
-    <!-- Search Form -->
+    
     <div class="admin-search-section">
         <form method="get" class="admin-search-form">
             <div class="search-input-group">
@@ -38,7 +44,7 @@ $this->params['breadcrumbs'][] = 'Bài Viết';
                     <a href="<?= Url::to(['admin/blog-list']) ?>" class="btn btn-secondary">Xóa</a>
                 <?php endif; ?>
                 
-                <!-- Preserve status filter when searching -->
+                
                 <?php if (!empty($currentStatus)): ?>
                     <input type="hidden" name="status" value="<?= Html::encode($currentStatus) ?>" />
                 <?php endif; ?>
@@ -51,7 +57,7 @@ $this->params['breadcrumbs'][] = 'Bài Viết';
         </form>
     </div>
 
-    <!-- Status Filter -->
+    
     <div class="filter-section">
         <h3>Lọc theo Trạng Thái:</h3>
         <div class="filter-buttons">
@@ -78,7 +84,7 @@ $this->params['breadcrumbs'][] = 'Bài Viết';
         </div>
     </div>
 
-    <!-- Blog List Table -->
+    
     <div class="blog-list-table">
         <?php if (empty($posts)): ?>
             <div class="alert alert-info">
@@ -217,7 +223,7 @@ $this->params['breadcrumbs'][] = 'Bài Viết';
     margin: 0;
 }
 
-/* Admin Search Form Styles */
+
 .admin-search-section {
     background: #f0f8ff;
     border: 1px solid #b3d9ff;

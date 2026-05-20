@@ -1,4 +1,4 @@
-// Toggle Sidebar
+
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     if (sidebar) {
@@ -8,7 +8,7 @@ function toggleSidebar() {
     }
 }
 
-// Toggle Profile Modal
+
 function toggleProfileModal() {
     const modal = document.getElementById('profileModal');
     if (modal) {
@@ -17,7 +17,7 @@ function toggleProfileModal() {
     closeAllEditModals();
 }
 
-// Close modal when clicking outside
+
 document.addEventListener('click', function(event) {
     const modal = document.getElementById('profileModal');
     const profileSection = document.querySelector('.profile');
@@ -27,7 +27,7 @@ document.addEventListener('click', function(event) {
     }
 });
 
-// ===== EDIT NAME FUNCTIONS =====
+
 function openEditNameModal() {
     const modal = document.getElementById('profileModal');
     const editNameModal = document.getElementById('editNameModal');
@@ -298,32 +298,32 @@ document.addEventListener('DOMContentLoaded', function() {
     if (studyDays) {
         const today = new Date();
         const dayOfWeek = today.getDay();
-        // Convert JavaScript day (0=Sun, 1=Mon, ..., 6=Sat) to data-day (1=Mon, ..., 7=Sun)
+        
         const todayDataDay = dayOfWeek === 0 ? 7 : dayOfWeek;
         
-        // Remove active from all spans
+        
         studyDays.querySelectorAll('span').forEach(span => {
             span.classList.remove('active');
         });
         
-        // Add active to today's span
+        
         const todaySpan = studyDays.querySelector(`span[data-day="${todayDataDay}"]`);
         if (todaySpan) {
             todaySpan.classList.add('active');
         }
     }
 
-    // Dark mode toggle with smooth transition
+    
     const darkModeToggle = document.getElementById('darkModeToggle');
     if (darkModeToggle) {
-        // Restore theme preference from localStorage
+        
         const isDarkMode = localStorage.getItem('darkMode') === 'true';
         if (isDarkMode) {
             document.body.classList.add('dark-mode');
             darkModeToggle.checked = true;
         }
 
-        // Listen for theme toggle
+        
         darkModeToggle.addEventListener('change', function() {
             if (this.checked) {
                 document.body.classList.add('dark-mode');

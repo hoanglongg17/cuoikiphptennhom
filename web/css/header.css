@@ -21,8 +21,8 @@ header .logo {
 }
 
 header .logo img {
-  height: 40px;       /* chỉnh kích thước logo */
-  margin-right: 10px; /* khoảng cách giữa logo và chữ */
+  height: 40px;       
+  margin-right: 10px; 
 }
 
 header .logo span {

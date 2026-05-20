@@ -135,9 +135,9 @@ create table blogposts (
     constraint fk_blogposts_decks foreign key (sharedeckid) 
         references decks(deckid) on delete set null
 ) engine=innodb;
---ALTER TABLE blogposts
---ADD COLUMN rejectionreason TEXT NULL
---thêm hai dòng trên để thêm cột rejectionreason vào bảng blogposts nếu chưa có
+-- ALTER TABLE blogposts
+-- ADD COLUMN rejectionreason TEXT NULL
+-- thêm hai dòng trên để thêm cột rejectionreason vào bảng blogposts nếu chưa có
 
 create index idx_blogposts_status on blogposts(status);
 create index idx_blogposts_userid on blogposts(userid);

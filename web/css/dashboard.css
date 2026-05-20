@@ -1,12 +1,12 @@
 .dashboard {
   display: flex;
-  margin-top: 0; /* body đã chừa chỗ header (70px) */
+  margin-top: 0; 
 }
 
-/* Sidebar */
+
 .sidebar {
   position: fixed;
-  top: 70px; /* khớp với header cao 70px */
+  top: 70px; 
   left: 0;
   width: 220px;
   background: #2c3e50;
@@ -53,14 +53,14 @@
   transform: translateX(5px);
 }
 
-/* Active state */
+
 .sidebar .menu a.active {
-  background: #1abc9c;       /* màu nền nổi bật */
+  background: #1abc9c;       
   color: #fff;
   font-weight: 600;
 }
 
-/* Toggle button */
+
 .toggle-btn {
   display: flex;
   align-items: center;
@@ -68,8 +68,8 @@
   background: #34495e;
   border: none;
   color: #fff;
-  font-size: 20px;       /* chữ « to hơn */
-  padding: 12px;         /* padding rộng */
+  font-size: 20px;       
+  padding: 12px;         
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -112,7 +112,7 @@
   align-items: center;
 }
 
-/* Nút xem hồ sơ */
+
 .btn-profile {
   background: #ff4081;
   border: none;
@@ -127,7 +127,7 @@
   background: #e73370;
 }
 
-/* Switch chế độ tối */
+
 .theme-switch {
   position: relative;
   display: inline-flex;
@@ -174,7 +174,7 @@
   color: #fff;
 }
 
-/* Main content */
+
 .main {
   margin-left: 220px;
   margin-top: 70px;
@@ -190,7 +190,7 @@
   margin-left: 80px;
 }
 
-/* Dark Mode */
+
 body.dark-mode {
   background: #1a1a1a;
   color: #e0e0e0;
@@ -278,9 +278,7 @@ body.dark-mode .sidebar .menu a.active {
   transform: scale(1.1);
 }
 
-/* ============================================
-   SRS SECTION - Phân bố từ vựng theo cấp độ
-   ============================================ */
+
 .srs-section {
   padding: 30px 20px;
   background: #f5f7fa;
@@ -358,7 +356,7 @@ body.dark-mode .sidebar .menu a.active {
   font-weight: 500;
 }
 
-/* Responsive */
+
 @media (max-width: 768px) {
   .srs-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -410,13 +408,13 @@ body.dark-mode .sidebar .menu a.active {
 
 
 
-/* Container chính */
+
 .dashboard {
     display: flex;
     margin-top: 0;
 }
 
-/* Sidebar */
+
 .sidebar {
     position: fixed;
     top: 70px;
@@ -430,7 +428,7 @@ body.dark-mode .sidebar .menu a.active {
     justify-content: space-between;
     height: calc(100vh - 70px);
     box-sizing: border-box;
-    z-index: 900; /* dưới header */
+    z-index: 900; 
 }
 
 .sidebar .menu {
@@ -457,12 +455,12 @@ body.dark-mode .sidebar .menu a.active {
     flex-shrink: 0;
 }
 
-/* Icons giữ nguyên màu gốc */
+
 .sidebar .menu a img {
     filter: none;
 }
 
-/* Collapsed sidebar */
+
 .sidebar.collapsed {
     width: 80px;
 }
@@ -492,7 +490,7 @@ body.dark-mode .sidebar .menu a.active {
     background: #1abc9c;
 }
 
-/* Profile Section */
+
 .profile {
     padding-top: 20px;
     border-top: 1px solid rgba(255,255,255,0.1);
@@ -528,7 +526,7 @@ body.dark-mode .sidebar .menu a.active {
     cursor: pointer;
 }
 
-/* Modal Popup Styles */
+
 .profile-modal {
     display: none; 
     position: fixed;
@@ -563,7 +561,7 @@ body.dark-mode .sidebar .menu a.active {
     font-family: 'Segoe UI', 'Roboto', 'Noto Sans', Arial, sans-serif;
 }
 
-/* Scrollbar styling for modal */
+
 .modal-content::-webkit-scrollbar {
     width: 6px;
 }
@@ -677,12 +675,12 @@ body.dark-mode .sidebar .menu a.active {
 .btn-edit { background: #1abc9c; color: #fff; }
 .btn-logout-modal { background: #ff4757; color: #fff; }
 
-/* --- MODAL PROFILE (Phần Popup giữa màn hình) --- */
-/* Đã dịch chuyển lên trên */
 
-/* Tên người dùng trong Modal */
+
+
+
 .modal-content h2 {
-    display: block; /* Ép xuống dòng */
+    display: block; 
     width: 100%;
     font-size: 28px;
     font-weight: 800;
@@ -702,7 +700,7 @@ body.dark-mode .sidebar .menu a.active {
 }
 
 .modal-body {
-    width: 100%; /* Đảm bảo body chiếm hết chiều ngang modal */
+    width: 100%; 
     margin: 25px 0;
     text-align: left;
     background: #f8f9fa;
@@ -727,7 +725,7 @@ body.dark-mode .sidebar .menu a.active {
 .btn-edit, .btn-logout-modal {
     flex: 1;
     border: none;
-    padding: 15px; /* Nút to dễ bấm */
+    padding: 15px; 
     border-radius: 15px;
     font-weight: 700;
     font-size: 16px;
@@ -756,9 +754,7 @@ body.dark-mode .sidebar .menu a.active {
     background: #ee3e4d;
     transform: translateY(-2px);
 }
-/*
 
-*/
 .btn-save {
     background: #27ae60;
     color: #fff;
@@ -775,7 +771,7 @@ body.dark-mode .sidebar .menu a.active {
     transform: translateY(-2px);
 }
 
-/* Đảm bảo input edit-input nằm ngang hàng và đẹp */
+
 .edit-input {
     width: 100%;
     padding: 12px 15px;
@@ -789,7 +785,7 @@ body.dark-mode .sidebar .menu a.active {
     margin-bottom: 10px;
 }
 
-/* Hiển thị flex cho các phần tử footer khi ở chế độ edit */
+
 .is-editing .modal-footer {
     flex-direction: row;
 }
@@ -798,10 +794,10 @@ body.dark-mode .sidebar .menu a.active {
     display: block !important;
 }
 
-/* Tiện ích ẩn/hiện nhanh */
+
 .w-100 { width: 100%; }
 
-/* Dark Mode - Extended Styles */
+
 body.dark-mode header {
     background: #1a1a1a;
     border-bottom: 1px solid #444;
@@ -872,7 +868,7 @@ body.dark-mode a:hover {
     color: #ff4081;
 }
 
-/* Action Buttons Styles for Profile Modal */
+
 .info-section {
     background: #f5f5f5;
     padding: 12px;
@@ -955,7 +951,7 @@ body.dark-mode a:hover {
     border-color: #ff4757;
 }
 
-/* Dark mode for action buttons */
+
 body.dark-mode .info-section {
     background: #2a2a2a;
     color: #e0e0e0;
@@ -980,7 +976,7 @@ body.dark-mode .modal-avatar img {
     border-color: #1abc9c;
 }
 
-/* Edit Profile Form Styles */
+
 .edit-form {
     margin-top: 20px;
     padding: 15px 0;
@@ -1102,7 +1098,7 @@ body.dark-mode .modal-avatar img {
     transform: scale(1.1);
 }
 
-/* Dark mode for edit form */
+
 body.dark-mode .edit-form {
     border-top-color: #444;
 }
@@ -1139,7 +1135,7 @@ body.dark-mode .text-danger {
     color: #ff6b6b;
 }
 
-/* Upload Button Style */
+
 .btn-upload {
     display: block;
     padding: 12px 16px;
@@ -1161,7 +1157,7 @@ body.dark-mode .text-danger {
     transform: translateY(-2px);
 }
 
-/* Additional action button styles */
+
 .password-btn {
     border-color: #667eea;
     color: #667eea;
@@ -1182,7 +1178,7 @@ body.dark-mode .text-danger {
     border-color: #ff9900;
 }
 
-/* Dark mode for new action buttons */
+
 body.dark-mode .password-btn {
     border-color: #667eea;
     color: #667eea;
@@ -1211,9 +1207,7 @@ body.dark-mode .btn-upload:hover {
     border-color: #16a687;
 }
 
-/* ============================================
-   DARK MODE - Global Styles
-   ============================================ */
+
 body.dark-mode {
     background: #1a1a1a;
     color: #e0e0e0;

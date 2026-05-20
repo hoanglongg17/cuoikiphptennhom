@@ -1,7 +1,7 @@
 <?php
 /** @var yii\web\View $this */
-/** @var app\models\BlogComment[] $comments */
 /** @var string $currentStatus */
+/** @var app\models\BlogComment[] $comments */
 
 use yii\helpers\Url;
 use yii\helpers\Html;
@@ -22,7 +22,7 @@ $this->params['breadcrumbs'][] = 'Bình Luận';
         </div>
     <?php endif; ?>
 
-    <!-- Status Filter -->
+    
     <div class="filter-section">
         <h3>Lọc theo Trạng Thái:</h3>
         <div class="filter-buttons">
@@ -45,7 +45,7 @@ $this->params['breadcrumbs'][] = 'Bình Luận';
         </div>
     </div>
 
-    <!-- Comments List -->
+    
     <div class="comments-wrapper">
         <?php if (empty($comments)): ?>
             <div class="alert alert-info">

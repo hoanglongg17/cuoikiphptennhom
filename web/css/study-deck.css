@@ -1,6 +1,4 @@
-/* ============================================
-   TRANG HỌC BỘ THẺ (FLASHCARD) - STUDY-DECK.PHP
-   ============================================ */
+
 
 .study-deck-container {
     padding: 30px 20px;
@@ -8,7 +6,7 @@
     margin: 0 auto;
 }
 
-/* Header */
+
 .study-header {
     margin-bottom: 40px;
 }
@@ -42,7 +40,7 @@
     color: #2c3e50;
 }
 
-/* Progress */
+
 .study-progress {
     margin-bottom: 20px;
 }
@@ -69,7 +67,7 @@
     transition: width 0.3s ease;
 }
 
-/* Flashcard */
+
 .study-content {
     background: #fff;
     border-radius: 12px;
@@ -156,13 +154,13 @@
     overflow-y: auto;
 }
 
-/* Controls */
+
 .study-controls {
     text-align: center;
     margin-bottom: 30px;
 }
 
-/* Nút Tiếp theo */
+
 .next-button-container {
     padding: 20px 0;
 }
@@ -189,7 +187,7 @@
     transform: scale(0.98);
 }
 
-/* Nút đánh giá container */
+
 .grade-buttons-container {
     padding: 20px 0;
 }
@@ -232,7 +230,7 @@
     transform: scale(0.98);
 }
 
-.grade-0 { /* Again */
+.grade-0 { 
     border-color: #f44336;
 }
 
@@ -240,7 +238,7 @@
     background: #ffebee;
 }
 
-.grade-1 { /* Hard */
+.grade-1 { 
     border-color: #ff9800;
 }
 
@@ -248,7 +246,7 @@
     background: #fff3e0;
 }
 
-.grade-2 { /* Good */
+.grade-2 { 
     border-color: #2196f3;
 }
 
@@ -256,7 +254,7 @@
     background: #e3f2fd;
 }
 
-.grade-3 { /* Easy */
+.grade-3 { 
     border-color: #4caf50;
 }
 
@@ -264,7 +262,7 @@
     background: #e8f5e9;
 }
 
-.grade-4 { /* Very Easy */
+.grade-4 { 
     border-color: #9c27b0;
 }
 
@@ -292,7 +290,7 @@
     display: block;
 }
 
-/* Card Info */
+
 .card-info {
     padding: 20px;
     background: #f9f9f9;
@@ -322,7 +320,7 @@
     flex: 1;
 }
 
-/* Loading state */
+
 .btn-grade:disabled {
     opacity: 0.6;
     cursor: not-allowed;
@@ -342,7 +340,7 @@
     to { transform: rotate(360deg); }
 }
 
-/* Responsive */
+
 @media (max-width: 768px) {
     .flashcard {
         height: 300px;
@@ -370,9 +368,7 @@
     }
 }
 
-/* ============================================
-   LOẠI 2: ĐẢO NGƯỢC (CÁCH 2 MẶT)
-   ============================================ */
+
 .flashcard-reverse {
     height: auto;
     cursor: default;
@@ -405,7 +401,7 @@
 
 .card-reverse-side.card-back {
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    transform: none; /* Remove rotateY 180deg từ flashcard.flipped */
+    transform: none; 
 }
 
 .card-reverse-divider {
@@ -425,14 +421,12 @@
     color: #666;
 }
 
-/* State: reversed (khi click divider) */
+
 .card-reverse-container.reversed {
     flex-direction: row-reverse;
 }
 
-/* ============================================
-   LOẠI 3: NHẬP LIỆU (INPUT ANSWER)
-   ============================================ */
+
 .flashcard-input {
     height: auto;
     perspective: none;
@@ -448,7 +442,7 @@
     to { opacity: 1; }
 }
 
-/* Phase 1: Input */
+
 .card-front.input-mode {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     height: auto;
@@ -512,7 +506,7 @@
     transform: scale(0.98);
 }
 
-/* Phase 2: Answer comparison */
+
 .card-answer-reveal {
     background: #f9f9f9;
     border-radius: 12px;
@@ -585,7 +579,7 @@
     color: #ff9800;
 }
 
-/* Responsive */
+
 @media (max-width: 768px) {
     .card-reverse-container {
         height: 300px;

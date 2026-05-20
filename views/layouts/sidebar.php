@@ -4,9 +4,9 @@ use yii\helpers\Html;
 
 $user = Yii::$app->user->identity;
 ?>
-<!-- Biến global để JavaScript sử dụng -->
+
 <script>
-    // Base URL và API URLs được sinh bởi PHP
+    
     window.appBaseUrl = '<?= Url::base() ?>';
     window.apiUpdateProfileUrl = '<?= Url::to(['site/ajax-update-profile'], true) ?>';
     console.log('✓ App initialized');
@@ -32,15 +32,15 @@ $user = Yii::$app->user->identity;
         <div class="avatar" onclick="toggleProfileModal()" style="cursor: pointer;">
             <img src="<?= $user->avatarurl ?: Yii::getAlias('@web/images/andi-avatar.png') ?>" alt="User Avatar">
         </div>
-        <!-- Nhấn vào tên để hiện popup -->
+        
         <p class="username" onclick="toggleProfileModal()"><?php 
             $displayName = $user->displayname;
-            // Remove emoji for cleaner display
+            
             $displayName = preg_replace('/[^\p{L}\p{N}\s\-]/u', '', $displayName);
             echo Html::encode(trim($displayName));
         ?></p>
         <div class="profile-actions">
-            <!-- Nút Xem hồ sơ kích hoạt popup -->
+            
             <button class="btn-profile" onclick="toggleProfileModal()">Xem hồ sơ</button>
             <label class="theme-switch">
                 <input type="checkbox" id="darkModeToggle">
@@ -50,12 +50,12 @@ $user = Yii::$app->user->identity;
         </div>
     </div>
 
-    <!-- Profile Modal -->
+    
     <div id="profileModal" class="profile-modal">
         <div class="modal-content">
             <button class="close-btn" onclick="toggleProfileModal()">✕</button>
             
-            <!-- VIEW MODE -->
+            
             <div class="modal-header">
                 <div class="logo-section">
                     <img src="<?= Yii::getAlias('@web/images/andilogo.png') ?>" alt="Andi Logo" class="logo-icon">
@@ -69,7 +69,7 @@ $user = Yii::$app->user->identity;
 
             <h3 id="profileNameDisplay"><?php 
                 $displayName = $user->displayname;
-                // Remove emoji for cleaner display
+                
                 $displayName = preg_replace('/[^\p{L}\p{N}\s\-]/u', '', $displayName);
                 echo Html::encode(trim($displayName));
             ?></h3>
@@ -79,7 +79,7 @@ $user = Yii::$app->user->identity;
                 <p><strong>Ngày tham gia:</strong> <?= date('d/m/Y', strtotime($user->createdat ?? 'now')) ?></p>
             </div>
 
-            <!-- ACTION BUTTONS -->
+            
             <button class="action-btn edit-btn" onclick="openEditNameModal()">
                 <span class="icon">✏️</span> Đổi tên đại diện
             </button>
@@ -101,7 +101,7 @@ $user = Yii::$app->user->identity;
         </div>
     </div>
 
-    <!-- MODAL EDIT NAME -->
+    
     <div id="editNameModal" class="profile-modal">
         <div class="modal-content">
             <button class="close-btn" onclick="closeEditNameModal()">✕</button>
@@ -122,7 +122,7 @@ $user = Yii::$app->user->identity;
         </div>
     </div>
 
-    <!-- MODAL CHANGE PASSWORD -->
+    
     <div id="changePasswordModal" class="profile-modal">
         <div class="modal-content">
             <button class="close-btn" onclick="closeChangePasswordModal()">✕</button>
@@ -149,7 +149,7 @@ $user = Yii::$app->user->identity;
         </div>
     </div>
 
-    <!-- MODAL CHANGE AVATAR -->
+    
     <div id="changeAvatarModal" class="profile-modal">
         <div class="modal-content">
             <button class="close-btn" onclick="closeChangeAvatarModal()">✕</button>

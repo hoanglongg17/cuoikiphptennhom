@@ -1,10 +1,17 @@
 <?php
-/** @var yii\web\View $this */
-/** @var integer $totalPosts */
-/** @var integer $publishedPosts */
-/** @var integer $draftPosts */
 
-/** @var appịmodelsịBlogPost[] $recentPosts */
+
+
+
+
+
+
+
+/** @var yii\web\View $this */
+/** @var int $totalPosts */
+/** @var int $publishedPosts */
+/** @var int $pendingPosts */
+/** @var app\models\BlogPost[] $recentPosts */
 
 use yii\helpers\Url;
 use yii\helpers\Html;
@@ -19,7 +26,7 @@ $this->params['breadcrumbs'][] = 'Admin';
         <p class="subtitle">Quản lý Blog và Nội Dung</p>
     </div>
 
-    <!-- Statistics -->
+    
     <div class="statistics-grid">
         <div class="stat-card">
             <div class="stat-icon">📝</div>
@@ -41,15 +48,15 @@ $this->params['breadcrumbs'][] = 'Admin';
         </div>
 
         <div class="stat-card">
-            <div class="stat-icon">📋</div>
+            <div class="stat-icon">⌛</div>
             <div class="stat-content">
-                <h3><?= $draftPosts ?></h3>
-                <p>Bản Nháp</p>
+                <h3><?= $pendingPosts ?></h3>
+                <p>Đang Chờ Duyệt</p>
             </div>
         </div>
     </div>
 
-    <!-- Admin Actions -->
+    
     <div class="admin-actions">
         <h2>Tác Vụ Quản Lý</h2>
         <div class="action-buttons">
@@ -64,7 +71,7 @@ $this->params['breadcrumbs'][] = 'Admin';
         </div>
     </div>
 
-    <!-- Recent Posts -->
+    
     <section class="dashboard-section">
         <h2>📖 Bài Viết Gần Đây</h2>
         <div class="recent-posts">

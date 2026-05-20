@@ -1,4 +1,8 @@
 <?php
+
+
+
+
 /** @var yii\web\View $this */
 /** @var app\models\Deck[] $decks */
 /** @var array $deckQuotas */
@@ -8,7 +12,7 @@ use yii\helpers\Html;
 
 $this->title = 'Quản lý Bộ thẻ - Andi';
 
-// Lấy thông tin người dùng đang đăng nhập
+
 $user = Yii::$app->user->identity;
 
 $this->registerCssFile('@web/css/dashboard.css', ['depends' => [\app\assets\AppAsset::class]]);
@@ -43,20 +47,20 @@ $this->registerCssFile('@web/css/vocabset.css', ['depends' => [\app\assets\AppAs
                         $s = $c->progress ? $c->progress->status : 0;
                         
                         if ($s == 0 && $newQuotaRemaining > 0) {
-                            // Thẻ mới (status 0): Chỉ đếm nếu còn quota
-                            // Nếu có progress và status = 0, phải check isDue
+                            
+                            
                             if (!$c->progress || strtotime($c->progress->duedate) <= strtotime($today . ' 23:59:59')) {
                                 $n++;
                                 $newQuotaRemaining--;
                             }
                         } elseif ($s == 1) {
-                            // FIX: Thẻ đang học (status 1): Chỉ đếm nếu đã đến hạn học
-                            // (Giống như logic trong actionPractice)
+                            
+                            
                             if ($c->progress && strtotime($c->progress->duedate) <= strtotime($today . ' 23:59:59')) {
                                 $l++;
                             }
                         } elseif ($s == 2 && $c->progress && strtotime($c->progress->duedate) <= strtotime($today . ' 23:59:59') && $reviewQuotaRemaining > 0) {
-                            // Thẻ ôn due hôm nay, còn quota
+                            
                             $r++;
                             $reviewQuotaRemaining--;
                         }
@@ -82,7 +86,7 @@ $this->registerCssFile('@web/css/vocabset.css', ['depends' => [\app\assets\AppAs
                     </div>
                 </div>
 
-                <!-- POP-UP XEM CHI TIẾT BỘ THẺ -->
+                
                 <div id="modalView-<?= $deck->deckid ?>" class="modal-overlay" onclick="closeModal(this)">
                     <div class="modal-content" onclick="event.stopPropagation()">
                         <div class="modal-header">
@@ -136,7 +140,7 @@ $this->registerCssFile('@web/css/vocabset.css', ['depends' => [\app\assets\AppAs
                     </div>
                 </div>
 
-                <!-- POP-UP SỬA THÔNG TIN BỘ THẺ -->
+                
                 <div id="modalEdit-<?= $deck->deckid ?>" class="modal-overlay" onclick="closeModal(this)">
                     <div class="modal-content" onclick="event.stopPropagation()">
                         <div class="modal-header">
@@ -160,7 +164,7 @@ $this->registerCssFile('@web/css/vocabset.css', ['depends' => [\app\assets\AppAs
             <?php endforeach; ?>
         </div>
 
-<!-- POP-UP TẠO MỚI BỘ THẺ -->
+
 <div id="modalCreate" class="modal-overlay" onclick="closeModal(this)">
     <div class="modal-content" onclick="event.stopPropagation()">
         <div class="modal-header">

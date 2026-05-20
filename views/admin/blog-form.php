@@ -1,7 +1,11 @@
 <?php
+
+
+
+
 /** @var yii\web\View $this */
 /** @var app\models\BlogPost $model */
-/** @var boolean $isNew */
+/** @var bool $isNew */
 
 use yii\helpers\Url;
 use yii\helpers\Html;
@@ -322,7 +326,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return res.json ? res.json() : res.text();
             }).then(function (json) {
                 if (json && json.success) {
-                    // redirect to blog list after successful rejection
+                    
                     location.href = '<?= Url::to(['admin/blog-list']) ?>';
                 } else {
                     alert((json && json.message) || 'Không thể từ chối bài viết.');

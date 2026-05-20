@@ -5,9 +5,7 @@ namespace app\models;
 use Yii;
 use yii\db\ActiveRecord;
 
-/**
- * EmailNotification Model - Lịch sử thông báo email
- */
+
 class EmailNotification extends ActiveRecord
 {
     public static function tableName()
@@ -56,9 +54,7 @@ class EmailNotification extends ActiveRecord
         return $this->hasOne(BlogNestedComment::class, ['commentid' => 'relatedcommentid']);
     }
 
-    /**
-     * Tạo notification cho bình luận mới trên bài viết
-     */
+    
     public static function createCommentNotification($postid, $userid, $commentid)
     {
         $post = BlogPost::findOne($postid);
@@ -69,7 +65,7 @@ class EmailNotification extends ActiveRecord
         }
 
         $notification = new static();
-        $notification->userid = $post->userid;  // Thông báo cho author của post
+        $notification->userid = $post->userid;  
         $notification->type = self::TYPE_COMMENT_ON_POST;
         $notification->relatedpostid = $postid;
         $notification->relatedcommentid = $commentid;
@@ -79,9 +75,7 @@ class EmailNotification extends ActiveRecord
         return $notification->save();
     }
 
-    /**
-     * Lấy pending notifications
-     */
+    
     public static function getPendingNotifications($limit = 50)
     {
         return static::find()
@@ -91,9 +85,7 @@ class EmailNotification extends ActiveRecord
             ->all();
     }
 
-    /**
-     * Đánh dấu đã gửi
-     */
+    
     public function markAsSent()
     {
         $this->status = self::STATUS_SENT;
@@ -101,9 +93,7 @@ class EmailNotification extends ActiveRecord
         return $this->save();
     }
 
-    /**
-     * Đánh dấu gửi thất bại
-     */
+    
     public function markAsFailed()
     {
         $this->status = self::STATUS_FAILED;

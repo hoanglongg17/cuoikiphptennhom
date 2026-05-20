@@ -6,12 +6,10 @@ use Yii;
 use yii\db\ActiveRecord;
 use yii\behaviors\TimestampBehavior;
 
-/**
- * BlogPost Model - Bài viết trên blog
- */
+
 class BlogPost extends ActiveRecord
 {
-    // Status constants
+    
     const STATUS_DRAFT = 'draft';
     const STATUS_PENDING = 'pending';
     const STATUS_PUBLISHED = 'published';
@@ -23,9 +21,7 @@ class BlogPost extends ActiveRecord
         return 'blogposts';
     }
 
-    /**
-     * Định nghĩa các rule xác thực
-     */
+    
     public function rules()
     {
         return [
@@ -41,9 +37,7 @@ class BlogPost extends ActiveRecord
         ];
     }
 
-    /**
-     * Tự động tạo slug từ title
-     */
+    
     public function beforeSave($insert)
     {
         if (parent::beforeSave($insert)) {
@@ -55,32 +49,28 @@ class BlogPost extends ActiveRecord
         return false;
     }
 
-    /**
-     * Sinh slug từ title
-     */
+    
     private function generateSlug($title)
     {
-        // Chuyển sang chữ thường
+        
         $slug = strtolower($title);
         
-        // Bỏ diacritics
+        
         $slug = $this->removeDiacritics($slug);
         
-        // Thay khoảng trắng bằng dấu gạch ngang
+        
         $slug = preg_replace('/[\s]+/', '-', trim($slug));
         
-        // Bỏ các ký tự đặc biệt
+        
         $slug = preg_replace('/[^a-z0-9\-]/', '', $slug);
         
-        // Bỏ các dấu gạch ngang liên tiếp
+        
         $slug = preg_replace('/-+/', '-', $slug);
         
         return $slug;
     }
 
-    /**
-     * Bỏ diacritics (dấu) từ tiếng Việt
-     */
+    
     private function removeDiacritics($string)
     {
         $characters = array(
@@ -102,9 +92,7 @@ class BlogPost extends ActiveRecord
         return strtr($string, $characters);
     }
 
-    /**
-     * Get attribute labels cho form
-     */
+    
     public function attributeLabels()
     {
         return [
@@ -124,91 +112,69 @@ class BlogPost extends ActiveRecord
         ];
     }
 
-    /**
-     * Relationship: Author của bài viết
-     */
+    
     public function getAuthor()
     {
         return $this->hasOne(User::class, ['userid' => 'userid']);
     }
 
-    /**
-     * Relationship: Deck được chia sẻ
-     */
+    
     public function getSharedDeck()
     {
         return $this->hasOne(Deck::class, ['deckid' => 'sharedeckid']);
     }
 
-    /**
-     * Relationship: Comments trên bài viết
-     */
+    
     public function getComments()
     {
         return $this->hasMany(BlogComment::class, ['postid' => 'postid']);
     }
 
-    /**
-     * Lấy comments được duyệt
-     */
+    
     public function getApprovedComments()
     {
         return $this->hasMany(BlogComment::class, ['postid' => 'postid'])
             ->where(['status' => 'approved']);
     }
 
-    /**
-     * Kiểm tra xem bài viết có được xuất bản hay không
-     */
+    
     public function isPublished()
     {
         return $this->status === self::STATUS_PUBLISHED && !is_null($this->publishedat);
     }
 
-    /**
-     * Kiểm tra xem bài viết đang chờ duyệt
-     */
+    
     public function isPending()
     {
         return $this->status === self::STATUS_PENDING;
     }
 
-    /**
-     * Kiểm tra xem bài viết bị từ chối
-     */
+    
     public function isDenied()
     {
         return $this->status === self::STATUS_DENIED;
     }
 
-    /**
-     * Kiểm tra xem chủ bài viết có thể chỉnh sửa bài này hay không
-     */
+    
     public function canBeEditedByOwner()
     {
         return in_array($this->status, [self::STATUS_DRAFT, self::STATUS_PENDING, self::STATUS_DENIED], true);
     }
 
-    /**
-     * Lấy lý do từ chối
-     */
+    
     public function getRejectionReason()
     {
         return trim($this->rejectionreason ?? '');
     }
 
-    /**
-     * Tăng lượt xem
-     */
+    
     public function increaseViews()
     {
         $this->views = $this->views + 1;
         return $this->save(false);
     }
 
-    /**
-     * Tìm các bài viết được xuất bản (để public blog) - sắp xếp theo ngày mới nhất trước
-     */
+    
     public static function findPublished()
     {
         return static::find()
@@ -216,9 +182,7 @@ class BlogPost extends ActiveRecord
             ->orderBy(['publishedat' => SORT_DESC]);
     }
 
-    /**
-     * Tìm các bài viết được ghim bởi admin
-     */
+    
     public static function findPinned()
     {
         return static::find()
@@ -226,9 +190,7 @@ class BlogPost extends ActiveRecord
             ->orderBy(['publishedat' => SORT_DESC]);
     }
     
-    /**
-     * Tìm các bài viết nổi bật (nhiều like nhất)
-     */
+    
     public static function findFeatured($limit = 5)
     {
         return static::find()
@@ -240,59 +202,45 @@ class BlogPost extends ActiveRecord
             ->limit($limit);
     }
 
-    /**
-     * Tìm bài viết theo slug
-     */
+    
     public static function findBySlug($slug)
     {
         return static::findOne(['slug' => $slug]);
     }
 
-    /**
-     * Relationship: Category
-     */
+    
     public function getCategory()
     {
         return $this->hasOne(BlogCategory::class, ['categoryid' => 'categoryid']);
     }
 
-    /**
-     * Relationship: Tags
-     */
+    
     public function getTags()
     {
         return $this->hasMany(BlogTag::class, ['tagid' => 'tagid'])
             ->via('post_tags');
     }
 
-    /**
-     * Relationship: Ratings/Likes
-     */
+    
     public function getRatings()
     {
         return $this->hasMany(BlogRating::class, ['postid' => 'postid']);
     }
 
-    /**
-     * Relationship: Nested Comments
-     */
+    
     public function getNestedComments()
     {
         return $this->hasMany(BlogNestedComment::class, ['postid' => 'postid']);
     }
 
-    /**
-     * Lấy approved nested comments
-     */
+    
     public function getApprovedNestedComments()
     {
         return $this->hasMany(BlogNestedComment::class, ['postid' => 'postid'])
             ->where(['status' => BlogNestedComment::STATUS_APPROVED]);
     }
 
-    /**
-     * Lấy top-level comments (không có parent)
-     */
+    
     public function getTopLevelComments()
     {
         return $this->hasMany(BlogNestedComment::class, ['postid' => 'postid'])
@@ -300,33 +248,25 @@ class BlogPost extends ActiveRecord
             ->orderBy(['createdat' => SORT_DESC]);
     }
 
-    /**
-     * Lấy số lượt like
-     */
+    
     public function getLikeCount()
     {
         return BlogRating::getLikeCount($this->postid);
     }
 
-    /**
-     * Lấy trung bình rating
-     */
+    
     public function getAverageRating()
     {
         return BlogRating::getAverageRating($this->postid);
     }
 
-    /**
-     * Kiểm tra xem user đã like bài viết này chưa
-     */
+    
     public function isLikedByUser($userid)
     {
         return BlogRating::isLikedByUser($this->postid, $userid);
     }
 
-    /**
-     * Thêm tag vào bài viết
-     */
+    
     public function addTag($tagname)
     {
         $tag = BlogTag::findOrCreate($tagname);
@@ -336,9 +276,7 @@ class BlogPost extends ActiveRecord
         return $postTag->save();
     }
 
-    /**
-     * Tìm bài viết theo category
-     */
+    
     public static function findByCategory($categoryid)
     {
         return static::find()
@@ -346,9 +284,7 @@ class BlogPost extends ActiveRecord
             ->orderBy(['publishedat' => SORT_DESC]);
     }
 
-    /**
-     * Tìm bài viết theo tag
-     */
+    
     public static function findByTag($tagid)
     {
         return static::find()
@@ -358,9 +294,7 @@ class BlogPost extends ActiveRecord
             ->orderBy(['blogposts.publishedat' => SORT_DESC]);
     }
 
-    /**
-     * Tìm kiếm bài viết (search) - sắp xếp theo ngày mới nhất
-     */
+    
     public static function search($keyword)
     {
         return static::find()

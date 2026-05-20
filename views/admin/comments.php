@@ -1,11 +1,11 @@
 <?php
 /** @var yii\web\View $this */
-/** @var app\models\BlogNestedComment[] $pendingComments */
 /** @var int $pendingCount */
 /** @var int $approvedCount */
 /** @var int $spamCount */
-/** @var yii\data\Pagination $pagination */
 /** @var string $statusFilter */
+/** @var app\models\BlogComment[] $comments */
+/** @var yii\data\Pagination $pagination */
 
 use yii\helpers\Url;
 use yii\helpers\Html;
@@ -122,7 +122,7 @@ $this->params['breadcrumbs'][] = 'Duyệt Bình Luận';
         <?php endif; ?>
     </div>
 
-    <!-- Pagination -->
+    
     <?php if ($pagination && $pagination->pageCount > 1): ?>
         <div class="pagination-wrap">
             <?= LinkPager::widget([

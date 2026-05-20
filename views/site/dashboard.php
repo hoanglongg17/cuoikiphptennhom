@@ -1,10 +1,10 @@
 <?php
-/** @var yii\web\View $this */
+
 use yii\helpers\Url;
 use yii\helpers\Html;
 
 $this->title = 'Trang chủ Andi';
-// Lấy thông tin người dùng đang đăng nhập
+
 $user = Yii::$app->user->identity; 
 ?>
 
