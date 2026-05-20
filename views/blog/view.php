@@ -44,9 +44,9 @@ $this->params['breadcrumbs'][] = $post->title;
                             <div class="deck-info-name"><?= Html::encode($post->sharedDeck->name) ?></div>
                             <div class="deck-info-desc"><?= Html::encode($post->sharedDeck->description) ?></div>
                             <div class="deck-actions">
-                                <a href="<?= Url::to(['site/vocabset', 'id' => $post->sharedDeck->deckid]) ?>" class="btn-deck-view">
-                                    📚 Xem Bộ Thẻ
-                                </a>
+                                <button type="button" class="btn-deck-view" id="import-deck-btn" data-deck-id="<?= $post->sharedDeck->deckid ?>">
+                                    📚 Lưu Bộ Thẻ
+                                </button>
                                 <button type="button" class="btn-deck-copy" id="copy-deck-code" data-deck-id="<?= $post->sharedDeck->deckid ?>">
                                     📋 Sao Chép Mã
                                 </button>
@@ -196,6 +196,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 2000);
             }).catch(function(err) {
                 alert('Lỗi khi sao chép: ' + err);
+            });
+        });
+    }
+
+    // Import/Add deck to user's decks via AJAX
+    const importButton = document.getElementById('import-deck-btn');
+    if (importButton) {
+        importButton.addEventListener('click', function() {
+            const deckId = this.getAttribute('data-deck-id');
+            const url = '<?= Url::to(['site/ajax-import-deck']) ?>';
+            const csrfParam = '<?= Yii::$app->request->csrfParam ?>';
+            const csrfToken = '<?= Yii::$app->request->csrfToken ?>';
+
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ deckId: deckId, [csrfParam]: csrfToken })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message || 'Đã thêm bộ thẻ.');
+                } else {
+                    alert(data.message || 'Có lỗi xảy ra.');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Lỗi kết nối: ' + err.message);
             });
         });
     }

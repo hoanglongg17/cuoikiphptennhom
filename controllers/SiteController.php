@@ -450,6 +450,10 @@ class SiteController extends Controller
     public function actionAjaxImportDeck()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
+        if (Yii::$app->user->isGuest) {
+            return ['success' => false, 'message' => 'Vui lòng đăng nhập để thêm bộ thẻ.'];
+        }
+
         $deckId = Yii::$app->request->post('deckId');
         $userId = Yii::$app->user->id;
 
@@ -460,19 +464,26 @@ class SiteController extends Controller
             return ['success' => false, 'message' => 'Không tìm thấy bộ bài với ID: ' . $deckId];
         }
 
-        // 2. Chặn nếu nhập bộ bài của chính mình (Tránh rác dữ liệu)
+        // 2. Chặn nếu import bộ của chính mình
         if ($originalDeck->userid == $userId) {
             return ['success' => false, 'message' => 'Bạn không thể nhập bộ bài của chính mình.'];
         }
 
-        // 3. Tiến hành sao chép bộ bài
+        // 3. Kiểm tra đã có bộ cùng tên (hoặc đã nhập trước đó)
+        $existsExact = Deck::findOne(['userid' => $userId, 'name' => $originalDeck->name]);
+        $existsImported = Deck::findOne(['userid' => $userId, 'name' => $originalDeck->name . ' (Đã nhập)']);
+        if ($existsExact || $existsImported) {
+            return ['success' => false, 'message' => 'Bạn đã có bộ thẻ này'];
+        }
+
+        // 4. Tiến hành sao chép bộ bài
         $newDeck = new Deck();
         $newDeck->name = $originalDeck->name . " (Đã nhập)";
         $newDeck->description = $originalDeck->description;
-        $newDeck->userid = $userId; 
+        $newDeck->userid = $userId;
 
         if ($newDeck->save()) {
-            // 4. Sao chép từng thẻ một (Copy toàn bộ thông tin thay vì chỉ mặt trước/sau)
+            // 5. Sao chép từng thẻ một
             foreach ($originalDeck->cards as $card) {
                 $newCard = new Card();
                 $newCard->userid = $userId;
@@ -483,9 +494,9 @@ class SiteController extends Controller
                 $newCard->pronunciation = $card->pronunciation;
                 $newCard->examplesentence = $card->examplesentence;
                 $newCard->tags = $card->tags;
-                $newCard->save(false); // Dùng false để bỏ qua validation nếu cần thiết cho nhanh
+                $newCard->save(false);
             }
-            return ['success' => true, 'message' => 'Đã nhập thành công bộ bài: ' . $originalDeck->name];
+            return ['success' => true, 'message' => 'Đã thêm bộ thẻ: ' . $originalDeck->name, 'newDeckId' => $newDeck->deckid];
         }
 
         return ['success' => false, 'message' => 'Có lỗi xảy ra khi lưu dữ liệu bộ bài mới.'];
