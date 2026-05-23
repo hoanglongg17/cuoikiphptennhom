@@ -68,6 +68,10 @@ $this->params['breadcrumbs'][] = 'Admin';
                 <span class="icon">✍️</span>
                 <span class="label">Tạo Bài Mới</span>
             </a>
+            <a href="<?= Url::to(['admin/admin-list']) ?>" class="action-btn">
+                <span class="icon">👥</span>
+                <span class="label">Quản Lý Admin</span>
+            </a>
         </div>
     </div>
 
@@ -149,7 +153,7 @@ $this->params['breadcrumbs'][] = 'Admin';
 }
 
 .stat-card {
-    background: linear-gradient(135deg, #1abc9c 0%, #ff4081 100%);
+    background: #1abc9c;
     color: white;
     padding: 25px;
     border-radius: 8px;
@@ -165,19 +169,19 @@ $this->params['breadcrumbs'][] = 'Admin';
 }
 
 .stat-card:nth-child(2) {
-    background: linear-gradient(135deg, #1abc9c 0%, #ff4081 100%);
+    background: #1abc9c;
 }
 
 .stat-card:nth-child(3) {
-    background: linear-gradient(135deg, #1abc9c 0%, #ff4081 100%);
+    background: #1abc9c;
 }
 
 .stat-card:nth-child(4) {
-    background: linear-gradient(135deg, #1abc9c 0%, #ff4081 100%);
+    background: #1abc9c;
 }
 
 .stat-card:nth-child(5) {
-    background: linear-gradient(135deg, #1abc9c 0%, #ff4081 100%);
+    background: #1abc9c;
 }
 
 .stat-icon {
@@ -223,23 +227,24 @@ $this->params['breadcrumbs'][] = 'Admin';
 }
 
 .action-btn {
-    background: linear-gradient(135deg, #1abc9c 0%, #ff4081 100%);
-    color: white;
+    background: white;
+    color: #333;
     padding: 20px;
     border-radius: 8px;
     text-decoration: none;
     display: flex;
     align-items: center;
     gap: 15px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    border: 2px solid transparent;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+    border: 2px solid #ff4081;
 }
 
 .action-btn:hover {
     transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    color: #333;
+    box-shadow: 0 4px 12px rgba(255, 64, 129, 0.3);
+    color: #ff4081;
     text-decoration: none;
+    background: #fff5f9;
 }
 
 .action-btn .icon {
@@ -248,6 +253,10 @@ $this->params['breadcrumbs'][] = 'Admin';
 
 .action-btn .label {
     font-weight: 500;
+}
+
+.action-btn:nth-child(2) {
+    background: white;
 }
 
 .dashboard-section {

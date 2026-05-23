@@ -277,10 +277,10 @@ create index idx_blogcomments_status on blogcomments(status);
 -- DỮ LIỆU MẪU
 -- ==========================================
 
--- 1. Thêm người dùng (Giữ nguyên Hash Password của bạn)
+-- 1. Thêm người dùng (Hash Password)
 insert into users (email, passwordhash, displayname, currentstreak, isemailverified, role)
 values 
-('admin@andi.com', '123456', '👨‍💼 Admin Master', 3, 1, 'admin'),
+('admin@gmail.com', '123456', '👨‍💼 Admin Master', 3, 1, 'admin'),
 ('nguyenvana@gmail.com', '123456', 'nguyễn văn a', 3, 1, 'user'), 
 ('tranthib@gmail.com', '123456', 'trần thị b', 0, 1, 'user');
 

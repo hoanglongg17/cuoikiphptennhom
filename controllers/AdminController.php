@@ -12,6 +12,7 @@ use app\models\BlogPost;
 use app\models\BlogComment;
 use app\models\BlogNestedComment;
 use app\models\User;
+use app\models\AdminForm;
 use yii\data\Pagination;
 
 
@@ -25,10 +26,10 @@ class AdminController extends Controller
         return [
             'access' => [
                 'class' => AccessControl::class,
-                'only' => ['dashboard', 'blog-list', 'blog-edit', 'blog-create', 'blog-delete', 'blog-pin', 'blog-approve', 'blog-reject', 'blog-archive', 'blog-unarchive', 'blog-comments', 'approve-comment', 'reject-comment', 'delete-comment'],
+                'only' => ['dashboard', 'blog-list', 'blog-edit', 'blog-create', 'blog-delete', 'blog-pin', 'blog-approve', 'blog-reject', 'blog-archive', 'blog-unarchive', 'blog-comments', 'approve-comment', 'reject-comment', 'delete-comment', 'admin-list', 'admin-create', 'admin-detail', 'admin-delete'],
                 'rules' => [
                         [
-                            'actions' => ['dashboard', 'blog-list', 'blog-edit', 'blog-create', 'blog-delete', 'blog-pin', 'blog-approve', 'blog-reject', 'blog-archive', 'blog-unarchive', 'blog-comments', 'approve-comment', 'reject-comment', 'delete-comment'],
+                            'actions' => ['dashboard', 'blog-list', 'blog-edit', 'blog-create', 'blog-delete', 'blog-pin', 'blog-approve', 'blog-reject', 'blog-archive', 'blog-unarchive', 'blog-comments', 'approve-comment', 'reject-comment', 'delete-comment', 'admin-list', 'admin-create', 'admin-detail', 'admin-delete'],
                         'allow' => true,
                         'roles' => ['@'],  
                         'matchCallback' => function ($rule, $action) {
@@ -51,6 +52,7 @@ class AdminController extends Controller
                     'blog-unarchive' => ['POST'],
                     'blog-pin' => ['POST'],
                     'delete-comment' => ['POST'],
+                    'admin-delete' => ['POST', 'DELETE'],
                 ],
             ],
         ];
@@ -328,8 +330,98 @@ class AdminController extends Controller
         ];
     }
 
+    
+    public function actionAdminList()
+    {
+        $admins = User::find()->where(['role' => 'admin'])->all();
+        
+        return $this->render('admin-list', [
+            'admins' => $admins,
+        ]);
+    }
 
+    
+    public function actionAdminCreate()
+    {
+        $model = new AdminForm();
 
+        if ($model->load(Yii::$app->request->post())) {
+            if ($admin = $model->createAdmin()) {
+                Yii::$app->session->setFlash('success', 'Tài khoản Admin đã được tạo thành công!');
+                return $this->redirect(['admin-list']);
+            } else {
+                Yii::$app->session->setFlash('error', 'Có lỗi xảy ra khi tạo tài khoản Admin.');
+            }
+        }
+
+        return $this->render('admin-form', [
+            'model' => $model,
+        ]);
+    }
+
+    
+    public function actionAdminDetail($id)
+    {
+        $admin = User::findOne(['userid' => $id, 'role' => 'admin']);
+        
+        if (!$admin) {
+            throw new NotFoundHttpException('Admin không tồn tại.');
+        }
+
+        $blogPosts = $admin->getBlogPosts()
+            ->where(['!=', 'status', BlogPost::STATUS_DRAFT])
+            ->all();
+
+        return $this->render('admin-detail', [
+            'admin' => $admin,
+            'blogPosts' => $blogPosts,
+        ]);
+    }
+
+    
+    public function actionAdminDelete($id)
+    {
+        $currentUser = Yii::$app->user->identity;
+        $admin = User::findOne(['userid' => $id, 'role' => 'admin']);
+
+        if (!$admin) {
+            throw new NotFoundHttpException('Admin không tồn tại.');
+        }
+
+        
+        if ($admin->userid === $currentUser->userid) {
+            Yii::$app->session->setFlash('error', 'Không thể xóa tài khoản của chính mình!');
+            return $this->redirect(['admin-list']);
+        }
+
+        
+        $publishedPosts = $admin->getBlogPosts()
+            ->where(['status' => BlogPost::STATUS_PUBLISHED])
+            ->count();
+
+        if ($publishedPosts > 0) {
+            Yii::$app->session->setFlash('error', 'Không thể xóa admin khi còn có bài viết đã xuất bản!');
+            return $this->redirect(['admin-detail', 'id' => $id]);
+        }
+
+        
+        $otherPosts = $admin->getBlogPosts()
+            ->where(['!=', 'status', BlogPost::STATUS_PUBLISHED])
+            ->all();
+        
+        foreach ($otherPosts as $post) {
+            $post->delete();
+        }
+
+        
+        if ($admin->delete()) {
+            Yii::$app->session->setFlash('success', 'Tài khoản Admin và các bài viết không xuất bản của admin đó đã được xóa thành công!');
+        } else {
+            Yii::$app->session->setFlash('error', 'Có lỗi xảy ra khi xóa tài khoản Admin.');
+        }
+
+        return $this->redirect(['admin-list']);
+    }
     
     protected function findBlogPost($id)
     {

@@ -7,7 +7,7 @@ use yii\base\Model;
 use app\models\User;
 
 
-class SignupForm extends Model
+class AdminForm extends Model
 {
     public $displayname;
     public $email;
@@ -19,21 +19,14 @@ class SignupForm extends Model
         return [
             [['displayname', 'email', 'password', 'password_repeat'], 'required', 'message' => '{attribute} không được để trống.'],
             
-            
             ['displayname', 'match', 'pattern' => '/^[\p{L}0-9 ]+$/u', 'message' => 'Họ và tên chỉ được dùng chữ cái, số và dấu cách.'],
             ['displayname', 'string', 'min' => 2, 'max' => 50, 'tooShort' => 'Tên quá ngắn.', 'tooLong' => 'Tên quá dài.'],
 
-            
             ['email', 'email', 'message' => 'Định dạng email không hợp lệ.'],
-            ['email', 'match', 'pattern' => '/^[a-z0-9](\.?[a-z0-9]){5,}@gmail\.com$/', 'message' => 'Tài khoản phải là địa chỉ @gmail.com hợp lệ.'],
-            
-            
             ['email', 'unique', 'targetClass' => '\app\models\User', 'message' => 'Email này đã được sử dụng.'],
 
-            
             ['password', 'string', 'min' => 6, 'message' => 'Mật khẩu phải từ 6 ký tự trở lên.'],
             ['password', 'match', 'pattern' => '/^[a-zA-Z0-9]+$/', 'message' => 'Mật khẩu chỉ được chứa chữ cái không dấu và số.'],
-            
             
             ['password_repeat', 'compare', 'compareAttribute' => 'password', 'message' => 'Xác nhận mật khẩu không khớp.'],
         ];
@@ -50,22 +43,21 @@ class SignupForm extends Model
     }
 
     
-    public function signup()
+    public function createAdmin()
     {
         if (!$this->validate()) {
             return null;
         }
 
-        $user = new User();
-        $user->displayname = $this->displayname;
-        $user->email = $this->email;
+        $admin = new User();
+        $admin->displayname = $this->displayname;
+        $admin->email = $this->email;
+        $admin->role = 'admin';
         
-        $user->setPassword($this->password);
-
+        $admin->setPassword($this->password);
+        $admin->createdat = date('Y-m-d H:i:s');
+        $admin->currentstreak = 0;
         
-        
-        $user->createdat = date('Y-m-d H:i:s');
-        $user->currentstreak = 0;
-        return $user->save() ? $user : null;
+        return $admin->save() ? $admin : null;
     }
 }
