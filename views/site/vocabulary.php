@@ -31,7 +31,6 @@ $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\App
     <div class="srs-grid">
         <?php foreach($srsByLevel as $level => $data): ?>
             <div class="srs-card" style="border-left: 4px solid <?= $data['color'] ?>;">
-                <div class="srs-level">Level <?= $level ?></div>
                 <div class="srs-name"><?= Html::encode($data['name']) ?></div>
                 <div class="srs-count" style="color: <?= $data['color'] ?>;"><?= $data['count'] ?> từ</div>
                 <div class="srs-next">

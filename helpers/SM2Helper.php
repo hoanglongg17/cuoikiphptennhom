@@ -11,9 +11,9 @@ class SM2Helper
 {
     // Anki's Learning/Relearning Intervals (phút)
     const LEARNING_STEPS = [1, 10];           // 1 phút, 10 phút
-    const RELEARNING_STEPS = [10];             // Khi lapse, restart từ 10 phút
+    const RELEARNING_STEPS = [1];             // Khi lapse (Again), restart từ 1 phút
     const GRADUATING_INTERVAL = 1;             // Sau learning -> review: 1 ngày
-    const EASY_INTERVAL = 4;                   // Grade Easy ở lần đầu: 4 ngày
+    const EASY_INTERVAL = 3;                   // Grade Easy ở lần đầu: 3 ngày
 
     /**
      * Tính toán lịch học tiếp theo theo SM-2 (Anki)
@@ -62,15 +62,21 @@ class SM2Helper
                 // Easy - skip learning, go to review
                 $status = 2;
                 $repetitions = 1;
-                $interval = self::EASY_INTERVAL; // 4 ngày
+                $interval = self::EASY_INTERVAL; // 3 ngày
                 $nextReview = date('Y-m-d H:i:s', strtotime('+' . $interval . ' days'));
                 $easeFactor = $easeFactor + 0.1; // Easy tăng EF thêm 0.1
-            } else {
-                // Move to learning (grade 2 hoặc 3)
+            } elseif ($grade == 2) {
+                // Hard - move to learning, repeat first step (1 min)
                 $status = 1;
                 $repetitions = 0;
                 $interval = 0;
                 $nextReview = date('Y-m-d H:i:s', strtotime('+' . self::LEARNING_STEPS[0] . ' minutes'));
+            } else {
+                // Good (grade 3) - move to learning, move to second step (10 min)
+                $status = 1;
+                $repetitions = 1;
+                $interval = 0;
+                $nextReview = date('Y-m-d H:i:s', strtotime('+' . self::LEARNING_STEPS[1] . ' minutes'));
             }
         } elseif ($status == 1) {
             // LEARNING/RELEARNING CARD
@@ -81,8 +87,8 @@ class SM2Helper
                 $interval = self::EASY_INTERVAL; // 4 ngày
                 $nextReview = date('Y-m-d H:i:s', strtotime('+' . $interval . ' days'));
             } elseif ($grade == 2) {
-                // Hard - stay in learning, repeat current step
-                $nextReview = date('Y-m-d H:i:s', strtotime('+' . self::LEARNING_STEPS[0] . ' minutes'));
+                // Hard - stay in learning, repeat at longer interval (10 min)
+                $nextReview = date('Y-m-d H:i:s', strtotime('+' . self::LEARNING_STEPS[1] . ' minutes'));
             } else {
                 // Good (grade 3) - move to next learning step or graduate
                 // FIX: Count which learning step we're on based on number of Good grades

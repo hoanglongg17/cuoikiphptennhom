@@ -29,12 +29,6 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
             <a href="<?= Url::to(['site/practice']) ?>" class="back-btn">← Quay lại</a>
             <h1><?= Html::encode($deck->name) ?></h1>
         </div>
-        <div class="study-progress">
-            <span class="progress-text">Thẻ <?= $cardIndex ?> / <?= $totalCards ?></span>
-            <div class="progress-bar">
-                <div class="progress-fill" style="width: <?= ($cardIndex / $totalCards * 100) ?>%"></div>
-            </div>
-        </div>
     </div>
 
     
@@ -70,25 +64,26 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
         
         
         <?php elseif ($cardType == 2): ?>
-        <div id="flashcard" class="flashcard flashcard-reverse" data-flipped="false" data-cardid="<?= $currentCard->cardid ?>" data-card-status="<?= $currentCard->progress ? $currentCard->progress->status : 0 ?>" data-card-interval="<?= $currentCard->progress ? $currentCard->progress->intervaldays : 0 ?>" data-card-repetitions="<?= $currentCard->progress ? $currentCard->progress->repetitions : 0 ?>" data-card-easefactor="<?= $currentCard->progress ? $currentCard->progress->easefactor : 2.5 ?>">
-            <div class="card-reverse-container">
-                <div class="card-reverse-side card-front">
+        <div id="flashcard" class="flashcard flashcard-reverse flipped" data-flipped="true" data-cardid="<?= $currentCard->cardid ?>" data-card-status="<?= $currentCard->progress ? $currentCard->progress->status : 0 ?>" data-card-interval="<?= $currentCard->progress ? $currentCard->progress->intervaldays : 0 ?>" data-card-repetitions="<?= $currentCard->progress ? $currentCard->progress->repetitions : 0 ?>" data-card-easefactor="<?= $currentCard->progress ? $currentCard->progress->easefactor : 2.5 ?>">
+            <div class="card-inner">
+                <div class="card-front">
                     <div class="card-label">Mặt trước</div>
-                    <div class="card-text"><?= nl2br(Html::encode($currentCard->frontcontent)) ?></div>
+                    <div class="card-text" id="cardFrontText"><?= nl2br(Html::encode($currentCard->frontcontent)) ?></div>
                     <?php if ($currentCard->pronunciation): ?>
-                        <div class="card-pronunciation">/ <?= Html::encode($currentCard->pronunciation) ?> /</div>
+                        <div class="card-pronunciation" id="cardPronunciation">/ <?= Html::encode($currentCard->pronunciation) ?> /</div>
+                    <?php else: ?>
+                        <div class="card-pronunciation" id="cardPronunciation" style="display: none;"></div>
                     <?php endif; ?>
                 </div>
-                <div class="card-reverse-divider" onclick="toggleReverse()" style="cursor: pointer; text-align: center; color: #999; padding: 20px; font-size: 14px;">
-                    ⟷ Nhấn để đảo
-                </div>
-                <div class="card-reverse-side card-back">
+                <div class="card-back">
                     <div class="card-label">Mặt sau</div>
-                    <div class="card-text"><?= nl2br(Html::encode($currentCard->backcontent)) ?></div>
+                    <div class="card-text" id="cardBackText"><?= nl2br(Html::encode($currentCard->backcontent)) ?></div>
                     <?php if ($currentCard->examplesentence): ?>
-                        <div class="card-example">
+                        <div class="card-example" id="cardExample">
                             <strong>Ví dụ:</strong> <em><?= nl2br(Html::encode($currentCard->examplesentence)) ?></em>
                         </div>
+                    <?php else: ?>
+                        <div class="card-example" id="cardExample" style="display: none;"></div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -146,7 +141,7 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
             
             <?php elseif ($cardType == 2): ?>
             <div id="nextButtonContainer" class="next-button-container">
-                <button class="btn-next" onclick="showGradeButtons()">
+                <button class="btn-next" onclick="flipCard()">
                     Tiếp theo →
                 </button>
             </div>
@@ -302,7 +297,10 @@ function updateCard(cardData) {
     const nextContainer = document.getElementById('nextButtonContainer');
     const gradeContainer = document.getElementById('gradeButtonContainer');
     
+    // Lưu ID của thẻ cũ TRƯỚC KHI update (dùng cho cardType 3 reload)
+    const oldCardId = flashcard.getAttribute('data-cardid');
     
+    // Update data attributes
     flashcard.setAttribute('data-cardid', cardData.cardid);
     
     
@@ -359,10 +357,29 @@ function updateCard(cardData) {
         }
     } else if (cardType == 2) {
         
-        window.location.reload();
+        if (document.getElementById('cardFrontText')) {
+            document.getElementById('cardFrontText').innerHTML = cardData.frontcontent;
+        }
+        if (document.getElementById('cardBackText')) {
+            document.getElementById('cardBackText').innerHTML = cardData.backcontent;
+        }
+        if (cardData.pronunciation && document.getElementById('cardPronunciation')) {
+            document.getElementById('cardPronunciation').innerHTML = '/ ' + cardData.pronunciation + ' /';
+            document.getElementById('cardPronunciation').style.display = 'block';
+        }
+        if (cardData.examplesentence && document.getElementById('cardExample')) {
+            document.getElementById('cardExample').innerHTML = '<strong>Ví dụ:</strong> <em>' + cardData.examplesentence + '</em>';
+            document.getElementById('cardExample').style.display = 'block';
+        }
+        
+        flashcard.classList.add('flipped');
+        flashcard.setAttribute('data-flipped', 'true');
     } else if (cardType == 3) {
         
-        window.location.reload();
+        // Reload với skipCardId là thẻ CŨ (oldCardId), không phải thẻ mới (cardData.cardid)
+        const url = new URL(window.location);
+        url.searchParams.set('skipCardId', oldCardId);
+        window.location.href = url.toString();
     }
     
     
@@ -373,15 +390,6 @@ function updateCard(cardData) {
     document.querySelectorAll('.btn-grade').forEach(btn => {
         btn.disabled = false;
     });
-    
-    
-    const progressBar = document.querySelector('.progress-fill');
-    const progressText = document.querySelector('.progress-text');
-    if (progressBar && cardData.cardIndex !== undefined && cardData.totalCards !== undefined) {
-        const percentage = (cardData.cardIndex / cardData.totalCards) * 100;
-        progressBar.style.width = percentage + '%';
-        progressText.textContent = 'Thẻ ' + cardData.cardIndex + ' / ' + cardData.totalCards;
-    }
     
     
     updateGradeTimings();
@@ -397,7 +405,7 @@ function toggleReverse() {
 function submitAnswer() {
     const userAnswer = document.getElementById('userAnswer');
     if (!userAnswer || !userAnswer.value.trim()) {
-        alert('Vui lòng nhập câu trả lời cả!');
+        alert('Bạn chưa nhập câu trả lời cho thẻ này');
         return;
     }
     

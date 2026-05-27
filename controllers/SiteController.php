@@ -312,7 +312,6 @@ class SiteController extends Controller
             2 => ['name' => 'Sau 3 ngày', 'count' => 0, 'nextReview' => '', 'color' => '#FF6B6B'],
             3 => ['name' => 'Sau 7 ngày', 'count' => 0, 'nextReview' => '', 'color' => '#9C27B0'],
             4 => ['name' => 'Sau 14 ngày', 'count' => 0, 'nextReview' => '', 'color' => '#4CAF50'],
-            5 => ['name' => 'Đã thuộc', 'count' => 0, 'nextReview' => 'Không ôn', 'color' => '#00BCD4'],
         ];
 
         foreach ($cards as $card) {
@@ -331,10 +330,8 @@ class SiteController extends Controller
                         $level = 2;
                     } elseif ($intervalDays <= 7) {
                         $level = 3;
-                    } elseif ($intervalDays < 14) {
-                        $level = 4;
                     } else {
-                        $level = 5;
+                        $level = 4;
                     }
                     $srsByLevel[$level]['count']++;
 
@@ -791,7 +788,7 @@ class SiteController extends Controller
     }
 
     
-    public function actionStudyDeck($deckid = null)
+    public function actionStudyDeck($deckid = null, $skipCardId = null)
     {
         if (!$deckid) return $this->redirect(['site/practice']);
 
@@ -901,6 +898,15 @@ class SiteController extends Controller
         $priorityQueue = array_merge($availableDue, $availableNew, $availableLearning);
 
         
+        // Nếu có skipCardId (từ cardtype 3 reload), loại trừ nó khỏi queue
+        if (!empty($skipCardId)) {
+            $priorityQueue = array_filter($priorityQueue, function($card) use ($skipCardId) {
+                return $card->cardid != $skipCardId;
+            });
+            $priorityQueue = array_values($priorityQueue); // Re-index
+        }
+
+        
         if (empty($priorityQueue)) {
             Yii::$app->session->setFlash('info', 'Hôm nay bạn đã hoàn thành tất cả bộ này! 🎉');
             return $this->redirect(['site/practice']);
@@ -968,6 +974,8 @@ class SiteController extends Controller
         $new = [];
         $learning = [];
         $review = [];
+        
+        $now = new \DateTime();
 
         foreach ($cardsToStudy as $card) {
             $progress = $card->progress;
@@ -976,11 +984,22 @@ class SiteController extends Controller
             } else {
                 
                 if ($progress->status == 0) {
-                    $dueSoon[] = $card; 
-                } elseif ($progress->status == 1 && $progress->isDue()) {
-                    $learning[] = $card; 
-                } elseif ($progress->status == 2 && $progress->isDue()) {
-                    $dueSoon[] = $card; 
+                    $dueTime = new \DateTime($progress->duedate);
+                    if ($dueTime <= $now) {
+                        $dueSoon[] = $card;
+                    }
+                } elseif ($progress->status == 1) {
+                    // Learning card: chỉ include nếu thực sự due
+                    $dueTime = new \DateTime($progress->duedate);
+                    if ($dueTime <= $now) {
+                        $learning[] = $card;
+                    }
+                } elseif ($progress->status == 2) {
+                    // Review card: chỉ include nếu thực sự due
+                    $dueTime = new \DateTime($progress->duedate);
+                    if ($dueTime <= $now) {
+                        $dueSoon[] = $card;
+                    }
                 }
             }
         }
@@ -991,43 +1010,86 @@ class SiteController extends Controller
         $availableDue = $dueSoon;
         $availableNew = $new;
 
-        
+        // Build full priority queue for progress tracking
         $priorityQueue = array_merge($availableDue, $availableNew, $learning);
-
         
-        
+        // Separate by type to prioritize: due/new first, learning last
         $nextCard = null;
-        $skipFirst = true;
-        foreach ($priorityQueue as $card) {
+        
+        // First: try to get a card that's NOT the current card from due/new queue
+        foreach (array_merge($availableDue, $availableNew) as $card) {
             if ($card->cardid != $currentCardId) {
-                $nextCard = $card;
-                break;
-            } elseif ($card->cardid == $currentCardId && !$skipFirst) {
-                
                 $nextCard = $card;
                 break;
             }
         }
         
-        
-        
+        // Second: if no other due/new card, try learning cards
         if (!$nextCard) {
-            foreach ($priorityQueue as $card) {
-                if ($card->cardid == $currentCardId) {
-                    
+            foreach ($learning as $card) {
+                if ($card->cardid != $currentCardId) {
                     $nextCard = $card;
                     break;
                 }
             }
         }
-
+        
+        // Finally: if no other card available, look for any incomplete card
+        // (even if not due yet), excluding current card
         if (!$nextCard) {
+            // Lấy tất cả thẻ chưa hoàn thành (status ≠ 2 hoặc chưa có progress)
+            // Loại trừ thẻ hiện tại để KHÔNG bao giờ lặp
+            $allCards = Card::find()
+                ->where(['userid' => $userId, 'deckid' => $deckId])
+                ->with('progress')
+                ->all();
             
-            return [
-                'success' => true,
-                'finished' => true,
-                'message' => 'Hoàn thành tất cả thẻ trong bộ này! 🎉'
-            ];
+            $incompleteCards = [];
+            
+            foreach ($allCards as $card) {
+                // Loại trừ thẻ hiện tại
+                if ($card->cardid == $currentCardId) {
+                    continue;
+                }
+                
+                // Chỉ lấy thẻ chưa hoàn thành
+                if (!$card->progress || $card->progress->status != 2) {
+                    $incompleteCards[] = $card;
+                }
+            }
+            
+            // Sắp xếp thẻ chưa hoàn thành theo duedate (sớm hạn nhất lên trước)
+            if (!empty($incompleteCards)) {
+                usort($incompleteCards, function($a, $b) {
+                    $dueDateA = $a->progress ? strtotime($a->progress->duedate) : strtotime('now');
+                    $dueDateB = $b->progress ? strtotime($b->progress->duedate) : strtotime('now');
+                    return $dueDateA - $dueDateB;
+                });
+                
+                $nextCard = $incompleteCards[0];  // Lấy thẻ sắp due nhất
+                $priorityQueue = $incompleteCards;
+            } else {
+                // Không còn thẻ chưa hoàn thành nào khác ngoài thẻ hiện tại
+                // Kiểm tra xem thẻ hiện tại có phải incomplete không
+                $currentCard = Card::findOne(['cardid' => $currentCardId, 'userid' => $userId]);
+                
+                if ($currentCard && (!$currentCard->progress || $currentCard->progress->status != 2)) {
+                    // Thẻ hiện tại VẪN incomplete (status ≠ 2)
+                    // Không được báo finished - phải hoàn thành thẻ này trước
+                    return [
+                        'success' => false,
+                        'message' => 'Chỉ còn thẻ này để hoàn thành. Vui lòng tiếp tục học nó.'
+                    ];
+                } else {
+                    // Thẻ hiện tại đã hoàn thành (status = 2) hoặc không tồn tại
+                    // Tất cả thẻ đã hoàn thành
+                    return [
+                        'success' => true,
+                        'finished' => true,
+                        'message' => 'Hoàn thành tất cả thẻ trong bộ này! 🎉'
+                    ];
+                }
+            }
         }
 
         
@@ -1037,6 +1099,28 @@ class SiteController extends Controller
                 $cardIndex = $idx + 1;
                 break;
             }
+        }
+
+        // Calculate total cards to display
+        // If priorityQueue has more than 1 card or has due cards, use its count
+        // Otherwise, count all incomplete cards in deck
+        $totalCardsDisplay = count($priorityQueue);
+        
+        // Check if we're in "incomplete cards outside due queue" mode
+        // This happens when priorityQueue was populated from $incompleteCards
+        $isOutsideDueQueue = (count($priorityQueue) > 0 && 
+                              !in_array($nextCard->cardid, array_map(fn($c) => $c->cardid, 
+                                  array_merge($availableDue, $availableNew, $learning))));
+        
+        if ($isOutsideDueQueue) {
+            // Show count of all incomplete cards
+            $allIncompleteCount = 0;
+            foreach ($cardsToStudy as $card) {
+                if ($card->cardid != $currentCardId && (!$card->progress || $card->progress->status != 2)) {
+                    $allIncompleteCount++;
+                }
+            }
+            $totalCardsDisplay = max(1, $allIncompleteCount);
         }
 
         return [
@@ -1051,7 +1135,7 @@ class SiteController extends Controller
                 'cardtype' => $nextCard->cardtype,
                 'tags' => $nextCard->tags,
                 'cardIndex' => $cardIndex,
-                'totalCards' => count($priorityQueue),
+                'totalCards' => $totalCardsDisplay,
                 
                 'status' => $nextCard->progress->status ?? 0,
                 'intervaldays' => $nextCard->progress->intervaldays ?? 0,

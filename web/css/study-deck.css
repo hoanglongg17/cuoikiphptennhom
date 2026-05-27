@@ -370,10 +370,10 @@
 
 
 .flashcard-reverse {
-    height: auto;
-    cursor: default;
+    /* Reverse cards use the same 3D flip animation as normal cards */
 }
 
+/* Old reverse layout CSS - kept for reference if needed
 .card-reverse-container {
     display: flex;
     gap: 0;
@@ -421,10 +421,10 @@
     color: #666;
 }
 
-
 .card-reverse-container.reversed {
     flex-direction: row-reverse;
 }
+*/
 
 
 .flashcard-input {
