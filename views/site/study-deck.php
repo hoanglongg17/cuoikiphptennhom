@@ -64,7 +64,7 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
         
         
         <?php elseif ($cardType == 2): ?>
-        <div id="flashcard" class="flashcard flashcard-reverse flipped" data-flipped="true" data-cardid="<?= $currentCard->cardid ?>" data-card-status="<?= $currentCard->progress ? $currentCard->progress->status : 0 ?>" data-card-interval="<?= $currentCard->progress ? $currentCard->progress->intervaldays : 0 ?>" data-card-repetitions="<?= $currentCard->progress ? $currentCard->progress->repetitions : 0 ?>" data-card-easefactor="<?= $currentCard->progress ? $currentCard->progress->easefactor : 2.5 ?>">
+        <div id="flashcard" class="flashcard flipped" data-flipped="true" data-cardid="<?= $currentCard->cardid ?>" data-card-status="<?= $currentCard->progress ? $currentCard->progress->status : 0 ?>" data-card-interval="<?= $currentCard->progress ? $currentCard->progress->intervaldays : 0 ?>" data-card-repetitions="<?= $currentCard->progress ? $currentCard->progress->repetitions : 0 ?>" data-card-easefactor="<?= $currentCard->progress ? $currentCard->progress->easefactor : 2.5 ?>">
             <div class="card-inner">
                 <div class="card-front">
                     <div class="card-label">Mặt trước</div>
@@ -74,10 +74,6 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
                     <?php else: ?>
                         <div class="card-pronunciation" id="cardPronunciation" style="display: none;"></div>
                     <?php endif; ?>
-                </div>
-                <div class="card-back">
-                    <div class="card-label">Mặt sau</div>
-                    <div class="card-text" id="cardBackText"><?= nl2br(Html::encode($currentCard->backcontent)) ?></div>
                     <?php if ($currentCard->examplesentence): ?>
                         <div class="card-example" id="cardExample">
                             <strong>Ví dụ:</strong> <em><?= nl2br(Html::encode($currentCard->examplesentence)) ?></em>
@@ -85,6 +81,10 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
                     <?php else: ?>
                         <div class="card-example" id="cardExample" style="display: none;"></div>
                     <?php endif; ?>
+                </div>
+                <div class="card-back">
+                    <div class="card-label">Mặt sau</div>
+                    <div class="card-text" id="cardBackText"><?= nl2br(Html::encode($currentCard->backcontent)) ?></div>
                 </div>
             </div>
         </div>
