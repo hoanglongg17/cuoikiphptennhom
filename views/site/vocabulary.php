@@ -413,9 +413,7 @@ function saveBatchCards() {
     .then(data => {
         if (data.success) {
             alert('Đã lưu thành công!');
-            var baseUrl = '<?= Url::to(['site/vocabulary']) ?>';
-            var separator = baseUrl.indexOf('?') !== -1 ? '&' : '?';
-            window.location.href = baseUrl + separator + 'deck_id=' + deckId;
+            location.reload();
         } else {
             alert('Lỗi: ' + data.message);
         }
