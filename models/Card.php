@@ -8,13 +8,11 @@ use yii\db\ActiveRecord;
 
 class Card extends ActiveRecord
 {
-    
     public static function tableName()
     {
         return 'cards';
     }
 
- 
     public function rules()
     {
         return [
@@ -22,7 +20,8 @@ class Card extends ActiveRecord
             [['deckid'], 'integer'],
             [['frontcontent', 'backcontent', 'examplesentence'], 'string'],
             [['createdat'], 'safe'],
-            [['pronunciation', 'tags'], 'string', 'max' => 255],
+            // Thêm imageurl vào danh sách để hệ thống cho phép lưu
+            [['pronunciation', 'tags', 'imageurl'], 'string', 'max' => 255],
             [['audiourl'], 'string', 'max' => 500],
             [['deckid'], 'exist', 'skipOnError' => true, 'targetClass' => Deck::class, 'targetAttribute' => ['deckid' => 'deckid']],
         ];

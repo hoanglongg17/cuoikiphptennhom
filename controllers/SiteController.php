@@ -55,7 +55,7 @@ class SiteController extends Controller
                     'ajax-delete-card', 'ajax-remove-from-deck', 'ajax-import-deck', 
                     'ajax-assign-card-to-deck', 'ajax-save-batch-cards', 'ajax-grade-card', 'ajax-get-next-card',
                     'ajax-update-card', 'ajax-update-profile',
-                    'error', 'captcha', 'auth',
+                    'error', 'captcha', 'auth','import',
                 ],
                 'rules' => [
                     [
@@ -65,7 +65,7 @@ class SiteController extends Controller
                             'ajax-create-deck', 'ajax-update-deck', 'ajax-delete-deck',
                             'ajax-delete-card', 'ajax-remove-from-deck', 'ajax-import-deck', 
                             'ajax-assign-card-to-deck', 'ajax-save-batch-cards', 'ajax-grade-card', 'ajax-get-next-card',
-                            'ajax-update-card', 'ajax-update-profile',
+                            'ajax-update-card', 'ajax-update-profile','import',
                         ],
                         'allow' => true,
                         'roles' => ['@'], 
@@ -374,28 +374,35 @@ class SiteController extends Controller
         }
         return ['success' => false, 'message' => 'Lỗi: Không tìm thấy thẻ hoặc không có quyền xóa.'];
     }
-    public function actionAjaxUpdateCard()
-        {
-            Yii::$app->response->format = Response::FORMAT_JSON;
-            $data = Yii::$app->request->post();
-            $userId = Yii::$app->user->id;
+       public function actionAjaxUpdateCard()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $data = Yii::$app->request->post();
+        $userId = Yii::$app->user->id;
 
-            $model = Card::findOne(['cardid' => $data['cardid'] ?? null, 'userid' => $userId]);
-            if (!$model) return ['success' => false, 'message' => 'Không tìm thấy thẻ.'];
+        $model = Card::findOne(['cardid' => $data['cardid'] ?? null, 'userid' => $userId]);
+        if (!$model) return ['success' => false, 'message' => 'Không tìm thấy thẻ.'];
 
-            $model->frontcontent = trim($data['frontcontent'] ?? $model->frontcontent);
-            $model->backcontent = trim($data['backcontent'] ?? $model->backcontent);
-            $model->pronunciation = trim($data['pronunciation'] ?? $model->pronunciation);
-            $model->examplesentence = trim($data['examplesentence'] ?? $model->examplesentence);
-            $model->tags = trim($data['tags'] ?? $model->tags);
-
-            if ($model->save()) {
-                return ['success' => true, 'message' => 'Cập nhật từ vựng thành công!'];
+        $model->frontcontent = trim($data['frontcontent'] ?? $model->frontcontent);
+        $model->backcontent = trim($data['backcontent'] ?? $model->backcontent);
+        $model->pronunciation = trim($data['pronunciation'] ?? $model->pronunciation);
+        $model->examplesentence = trim($data['examplesentence'] ?? $model->examplesentence);
+        $model->tags = trim($data['tags'] ?? $model->tags);
+        if (!empty($data['image_base64'])) {
+            $uploadPath = Yii::getAlias('@webroot/uploads/cards');
+            if (!is_dir($uploadPath)) FileHelper::createDirectory($uploadPath);
+            if (preg_match('/^data:image\/(\w+);base64,/', $data['image_base64'], $type)) {
+                $base64Data = base64_decode(substr($data['image_base64'], strpos($data['image_base64'], ',') + 1));
+                $fileName = 'card_' . $userId . '_' . time() . '.' . strtolower($type[1]);
+                if (file_put_contents($uploadPath . DIRECTORY_SEPARATOR . $fileName, $base64Data)) {
+                    $model->imageurl = Yii::getAlias('@web/uploads/cards/') . $fileName;
+                }
             }
-
-            $errorMsg = reset($model->errors)[0] ?? 'Lỗi khi cập nhật dữ liệu.';
-            return ['success' => false, 'message' => $errorMsg];
         }
+        if ($model->save(false)) return ['success' => true, 'message' => 'Cập nhật từ vựng thành công!'];
+        return ['success' => false, 'message' => 'Lỗi khi cập nhật dữ liệu.'];
+    }
+
     
     public function actionAjaxRemoveFromDeck($id = null) {
         Yii::$app->response->format = Response::FORMAT_JSON;
@@ -415,40 +422,18 @@ class SiteController extends Controller
     public function actionAjaxImportDeck()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
-        if (Yii::$app->user->isGuest) {
-            return ['success' => false, 'message' => 'Vui lòng đăng nhập để thêm bộ thẻ.'];
-        }
-
         $deckId = Yii::$app->request->post('deckId');
         $userId = Yii::$app->user->id;
 
-        
         $originalDeck = Deck::find()->where(['deckid' => $deckId])->with('cards')->one();
+        if (!$originalDeck) return ['success' => false, 'message' => 'Không tìm thấy bộ bài.'];
 
-        if (!$originalDeck) {
-            return ['success' => false, 'message' => 'Không tìm thấy bộ bài với ID: ' . $deckId];
-        }
-
-        
-        if ($originalDeck->userid == $userId) {
-            return ['success' => false, 'message' => 'Bạn không thể nhập bộ bài của chính mình.'];
-        }
-
-        
-        $existsExact = Deck::findOne(['userid' => $userId, 'name' => $originalDeck->name]);
-        $existsImported = Deck::findOne(['userid' => $userId, 'name' => $originalDeck->name . ' (Đã nhập)']);
-        if ($existsExact || $existsImported) {
-            return ['success' => false, 'message' => 'Bạn đã có bộ thẻ này'];
-        }
-
-        
         $newDeck = new Deck();
-        $newDeck->name = $originalDeck->name . " (Đã nhập)";
+        $newDeck->name = $originalDeck->name . " (Bản sao)";
         $newDeck->description = $originalDeck->description;
         $newDeck->userid = $userId;
-
+        $newDeck->share_token = Yii::$app->security->generateRandomString(12);
         if ($newDeck->save()) {
-            
             foreach ($originalDeck->cards as $card) {
                 $newCard = new Card();
                 $newCard->userid = $userId;
@@ -457,16 +442,15 @@ class SiteController extends Controller
                 $newCard->frontcontent = $card->frontcontent;
                 $newCard->backcontent = $card->backcontent;
                 $newCard->pronunciation = $card->pronunciation;
+                $newCard->imageurl = $card->imageurl; // Copy luôn cả ảnh
                 $newCard->examplesentence = $card->examplesentence;
                 $newCard->tags = $card->tags;
                 $newCard->save(false);
             }
-            return ['success' => true, 'message' => 'Đã thêm bộ thẻ: ' . $originalDeck->name, 'newDeckId' => $newDeck->deckid];
+            return ['success' => true, 'message' => 'Đã nhân bản bộ bài thành công!', 'newDeckId' => $newDeck->deckid];
         }
-
-        return ['success' => false, 'message' => 'Có lỗi xảy ra khi lưu dữ liệu bộ bài mới.'];
+        return ['success' => false, 'message' => 'Có lỗi xảy ra khi nhân bản.'];
     }
-    
      public function actionAjaxUpdateDeck($id = null)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
@@ -507,15 +491,32 @@ class SiteController extends Controller
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
         $id = $id ?? Yii::$app->request->post('id');
-        $model = Deck::findOne(['deckid' => $id, 'userid' => Yii::$app->user->id]);
-        if ($model && $model->delete()) {
-            return ['success' => true];
+        $userId = Yii::$app->user->id;
+
+        $transaction = Yii::$app->db->beginTransaction();
+        
+        try {
+            $deck = Deck::findOne(['deckid' => $id, 'userid' => $userId]);
+            
+            if ($deck) {
+                Card::deleteAll(['deckid' => $id, 'userid' => $userId]);
+                
+                if ($deck->delete()) {
+                    $transaction->commit();
+                    return ['success' => true];
+                }
+            }
+            
+            $transaction->rollBack();
+            return ['success' => false];
+            
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            return ['success' => false, 'message' => 'Lỗi hệ thống khi xóa bộ thẻ: ' . $e->getMessage()];
         }
-        return ['success' => false];
     }
 
-    
-   public function actionAjaxCreateDeck()
+    public function actionAjaxCreateDeck()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
         $data = Yii::$app->request->post();
@@ -533,7 +534,8 @@ class SiteController extends Controller
         
         $model->description = trim($data['description'] ?? '');
         $model->userid = $userId; 
-        
+        $model->share_token = Yii::$app->security->generateRandomString(12);
+
         try {
             if ($model->save()) {
                 
@@ -543,8 +545,6 @@ class SiteController extends Controller
 
                 return ['success' => true, 'message' => 'Tạo bộ thẻ mới thành công!'];
             }
-            
-            
             $errorMsg = reset($model->errors)[0] ?? 'Lỗi không xác định khi tạo bộ thẻ.';
             return ['success' => false, 'message' => 'Lỗi dữ liệu: ' . $errorMsg];
             
@@ -553,8 +553,48 @@ class SiteController extends Controller
             return ['success' => false, 'message' => 'Lỗi DB: ' . $e->getMessage()];
         }
     }
+    public function actionImport($token)
+    {
+        $sourceDeck = Deck::find()->where(['share_token' => $token])->one();
 
-    
+        if (!$sourceDeck) {
+            Yii::$app->session->setFlash('error', 'Bộ thẻ không tồn tại hoặc đã bị xóa.');
+            return $this->redirect(['site/dashboard']);
+        }
+
+        $transaction = Yii::$app->db->beginTransaction();
+        try {
+            $newDeck = new Deck();
+            $newDeck->name = $sourceDeck->name . ' (Bản sao)';
+            $newDeck->description = $sourceDeck->description;
+            $newDeck->userid = Yii::$app->user->id;
+            $newDeck->share_token = Yii::$app->security->generateRandomString(12);
+            if (!$newDeck->save()) {
+                throw new \Exception('Không thể tạo bộ thẻ mới.');
+            }
+
+            $cards = $sourceDeck->getCards()->all(); 
+            foreach ($cards as $card) {
+                $newCard = new Card();
+                $newCard->attributes = $card->attributes; 
+                $newCard->cardid = null; 
+                $newCard->deckid = $newDeck->deckid; 
+                $newCard->userid = Yii::$app->user->id; 
+                if (!$newCard->save()) {
+                    throw new \Exception('Lỗi khi sao chép thẻ.');
+                }
+            }
+
+            $transaction->commit();
+            Yii::$app->session->setFlash('success', 'Đã import bộ thẻ thành công!');
+            
+        } catch (\Exception $e) {
+            $transaction->rollBack();
+            Yii::$app->session->setFlash('error', 'Lỗi khi import: ' . $e->getMessage());
+        }
+
+        return $this->redirect(['site/vocabset']);
+    } 
     public function actionAjaxTest()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
@@ -640,7 +680,28 @@ class SiteController extends Controller
         $transaction = Yii::$app->db->beginTransaction();
         try {
             foreach ($cardsData as $data) {
-                $this->saveCardInstance($deckId, $data, $request['cardType'] ?? 1, $userId);
+                $model = new Card();
+                $model->userid = $userId;
+                $model->deckid = $deckId;
+                $model->cardtype = $request['cardType'] ?? 1; 
+                $model->frontcontent = $data['front'] ?? '';
+                $model->backcontent = $data['back'] ?? '';
+                $model->pronunciation = $data['pronunciation'] ?? '';
+                $model->examplesentence = $data['example'] ?? '';
+                $model->tags = $data['tags'] ?? '';
+                $model->createdat = date('Y-m-d H:i:s');
+                if (!empty($data['image_base64'])) {
+                    $uploadPath = Yii::getAlias('@webroot/uploads/cards');
+                    if (!is_dir($uploadPath)) FileHelper::createDirectory($uploadPath);
+                    if (preg_match('/^data:image\/(\w+);base64,/', $data['image_base64'], $type)) {
+                        $base64Data = base64_decode(substr($data['image_base64'], strpos($data['image_base64'], ',') + 1));
+                        $fileName = 'card_' . $userId . '_' . uniqid() . '.' . strtolower($type[1]);
+                        if (file_put_contents($uploadPath . DIRECTORY_SEPARATOR . $fileName, $base64Data)) {
+                            $model->imageurl = Yii::getAlias('@web/uploads/cards/') . $fileName;
+                        }
+                    }
+                }
+                if (!$model->save(false)) throw new \Exception("Lỗi lưu dữ liệu thẻ.");
             }
             $transaction->commit();
             return ['success' => true];

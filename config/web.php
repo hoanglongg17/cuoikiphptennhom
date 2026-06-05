@@ -42,8 +42,7 @@ $config = [
             ],
         ],
         
-        // --- THÊM CẤU HÌNH GOOGLE LOGIN TẠI ĐÂY ---
-           'authClientCollection' => [
+        'authClientCollection' => [
             'class' => 'yii\authclient\Collection',
             'clients' => [
                 'google' => [
@@ -54,9 +53,9 @@ $config = [
                 ],
             ],
         ],
-        // ------------------------------------------
-        // ------------------------------------------
 
+
+        
         'db' => $db,
         
         

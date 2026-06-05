@@ -23,8 +23,7 @@ class Deck extends ActiveRecord
             [['description'], 'string'], 
             [['createdat'], 'safe'],     
             [['name'], 'string', 'max' => 255],
-            
-            
+            [['share_token'], 'unique'],
             [['userid'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['userid' => 'userid']],
             
             
