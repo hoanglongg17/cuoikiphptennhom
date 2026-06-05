@@ -57,24 +57,38 @@ $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\App
     <table class="vocab-table">
         <thead>
             <tr>
+                <th style="width: 60px; text-align: center;">Ảnh</th>
                 <th>Mặt trước</th>
                 <th>Mặt sau</th>
                 <th>Loại</th>
                 <th>Ví dụ</th>
                 <th>Phiên âm</th>
-                <th class="col-action" style="width: 90px; text-align: center;"></th>
+                <th class="col-action" style="width: 90px; text-align: center;">Hành động</th>
             </tr>
         </thead>
         <tbody id="vocabularyTableBody">
             <?php if (empty($cards)): ?>
                 <tr>
-                    <td colspan="6" style="text-align: center; color: #999; padding: 40px;">Không có từ vựng nào để hiển thị.</td>
+                    <td colspan="7" style="text-align: center; color: #999; padding: 40px;">Không có từ vựng nào để hiển thị.</td>
                 </tr>
             <?php else: ?>
                 <?php foreach ($cards as $card): ?>
                     <tr id="row-card-<?= $card->cardid ?>">
-                        <td style="font-weight: 700;"><?= Html::encode($card->frontcontent) ?></td>
+                        <td style="text-align: center; vertical-align: middle;">
+                            <?php if(!empty($card->imageurl)): ?>
+                                <img src="<?= Html::encode($card->imageurl) ?>" style="width: 45px; height: 45px; border-radius: 8px; object-fit: cover; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                            <?php else: ?>
+                                <span style="color:#cbd5e0; font-size: 20px;">-</span>
+                            <?php endif; ?>
+                        </td>
+
+                        <td style="font-weight: 700;">
+                            <?= Html::encode($card->frontcontent) ?>
+                            <button onclick="playAudio('<?= addslashes($card->frontcontent) ?>')" style="background:none; border:none; cursor:pointer; margin-left: 8px; font-size: 18px; padding: 0; color: #3182ce; transition: transform 0.2s;" title="Nghe phát âm" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">🔊</button>
+                        </td>
+
                         <td><?= Html::encode($card->backcontent) ?></td>
+                        
                         <td>
                             <?php if ($card->tags): ?>
                                 <?php foreach (explode(',', $card->tags) as $tag): ?>
@@ -90,27 +104,24 @@ $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\App
                                 <?php endforeach; ?>
                             <?php endif; ?>
                         </td>
+
                         <td style="font-style: italic; color: #718096;"><?= Html::encode($card->examplesentence) ?></td>
                         <td style="font-family: monospace;"><?= Html::encode($card->pronunciation) ?></td>
+                        
                         <td class="col-action">
                              <div style="display: flex; justify-content: center; gap: 8px; align-items: center; min-width: 120px;">
-                                
                                 <button class="btn-action-edit" 
                                         onclick="openEditCardModal(<?= htmlspecialchars(json_encode($card->attributes)) ?>)" 
                                         title="Sửa từ vựng" 
                                         style="background: #e3f2fd; border: 1px solid #bbdefb; color: #1976d2; cursor: pointer; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s;">
                                     ✏️
                                 </button>
-                                
-                                
                                 <button class="btn-action-add" 
                                         onclick="openAssignModal(<?= $card->cardid ?>)" 
                                         title="Thêm vào bộ"
                                         style="background: #e6fffa; border: 1px solid #b2f5ea; color: #319795; cursor: pointer; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                                     ➕
                                 </button>
-
-                                
                                 <button class="btn-delete-card-table" 
                                         onclick="deleteCard(<?= $card->cardid ?>)" 
                                         title="Xóa vĩnh viễn"
@@ -153,6 +164,8 @@ $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\App
                 <thead>
                     <tr>
                         <th width="40">#</th>
+                        <!-- Thêm cột Hình ảnh -->
+                        <th width="80">Hình ảnh</th>
                         <th>Mặt trước</th>
                         <th>Mặt sau</th>
                         <th>Phát âm</th>
@@ -164,6 +177,13 @@ $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\App
                 <tbody>
                     <tr class="entry-row">
                         <td style="font-weight:800; color:#718096; text-align: center;">1</td>
+                        <td style="text-align: center;">
+                            <label style="cursor: pointer; display: block; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 5px; background: #f8fafc; transition: all 0.2s;" onmouseover="this.style.borderColor='#3182ce'" onmouseout="this.style.borderColor='#cbd5e1'">
+                                <input type="file" accept="image/*" onchange="convertImage(this)" style="display: none;">
+                                <div class="upload-icon" style="font-size: 20px; color: #a0aec0;">🖼️</div>
+                                <img class="preview-img" style="display:none; width:100%; height:40px; object-fit:cover; border-radius:4px;">
+                            </label>
+                        </td>
                         <td><input type="text" class="in-front"></td>
                         <td><input type="text" class="in-back"></td>
                         <td><input type="text" class="in-pronun"></td>
@@ -182,7 +202,6 @@ $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\App
         </div>
     </div>
 </div>
-
 
 <div id="modalAssignDeck" class="modal-overlay" onclick="this.style.display='none'">
     <div class="modal-content" style="max-width: 400px; text-align: center;" onclick="event.stopPropagation()">
@@ -210,6 +229,20 @@ $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\App
         
         <input type="hidden" id="editCardId">
         
+        <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 15px;">
+            <div style="flex-shrink: 0;">
+                <label style="display:block; font-weight:700; margin-bottom:5px; font-size:14px; color:#4a5568;">Ảnh minh họa</label>
+                <div style="border: 1px dashed #cbd5e1; padding: 10px; border-radius: 12px; background: #f8fafc; text-align: center; width: 100px;">
+                    <input type="file" id="editImageFile" accept="image/*" onchange="convertEditImage(this)" style="display: none;">
+                    <input type="hidden" id="editImageBase64">
+                    <label for="editImageFile" style="cursor: pointer; color: #3182ce; font-weight: bold; font-size: 13px;">Chọn ảnh</label>
+                </div>
+            </div>
+            <div>
+                <img id="editImagePreview" style="display:none; width: 80px; height: 80px; border-radius: 12px; object-fit: cover; border: 2px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+            </div>
+        </div>
+
         <div style="margin-bottom: 15px;">
             <label style="display:block; font-weight:700; margin-bottom:5px; font-size:14px; color:#4a5568;">Mặt trước (Từ vựng/Câu hỏi)</label>
             <input type="text" id="editFront" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; font-family:'Nunito'; outline:none;">
@@ -231,22 +264,81 @@ $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\App
         </div>
 
         <div style="margin-bottom: 25px;">
-            <label style="display:block; font-weight:700; margin-bottom:5px; font-size:14px; color:#4a5568;">Tags (ngăn cách bằng dấu phẩy)</label>
-            <input type="text" id="editTags" placeholder="Ví dụ: ielts, verb, essential" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; font-family:'Nunito'; outline:none;">
+            <label style="display:block; font-weight:700; margin-bottom:5px; font-size:14px; color:#4a5568;">Tags (cách nhau bằng dấu phẩy)</label>
+            <input type="text" id="editTags" placeholder="Ví dụ: noun, verb, essential" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; font-family:'Nunito'; outline:none;">
         </div>
 
         <div style="display: flex; justify-content: flex-end; gap: 15px;">
             <button class="btn-text-cancel" onclick="document.getElementById('modalEditCard').style.display='none'">HỦY BỎ</button>
-            <button class="btn-text-save" onclick="updateCardData()" style="background: #3182ce; color: white; padding: 8px 25px; border-radius: 8px;">LƯU THAY ĐỔI</button>
+            <button class="btn-text-save" onclick="updateCardData()" style="background: #3182ce; color: white; padding: 8px 25px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer;">LƯU THAY ĐỔI</button>
         </div>
     </div>
 </div>
 
 <script>
 
+function playAudio(text) {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        var msg = new SpeechSynthesisUtterance();
+        msg.text = text;
+        msg.lang = 'en-US'; 
+        msg.rate = 0.7;     
+        msg.pitch = 1.0;    
+        window.speechSynthesis.speak(msg);
+    } else {
+        alert("Trình duyệt của bạn không hỗ trợ đọc văn bản. Vui lòng sử dụng Google Chrome hoặc Safari.");
+    }
+}
+
+
+function convertImage(input) {
+    const file = input.files[0];
+    if (file) {
+        // Giới hạn dung lượng 2MB
+        if (file.size > 2 * 1024 * 1024) {
+            alert("Vui lòng chọn ảnh dung lượng dưới 2MB!");
+            input.value = "";
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            input.dataset.base64 = e.target.result; 
+                        const label = input.parentElement;
+            const icon = label.querySelector('.upload-icon');
+            const img = label.querySelector('.preview-img');
+            
+            icon.style.display = 'none';
+            img.src = e.target.result;
+            img.style.display = 'block';
+        }
+        reader.readAsDataURL(file);
+    }
+}
+
+function convertEditImage(input) {
+    const file = input.files[0];
+    if (file) {
+        if (file.size > 2 * 1024 * 1024) {
+            alert("Vui lòng chọn ảnh dung lượng dưới 2MB!");
+            input.value = "";
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('editImageBase64').value = e.target.result;
+            const img = document.getElementById('editImagePreview');
+            img.src = e.target.result;
+            img.style.display = 'block';
+        }
+        reader.readAsDataURL(file);
+    }
+}
+
 
 function openEditCardModal(cardData) {
-    
     document.getElementById('editCardId').value = cardData.cardid;
     document.getElementById('editFront').value = cardData.frontcontent;
     document.getElementById('editBack').value = cardData.backcontent;
@@ -254,6 +346,15 @@ function openEditCardModal(cardData) {
     document.getElementById('editExample').value = cardData.examplesentence || '';
     document.getElementById('editTags').value = cardData.tags || '';
     
+    document.getElementById('editImageFile').value = '';
+    document.getElementById('editImageBase64').value = '';
+    const preview = document.getElementById('editImagePreview');
+    if (cardData.imageurl) {
+        preview.src = cardData.imageurl;
+        preview.style.display = 'block';
+    } else {
+        preview.style.display = 'none';
+    }
     
     document.getElementById('modalEditCard').style.display = 'flex';
 }
@@ -265,6 +366,7 @@ function updateCardData() {
     const pronun = document.getElementById('editPronun').value.trim();
     const example = document.getElementById('editExample').value.trim();
     const tags = document.getElementById('editTags').value.trim();
+    const imageBase64 = document.getElementById('editImageBase64').value; 
 
     if(!front || !back) return alert('Mặt trước và mặt sau không được để trống!');
 
@@ -280,7 +382,8 @@ function updateCardData() {
             backcontent: back,
             pronunciation: pronun,
             examplesentence: example,
-            tags: tags
+            tags: tags,
+            image_base64: imageBase64 
         })
     })
     .then(res => res.json())
@@ -355,6 +458,13 @@ function addEntryRow() {
     tr.className = 'entry-row';
     tr.innerHTML = `
         <td style="font-weight:800; color:#718096; text-align: center;">${index}</td>
+        <td style="text-align: center;">
+            <label style="cursor: pointer; display: block; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 5px; background: #f8fafc; transition: all 0.2s;" onmouseover="this.style.borderColor='#3182ce'" onmouseout="this.style.borderColor='#cbd5e1'">
+                <input type="file" accept="image/*" onchange="convertImage(this)" style="display: none;">
+                <div class="upload-icon" style="font-size: 20px; color: #a0aec0;">🖼️</div>
+                <img class="preview-img" style="display:none; width:100%; height:40px; object-fit:cover; border-radius:4px;">
+            </label>
+        </td>
         <td><input type="text" class="in-front"></td>
         <td><input type="text" class="in-back"></td>
         <td><input type="text" class="in-pronun"></td>
@@ -384,13 +494,16 @@ function saveBatchCards() {
     rows.forEach(row => {
         const front = row.querySelector('.in-front').value.trim();
         const back = row.querySelector('.in-back').value.trim();
+        const fileInput = row.querySelector('input[type="file"]');
+        
         if (front && back) {
             cards.push({
                 front: front,
                 back: back,
                 pronunciation: row.querySelector('.in-pronun').value,
                 example: row.querySelector('.in-example').value,
-                tags: row.querySelector('.in-tags').value
+                tags: row.querySelector('.in-tags').value,
+                image_base64: fileInput.dataset.base64 || '' 
             });
         }
     });

@@ -44,6 +44,7 @@ create table decks (
     userid int not null,
     name varchar(255) not null,
     description text,
+    share_token varchar(32) unique null,
     createdat datetime default current_timestamp,
     constraint fk_decks_users foreign key (userid) 
         references users(userid) on delete cascade,
@@ -73,6 +74,7 @@ create table cards (
     frontcontent text not null,
     backcontent text not null,
     pronunciation varchar(255) null,
+    imageurl varchar(500) null comment 'Đường dẫn ảnh minh họa cho thẻ',
     audiourl varchar(500) null,
     examplesentence text null,
     tags varchar(255) null,
@@ -292,37 +294,36 @@ values
 (1, current_date, 10, 8);
 
 -- 3. Thêm bộ thẻ
-insert into decks (userid, name, description)
-values 
-(1, '100 từ vựng toeic', 'bộ từ vựng cơ bản thường gặp trong bài thi toeic'), 
-(1, 'động từ bất quy tắc', 'cần học thuộc lòng để chia thì'),                 
-(2, 'giải phẫu học cơ sở', 'dành cho sinh viên y khoa năm 1');
+insert into decks (userid, name, description, share_token)values 
+(1, '100 từ vựng toeic', 'bộ từ vựng cơ bản thường gặp trong bài thi toeic','tok_toeic_123'), 
+(1, 'động từ bất quy tắc', 'cần học thuộc lòng để chia thì','tok_irregular_456'),                 
+(2, 'giải phẫu học cơ sở', 'dành cho sinh viên y khoa năm 1','tok_irregular_789');
 
 -- 4. Thêm cài đặt bộ thẻ
 insert into decksettings (deckid, maxnewcardsperday, maxreviewsperday)
 values (1, 20, 100), (2, 10, 50), (3, 30, 200);
 
 -- 5. Thêm thẻ ghi nhớ (ĐÃ BỔ SUNG CỘT USERID CHO TỪNG THẺ)
-insert into cards (userid, deckid, cardtype, frontcontent, backcontent, pronunciation, audiourl, examplesentence, tags)
+insert into cards (userid, deckid, cardtype, frontcontent, backcontent, pronunciation, imageurl, audiourl, examplesentence, tags)
 values 
-(1, 1, 1, 'accommodate (v)', 'cung cấp chỗ ở, đáp ứng nhu cầu', '/əˈkɒm.ə.deɪt/', '/audio/accommodate.mp3', 'the hotel can accommodate up to 500 guests.', 'toeic, verb'),
-(1, 1, 1, 'fluctuate (v)', 'dao động, biến động', '/ˈflʌk.tʃu.eɪt/', '/audio/fluctuate.mp3', 'vegetable prices fluctuate according to the season.', 'toeic, verb'),
-(1, 1, 1, 'mandatory (adj)', 'bắt buộc', '/ˈmæn.də.tər.i/', '/audio/mandatory.mp3', 'athletes must undergo a mandatory drug test.', 'toeic, adjective'),
-(1, 1, 1, 'implement (v)', 'thi hành, thực hiện', '/ˈɪm.plɪ.mənt/', '/audio/implement.mp3', 'the changes to the national health system will be implemented next year.', 'toeic, verb'),
-(1, 1, 1, 'crucial (adj)', 'quan trọng, cốt yếu', '/ˈkruː.ʃəl/', '/audio/crucial.mp3', 'her work has been crucial to the project\'s success.', 'toeic, adjective'),
-(1, 1, 1, 'substantial (adj)', 'đáng kể, quan trọng', '/səbˈstæn.ʃəl/', '/audio/substantial.mp3', 'the findings show a substantial difference between the opinions of men and women.', 'toeic, adjective'),
-(1, 1, 1, 'eliminate (v)', 'loại bỏ, loại trừ', '/ɪˈlɪm.ɪ.neɪt/', '/audio/eliminate.mp3', 'a move towards healthy eating could help eliminate heart disease.', 'toeic, verb'),
-(1, 1, 1, 'initiate (v)', 'khởi xướng, bắt đầu', '/ɪˈnɪʃ.i.eɪt/', '/audio/initiate.mp3', 'who initiated the violence?', 'toeic, verb'),
-(1, 2, 3, 'go', 'went - gone (đi)', '/ɡəʊ/', '/audio/go.mp3', 'i go to school every day.', 'verb, irregular'),
-(1, 2, 3, 'see', 'saw - seen (nhìn thấy)', '/siː/', '/audio/see.mp3', 'i can see the ocean from my window.', 'verb, irregular'),
-(1, 2, 3, 'take', 'took - taken (lấy, cầm, nắm)', '/teɪk/', '/audio/take.mp3', 'don\'t forget to take your umbrella.', 'verb, irregular'),
-(1, 2, 3, 'eat', 'ate - eaten (ăn)', '/iːt/', '/audio/eat.mp3', 'i usually eat an apple for breakfast.', 'verb, irregular'),
-(1, 2, 3, 'break', 'broke - broken (làm vỡ, bẻ gãy)', '/breɪk/', '/audio/break.mp3', 'he broke the vase by accident.', 'verb, irregular'),
-(2, 3, 1, 'cranium', 'hộp sọ', null, null, 'the cranium protects the brain.', 'anatomy, bone'),
-(2, 3, 1, 'clavicle', 'xương quai xanh', null, null, 'a broken clavicle is a common sports injury.', 'anatomy, bone'),
-(2, 3, 1, 'femur', 'xương đùi', null, null, 'the femur is the longest bone in the human body.', 'anatomy, bone'),
-(2, 3, 1, 'sternum', 'xương ức', null, null, 'the ribs are attached to the sternum.', 'anatomy, bone'),
-(2, 3, 1, 'patella', 'xương bánh chè', null, null, 'the patella protects the knee joint.', 'anatomy, bone');
+(1, 1, 1, 'accommodate (v)', 'cung cấp chỗ ở, đáp ứng nhu cầu', '/əˈkɒm.ə.deɪt/', null, '/audio/accommodate.mp3', 'the hotel can accommodate up to 500 guests.', 'toeic, verb'),
+(1, 1, 1, 'fluctuate (v)', 'dao động, biến động', '/ˈflʌk.tʃu.eɪt/', null, '/audio/fluctuate.mp3', 'vegetable prices fluctuate according to the season.', 'toeic, verb'),
+(1, 1, 1, 'mandatory (adj)', 'bắt buộc', '/ˈmæn.də.tər.i/', null, '/audio/mandatory.mp3', 'athletes must undergo a mandatory drug test.', 'toeic, adjective'),
+(1, 1, 1, 'implement (v)', 'thi hành, thực hiện', '/ˈɪm.plɪ.mənt/', null, '/audio/implement.mp3', 'the changes to the national health system will be implemented next year.', 'toeic, verb'),
+(1, 1, 1, 'crucial (adj)', 'quan trọng, cốt yếu', '/ˈkruː.ʃəl/', null, '/audio/crucial.mp3', 'her work has been crucial to the project\'s success.', 'toeic, adjective'),
+(1, 1, 1, 'substantial (adj)', 'đáng kể, quan trọng', '/səbˈstæn.ʃəl/', null, '/audio/substantial.mp3', 'the findings show a substantial difference between the opinions of men and women.', 'toeic, adjective'),
+(1, 1, 1, 'eliminate (v)', 'loại bỏ, loại trừ', '/ɪˈlɪm.ɪ.neɪt/', null, '/audio/eliminate.mp3', 'a move towards healthy eating could help eliminate heart disease.', 'toeic, verb'),
+(1, 1, 1, 'initiate (v)', 'khởi xướng, bắt đầu', '/ɪˈnɪʃ.i.eɪt/', null, '/audio/initiate.mp3', 'who initiated the violence?', 'toeic, verb'),
+(1, 2, 3, 'go', 'went - gone (đi)', '/ɡəʊ/', null, '/audio/go.mp3', 'i go to school every day.', 'verb, irregular'),
+(1, 2, 3, 'see', 'saw - seen (nhìn thấy)', '/siː/', null, '/audio/see.mp3', 'i can see the ocean from my window.', 'verb, irregular'),
+(1, 2, 3, 'take', 'took - taken (lấy, cầm, nắm)', '/teɪk/', null, '/audio/take.mp3', 'don\'t forget to take your umbrella.', 'verb, irregular'),
+(1, 2, 3, 'eat', 'ate - eaten (ăn)', '/iːt/', null, '/audio/eat.mp3', 'i usually eat an apple for breakfast.', 'verb, irregular'),
+(1, 2, 3, 'break', 'broke - broken (làm vỡ, bẻ gãy)', '/breɪk/', null, '/audio/break.mp3', 'he broke the vase by accident.', 'verb, irregular'),
+(2, 3, 1, 'cranium', 'hộp sọ', null, null, null, 'the cranium protects the brain.', 'anatomy, bone'),
+(2, 3, 1, 'clavicle', 'xương quai xanh', null, null, null, 'a broken clavicle is a common sports injury.', 'anatomy, bone'),
+(2, 3, 1, 'femur', 'xương đùi', null, null, null, 'the femur is the longest bone in the human body.', 'anatomy, bone'),
+(2, 3, 1, 'sternum', 'xương ức', null, null, null, 'the ribs are attached to the sternum.', 'anatomy, bone'),
+(2, 3, 1, 'patella', 'xương bánh chè', null, null, null, 'the patella protects the knee joint.', 'anatomy, bone');
 
 -- 6. Thêm tiến độ học tập
 insert into cardprogress (cardid, status, duedate, intervaldays, easefactor, repetitions, lapses)

@@ -23,11 +23,6 @@ $this->registerCssFile('@web/css/vocabset.css', ['depends' => [\app\assets\AppAs
             <h1>Quản lý Bộ thẻ</h1>
             
             <div class="vocabset-actions">
-                <div class="share-import-group">
-                    <input type="text" id="importDeckId" placeholder="Nhập ID bộ bài..." class="search-input-mini">
-                    <button class="btn-import-share" onclick="importDeck()">Nhận bộ bài</button>
-                </div>
-
                 <div class="search-container">
                     <input type="text" id="searchInput" placeholder="Tìm kiếm bộ bài..." class="search-input">
                 </div>
@@ -47,20 +42,15 @@ $this->registerCssFile('@web/css/vocabset.css', ['depends' => [\app\assets\AppAs
                         $s = $c->progress ? $c->progress->status : 0;
                         
                         if ($s == 0 && $newQuotaRemaining > 0) {
-                            
-                            
                             if (!$c->progress || strtotime($c->progress->duedate) <= strtotime($today . ' 23:59:59')) {
                                 $n++;
                                 $newQuotaRemaining--;
                             }
                         } elseif ($s == 1) {
-                            
-                            
                             if ($c->progress && strtotime($c->progress->duedate) <= strtotime($today . ' 23:59:59')) {
                                 $l++;
                             }
                         } elseif ($s == 2 && $c->progress && strtotime($c->progress->duedate) <= strtotime($today . ' 23:59:59') && $reviewQuotaRemaining > 0) {
-                            
                             $r++;
                             $reviewQuotaRemaining--;
                         }
@@ -80,8 +70,10 @@ $this->registerCssFile('@web/css/vocabset.css', ['depends' => [\app\assets\AppAs
                         <div class="stat-item stat-learning"><span class="stat-number"><?= $l ?></span><span class="stat-label">Đang học</span></div>
                         <div class="stat-item stat-review"><span class="stat-number"><?= $r ?></span><span class="stat-label">Ôn tập</span></div>
                         
-                        <button class="btn-share-id" onclick="event.stopPropagation(); shareId(<?= $deck->deckid ?>)" title="Copy ID để chia sẻ">🔗</button>
-                        
+                        <button class="btn-share-id" onclick="event.stopPropagation(); duplicateDeck(<?= $deck->deckid ?>)" title="Nhân bản bộ bài này">📑</button>
+                        <button class="btn-share-id" 
+                        onclick="event.stopPropagation(); copyAndAlert('<?= Url::to(['site/import', 'token' => $deck->share_token], true) ?>')" 
+                        title="Copy link chia sẻ">🔗</button>
                         <button class="btn-edit-trigger" onclick="event.stopPropagation(); openModal('modalEdit-<?= $deck->deckid ?>')">✏️</button>
                     </div>
                 </div>
@@ -90,7 +82,7 @@ $this->registerCssFile('@web/css/vocabset.css', ['depends' => [\app\assets\AppAs
                 <div id="modalView-<?= $deck->deckid ?>" class="modal-overlay" onclick="closeModal(this)">
                     <div class="modal-content" onclick="event.stopPropagation()">
                         <div class="modal-header">
-                            <h2>Chi tiết bộ thẻ (ID: <?= $deck->deckid ?>)</h2>
+                            <h2>  Chi tiết bộ thẻ</h2>
                             <button class="btn-close-modal" onclick="closeModalById('modalView-<?= $deck->deckid ?>')">&times;</button>
                         </div>
                         
@@ -114,24 +106,41 @@ $this->registerCssFile('@web/css/vocabset.css', ['depends' => [\app\assets\AppAs
                                 <p style="text-align: center; color: #a0aec0; padding: 20px;">Không có từ vựng nào trong bộ thẻ này.</p>
                             <?php else: ?>
                                 <?php foreach($deck->cards as $card): ?>
-                                    <div class="card-row-display" id="card-row-<?= $card->cardid ?>">
-                                        <div class="card-main-content">
-                                            <div class="content-part"><label>Mặt trước</label><div class="content-text" style="color:#3182ce;"><?= Html::encode($card->frontcontent) ?></div></div>
-                                            <div class="content-part"><label>Mặt sau</label><div class="content-text"><?= Html::encode($card->backcontent) ?></div></div>
-                                        </div>
-                                        <div class="card-meta-info">
-                                            <div class="meta-item"><strong>Phiên âm:</strong> <?= Html::encode($card->pronunciation) ?: 'N/A' ?></div>
-                                            <div style="width:100%; margin-top:5px;"><strong>Ví dụ:</strong> <em style="color: #718096;">"<?= Html::encode($card->examplesentence) ?: 'Chưa có ví dụ' ?>"</em></div>
-                                            <div style="flex-grow:1; text-align:right;">
-                                                <span class="status-badge status-<?= $card->progress ? $card->progress->status : 0 ?>">
-                                                    <?= $card->progress ? ($card->progress->status == 0 ? 'Mới' : ($card->progress->status == 1 ? 'Đang học' : 'Ôn tập')) : 'Mới' ?>
-                                                </span>
+                                    <div class="card-row-display" id="card-row-<?= $card->cardid ?>" style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #e2e8f0;">
+                                        <?php if(!empty($card->imageurl)): ?>
+                                            <div style="flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden; width: 80px; height: 80px;">
+                                                <img src="<?= Html::encode($card->imageurl) ?>" style="width: 100%; height: 100%; object-fit: cover;" alt="Image">
                                             </div>
-                                        </div>
-                                        <div class="card-actions-inner" style="margin-top: 15px; display: flex; justify-content: flex-end;">
-                                            <button onclick="removeFromDeck(<?= $card->cardid ?>, <?= $deck->deckid ?>)" style="padding: 6px 15px; border: 1px solid #f44336; color: #f44336; background: #fff5f5; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Nunito'; transition: all 0.2s;">
-                                                ✖ Gỡ khỏi bộ
-                                            </button>
+                                        <?php endif; ?>
+
+                                        <div style="flex: 1;">
+                                            <div class="card-main-content" style="display: flex; gap: 10px;">
+                                                <div class="content-part" style="flex: 1;">
+                                                    <label>Mặt trước</label>
+                                                    <div class="content-text" style="color:#3182ce; display: flex; align-items: center; gap: 10px;">
+                                                        <?= Html::encode($card->frontcontent) ?>
+                                                        <button onclick="playAudio('<?= addslashes($card->frontcontent) ?>')" style="background:none; border:none; cursor:pointer; font-size: 16px; padding: 0;" title="Nghe phát âm">🔊</button>
+                                                    </div>
+                                                </div>
+                                                <div class="content-part" style="flex: 1;">
+                                                    <label>Mặt sau</label>
+                                                    <div class="content-text"><?= Html::encode($card->backcontent) ?></div>
+                                                </div>
+                                            </div>
+                                            <div class="card-meta-info" style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 10px;">
+                                                <div class="meta-item"><strong>Phiên âm:</strong> <?= Html::encode($card->pronunciation) ?: 'N/A' ?></div>
+                                                <div style="width:100%;"><strong>Ví dụ:</strong> <em style="color: #718096;">"<?= Html::encode($card->examplesentence) ?: 'Chưa có ví dụ' ?>"</em></div>
+                                                <div style="flex-grow:1; text-align:right;">
+                                                    <span class="status-badge status-<?= $card->progress ? $card->progress->status : 0 ?>">
+                                                        <?= $card->progress ? ($card->progress->status == 0 ? 'Mới' : ($card->progress->status == 1 ? 'Đang học' : 'Ôn tập')) : 'Mới' ?>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="card-actions-inner" style="margin-top: 15px; display: flex; justify-content: flex-end;">
+                                                <button onclick="removeFromDeck(<?= $card->cardid ?>, <?= $deck->deckid ?>)" style="padding: 6px 15px; border: 1px solid #f44336; color: #f44336; background: #fff5f5; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Nunito'; transition: all 0.2s;">
+                                                    ✖ Gỡ khỏi bộ
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 <?php endforeach; ?>
@@ -184,31 +193,32 @@ $this->registerCssFile('@web/css/vocabset.css', ['depends' => [\app\assets\AppAs
 </div>
 
 <script>
+
+function playAudio(text) {
+    if ('speechSynthesis' in window) {
+        var msg = new SpeechSynthesisUtterance();
+        msg.text = text;
+        msg.lang = 'en-US'; // Giọng đọc Tiếng Anh Mỹ
+        msg.rate = 0.7;    
+        window.speechSynthesis.speak(msg);
+    } else {
+        alert("Trình duyệt của bạn không hỗ trợ đọc văn bản. Vui lòng dùng Chrome hoặc Safari.");
+    }
+}
+
 function openModal(id) { document.getElementById(id).style.display = 'flex'; document.body.style.overflow = 'hidden'; }
 function closeModal(overlay) { overlay.style.display = 'none'; document.body.style.overflow = 'auto'; }
 function closeModalById(id) { document.getElementById(id).style.display = 'none'; document.body.style.overflow = 'auto'; }
 
-function shareId(id) {
-    const tempInput = document.createElement("input");
-    tempInput.value = id;
-    document.body.appendChild(tempInput);
-    tempInput.select();
-    document.execCommand("copy");
-    document.body.removeChild(tempInput);
-    alert("Đã copy ID: " + id + ". Hãy gửi số này cho bạn bè nhé!");
-}
-
-function importDeck() {
-    const id = document.getElementById('importDeckId').value.trim();
-    if(!id) return alert("Vui lòng nhập ID bộ bài!");
-
+function duplicateDeck(deckId) {
+    if(!confirm("Bạn có muốn tạo một bản sao (Copy) của bộ thẻ này không?")) return;
     fetch('<?= Url::to(['site/ajax-import-deck']) ?>', {
         method: 'POST',
         headers: { 
             'Content-Type': 'application/x-www-form-urlencoded', 
             'X-CSRF-Token': '<?= Yii::$app->request->csrfToken ?>' 
         },
-        body: new URLSearchParams({ deckId: id })
+        body: new URLSearchParams({ deckId: deckId })
     })
     .then(res => res.json())
     .then(data => {
@@ -304,6 +314,13 @@ function removeFromDeck(cardId, deckId) {
     .catch(err => {
         console.error(err);
         alert('Lỗi kết nối máy chủ!');
+    });
+}
+function copyAndAlert(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        alert("Đã copy link chia sẻ");
+    }).catch(err => {
+        console.error('Lỗi khi copy: ', err);
     });
 }
 </script>
