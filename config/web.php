@@ -1,5 +1,7 @@
 <?php
 
+// Load environment variables từ .env file
+
 $params = require __DIR__ . '/params.php';
 $db = require __DIR__ . '/db.php';
 
@@ -49,7 +51,6 @@ $config = [
                     'class' => 'yii\authclient\clients\Google',
                     'clientId' => getenv('GOOGLE_CLIENT_ID'),
                     'clientSecret' => getenv('GOOGLE_CLIENT_SECRET'),
-
                 ],
             ],
         ],
