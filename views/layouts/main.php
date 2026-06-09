@@ -189,6 +189,8 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
 
 </footer>
 
+<?= $this->render('@app/views/chatbot/floating') ?>
+
 <?php $this->endBody() ?>
 </body>
 </html>

@@ -6,6 +6,8 @@ use Yii;
 use yii\web\Controller;
 use yii\web\Response;
 use yii\filters\AccessControl;
+use app\models\Card;
+use app\models\Deck;
 
 class ChatbotController extends Controller
 {
@@ -124,6 +126,8 @@ class ChatbotController extends Controller
      */
     private function getVocabularyContext()
     {
+        $userVocabData = $this->fetchUserVocabularyData();
+        
         $context = <<<CONTEXT
 === THÔNG TIN CHI TIẾT VỀ NỀN TẢNG ANDI ===
 
@@ -196,6 +200,8 @@ C. LỘ TRÌNH HỌC CÁ NHÂN HÓA:
      * Tỷ lệ thành công
      * Thời gian học
      * Tiến độ hàng ngày
+
+$userVocabData
 
 === PHẦN 3: TÍNH NĂNG LUYỆN TẬP ===
 
@@ -346,6 +352,78 @@ CONTEXT;
     }
 
     /**
+     * Fetch dữ liệu từ vựng của user hiện tại từ database
+     * Chỉ lấy dữ liệu liên quan đến tài khoản đang đăng nhập
+     */
+    private function fetchUserVocabularyData()
+    {
+        // Kiểm tra user đã đăng nhập
+        if (Yii::$app->user->isGuest) {
+            return "=== THÔNG TIN TỪ VỰNG CÁ NHÂN ===\n\nBạn chưa đăng nhập. Vui lòng đăng nhập để xem dữ liệu từ vựng cá nhân của bạn.";
+        }
+
+        $userId = Yii::$app->user->identity->userid;
+        
+        try {
+            // Lấy tất cả deck của user
+            $userDecks = Deck::find()
+                ->where(['userid' => $userId])
+                ->all();
+
+            if (empty($userDecks)) {
+                return "=== THÔNG TIN TỪ VỰNG CÁ NHÂN ===\n\nBạn chưa tạo bộ thẻ nào. Hãy tạo bộ thẻ đầu tiên để bắt đầu học từ vựng.";
+            }
+
+            $userVocabInfo = "=== THÔNG TIN TỪ VỰNG CÁ NHÂN CỦA BẠN ===\n\n";
+            $userVocabInfo .= "Bạn hiện có " . count($userDecks) . " bộ thẻ:\n\n";
+
+            $totalCards = 0;
+
+            foreach ($userDecks as $deck) {
+                // Lấy số lượng card trong mỗi deck
+                $cards = Card::find()
+                    ->where(['deckid' => $deck->deckid])
+                    ->all();
+                
+                $cardCount = count($cards);
+                $totalCards += $cardCount;
+
+                // Thông tin từng deck
+                $userVocabInfo .= "📚 BỘ THẺ: {$deck->name}\n";
+                $userVocabInfo .= "   Mô tả: {$deck->description}\n";
+                $userVocabInfo .= "   Số thẻ từ vựng: {$cardCount}\n";
+                $userVocabInfo .= "   Ngày tạo: " . date('d/m/Y', strtotime($deck->createdat)) . "\n";
+
+                // Hiển thị một số từ vựng ví dụ (tối đa 3 từ)
+                if (!empty($cards)) {
+                    $userVocabInfo .= "   Ví dụ từ vựng:\n";
+                    $exampleCount = min(3, count($cards));
+                    for ($i = 0; $i < $exampleCount; $i++) {
+                        $card = $cards[$i];
+                        $userVocabInfo .= "      • {$card->frontcontent} → {$card->backcontent}\n";
+                    }
+                    if (count($cards) > 3) {
+                        $userVocabInfo .= "      ... và " . (count($cards) - 3) . " từ khác\n";
+                    }
+                }
+                $userVocabInfo .= "\n";
+            }
+
+            $userVocabInfo .= "Tổng cộng: {$totalCards} từ vựng trong " . count($userDecks) . " bộ thẻ\n\n";
+            $userVocabInfo .= "Chatbot của bạn có thể:\n";
+            $userVocabInfo .= "- Giúp bạn ôn tập các bộ thẻ của bạn\n";
+            $userVocabInfo .= "- Trả lời câu hỏi về các từ vựng bạn đang học\n";
+            $userVocabInfo .= "- Cung cấp mẹo học hiệu quả\n";
+            $userVocabInfo .= "- Hỗ trợ bạn trong quá trình học tập\n";
+
+            return $userVocabInfo;
+        } catch (\Exception $e) {
+            Yii::error('Error fetching user vocabulary: ' . $e->getMessage());
+            return "=== THÔNG TIN TỪ VỰNG CÁ NHÂN ===\n\nCó lỗi khi tải dữ liệu từ vựng của bạn. Vui lòng thử lại sau.";
+        }
+    }
+
+    /**
      * Build system prompt cho Gemini
      */
     private function buildSystemPrompt($vocabularyContext)
@@ -354,27 +432,30 @@ CONTEXT;
 Bạn là trợ lý hỗ trợ của nền tảng học ngoại ngữ "ANDI". Bạn là một cố vấn tư vấn thân thiện, am hiểu sâu về học từ vựng và cả nền tảng.
 
 Nhiệm vụ của bạn:
-1. Giải thích về các loại thẻ trên ANDI (Vocabulary Card, Deck, Flashcard)
-2. Hướng dẫn người dùng cách sử dụng các tính năng của ANDI
-3. Cung cấp lời khuyên về cách học từ vựng hiệu quả
-4. Trả lời câu hỏi về cách đăng bài blog
-5. Giới thiệu về nền tảng và các tính năng nổi bật
-6. Hỗ trợ các vấn đề thường gặp khi sử dụng ANDI
+1. Trả lời các câu hỏi về từ vựng và deck của người dùng (dữ liệu cá nhân)
+2. Giải thích về các loại thẻ trên ANDI (Vocabulary Card, Deck, Flashcard)
+3. Hướng dẫn người dùng cách sử dụng các tính năng của ANDI
+4. Cung cấp lời khuyên về cách học từ vựng hiệu quả
+5. Trả lời câu hỏi về cách đăng bài blog
+6. Giới thiệu về nền tảng và các tính năng nổi bật
+7. Hỗ trợ các vấn đề thường gặp khi sử dụng ANDI
 
 $vocabularyContext
 
 Hướng dẫn trả lời:
 - Trả lời bằng tiếng Việt
-- Ngắn gọn nhưng đầy đủ thông tin (2-3 đoạn văn)
+- **QUAN TRỌNG: Trả lời ngắn gọn nhưng đầy đủ thông tin (2-3 đoạn văn)**
 - **QUAN TRỌNG: Chia đoạn bằng cách sử dụng hai dòng trống (\n\n) giữa các đoạn văn để dễ đọc**
 - Mỗi đoạn nên có 2-4 câu
-- Trả lời đúng trọng tâm, đừng đi quá sâu vào các vấn đề phụ nếu không cần thiết
-- Sử dụng ví dụ cụ thể khi cần thiết
+- **QUAN TRỌNG: Trả lời đúng trọng tâm, đừng đi quá sâu vào các vấn đề phụ nếu không cần thiết**
+- Sử dụng ví dụ cụ thể từ dữ liệu từ vựng cá nhân của người dùng khi có liên quan
 - Nếu người dùng hỏi về tính năng, hãy giải thích chi tiết cách sử dụng
 - Luôn hỗ trợ tích cực và khuyến khích người dùng học tập
 - Không sử dụng Markdown formatting, ** hoặc __ hay ```
 - Tự nhiên, thân thiện, giống như một "cố vấn" thực sự của ANDI
 - Đôi khi sử dụng emoji phù hợp để tăng sự thân thiện (chỉ 1-2 emoji)
+- NẾU NGƯỜI DÙNG HỎI VỀ TỪ VỰNG: Hãy tìm từ đó trong danh sách từ vựng của họ và cung cấp ngữ cảnh cá nhân
+- NẾU KHÔNG TÌM THẤY TỪ TRONG CÁC BỘ THẺ CỦA HỌ: Hãy giải thích từ đó và gợi ý thêm từ vựng liên quan
 PROMPT;
     }
 
@@ -458,5 +539,131 @@ PROMPT;
         $text = trim($text);
 
         return !empty($text) ? $text : 'Xin lỗi, tôi không thể trả lời câu hỏi này lúc này.';
+    }
+
+    /**
+     * Tìm kiếm từ vựng của user theo từ khóa
+     * Chỉ tìm trong các bộ thẻ của user hiện tại
+     */
+    private function searchUserVocabulary($keyword)
+    {
+        if (Yii::$app->user->isGuest) {
+            return [];
+        }
+
+        $userId = Yii::$app->user->identity->userid;
+        
+        try {
+            // Lấy tất cả deck của user
+            $userDecks = Deck::find()
+                ->where(['userid' => $userId])
+                ->all();
+
+            $results = [];
+            
+            foreach ($userDecks as $deck) {
+                // Tìm card chứa từ khóa trong mặt trước (tiếng Anh) hoặc mặt sau (tiếng Việt)
+                $cards = Card::find()
+                    ->where(['deckid' => $deck->deckid])
+                    ->andWhere(['OR',
+                        ['LIKE', 'frontcontent', '%' . $keyword . '%'],
+                        ['LIKE', 'backcontent', '%' . $keyword . '%']
+                    ])
+                    ->limit(5)
+                    ->all();
+
+                foreach ($cards as $card) {
+                    $results[] = [
+                        'deck' => $deck->name,
+                        'english' => $card->frontcontent,
+                        'vietnamese' => $card->backcontent,
+                        'example' => $card->examplesentence,
+                        'pronunciation' => $card->pronunciation
+                    ];
+                }
+            }
+
+            return $results;
+        } catch (\Exception $e) {
+            Yii::error('Error searching vocabulary: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Lấy thống kê về bộ thẻ của user
+     */
+    private function getUserDecksStats()
+    {
+        if (Yii::$app->user->isGuest) {
+            return [];
+        }
+
+        $userId = Yii::$app->user->identity->userid;
+        
+        try {
+            $userDecks = Deck::find()
+                ->where(['userid' => $userId])
+                ->all();
+
+            $stats = [];
+            
+            foreach ($userDecks as $deck) {
+                $cardCount = Card::find()
+                    ->where(['deckid' => $deck->deckid])
+                    ->count();
+
+                $stats[] = [
+                    'deckId' => $deck->deckid,
+                    'deckName' => $deck->name,
+                    'cardCount' => $cardCount,
+                    'description' => $deck->description,
+                    'createdAt' => $deck->createdat
+                ];
+            }
+
+            return $stats;
+        } catch (\Exception $e) {
+            Yii::error('Error getting deck stats: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Lấy thông tin chi tiết về một deck cụ thể
+     */
+    private function getDeckDetails($deckId)
+    {
+        if (Yii::$app->user->isGuest) {
+            return null;
+        }
+
+        $userId = Yii::$app->user->identity->userid;
+        
+        try {
+            $deck = Deck::find()
+                ->where(['deckid' => $deckId, 'userid' => $userId])
+                ->one();
+
+            if (!$deck) {
+                return null;
+            }
+
+            $cards = Card::find()
+                ->where(['deckid' => $deckId])
+                ->all();
+
+            return [
+                'deckId' => $deck->deckid,
+                'deckName' => $deck->name,
+                'description' => $deck->description,
+                'totalCards' => count($cards),
+                'cards' => $cards,
+                'createdAt' => $deck->createdat
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error getting deck details: ' . $e->getMessage());
+            return null;
+        }
     }
 }

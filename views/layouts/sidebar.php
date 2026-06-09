@@ -21,7 +21,6 @@ $user = Yii::$app->user->identity;
         <li><a href="<?= Url::to(['site/vocabulary']) ?>" class="<?= Yii::$app->controller->action->id == 'vocabulary' ? 'active' : '' ?>" title="Từ vựng"><img src="<?= Yii::getAlias('@web') ?>/icons/vocabulary.png" alt=""><span>Từ vựng</span></a></li>            
         <li><a href="<?= Url::to(['site/practice']) ?>" class="<?= Yii::$app->controller->action->id == 'practice' || Yii::$app->controller->action->id == 'study-deck' ? 'active' : '' ?>" title="Luyện tập"><img src="<?= Yii::getAlias('@web') ?>/icons/practice.png" alt=""><span>Luyện tập</span></a></li>
         <li><a href="<?= Url::to(['blog/index']) ?>" class="<?= Yii::$app->controller->action->id == 'blog' ? 'active' : '' ?>" title="Blog"><img src="<?= Yii::getAlias('@web') ?>/icons/blog.png" alt=""><span>Blog</span></a></li>
-        <li><a href="<?= Url::to(['chatbot/index']) ?>" class="<?= Yii::$app->controller->id == 'chatbot' ? 'active' : '' ?>" title="Chatbot"><img src="<?= Yii::getAlias('@web') ?>/icons/chatbot.png" alt="" onerror="this.style.display='none'"><span>📚 Chatbot</span></a></li>
         <?php if ($user && method_exists($user, 'isAdmin') && $user->isAdmin()): ?>
         <li><a href="<?= Url::to(['admin/dashboard']) ?>" class="<?= Yii::$app->controller->action->id == 'admin' ? 'active' : '' ?>" title="Admin Panel"><img src="<?= Yii::getAlias('@web') ?>/icons/admin.png" alt=""><span>Admin Panel</span></a></li>
         <?php endif; ?>
