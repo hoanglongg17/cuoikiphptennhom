@@ -41,6 +41,55 @@ class SiteController extends Controller
         return parent::beforeAction($action);
     }
 
+    public function actionAjaxGetSrsCards()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $level = Yii::$app->request->post('level');
+        $deck_id = Yii::$app->request->post('deck_id');
+        $userId = Yii::$app->user->id;
+
+        $query = Card::find()->where(['userid' => $userId])->with('progress')->orderBy(['createdat' => SORT_DESC]);
+        if ($deck_id) $query->andWhere(['deckid' => $deck_id]);
+        $cards = $query->all();
+
+        $result = [];
+        foreach ($cards as $card) {
+            $include = false;
+            if ($level == 0) {
+                if (!$card->progress) $include = true;
+                else {
+                    $status = $card->progress->status ?? 0;
+                    if ($status == 0 || $status == 1) $include = true;
+                }
+            } else {
+                if ($card->progress && ($card->progress->status ?? 0) == 2) {
+                    $intervalDays = $card->progress->intervaldays ?? 0;
+                    $lv = 4;
+                    if ($intervalDays <= 1) $lv = 1;
+                    elseif ($intervalDays <= 3) $lv = 2;
+                    elseif ($intervalDays <= 7) $lv = 3;
+                    else $lv = 4;
+                    if ($lv == intval($level)) $include = true;
+                }
+            }
+
+            if ($include) {
+                $result[] = [
+                    'cardid' => $card->cardid,
+                    'frontcontent' => $card->frontcontent,
+                    'backcontent' => $card->backcontent,
+                    'pronunciation' => $card->pronunciation,
+                    'examplesentence' => $card->examplesentence,
+                    'imageurl' => $card->imageurl ?? null,
+                    'audiourl' => $card->audiourl ?? null,
+                    'tags' => $card->tags,
+                ];
+            }
+        }
+
+        return ['success' => true, 'cards' => $result];
+    }
+
     
     public function behaviors()
     {
@@ -1136,11 +1185,9 @@ class SiteController extends Controller
                 
                 if ($currentCard && (!$currentCard->progress || $currentCard->progress->status != 2)) {
                     // Thẻ hiện tại VẪN incomplete (status ≠ 2)
-                    // Không được báo finished - phải hoàn thành thẻ này trước
-                    return [
-                        'success' => false,
-                        'message' => 'Chỉ còn thẻ này để hoàn thành. Vui lòng tiếp tục học nó.'
-                    ];
+                    // Thay vì chặn và hiện thông báo, cho phép tiếp tục học chính thẻ hiện tại
+                    $nextCard = $currentCard;
+                    $priorityQueue = [$currentCard];
                 } else {
                     // Thẻ hiện tại đã hoàn thành (status = 2) hoặc không tồn tại
                     // Tất cả thẻ đã hoàn thành
@@ -1193,6 +1240,8 @@ class SiteController extends Controller
                 'backcontent' => $nextCard->backcontent,
                 'pronunciation' => $nextCard->pronunciation,
                 'examplesentence' => $nextCard->examplesentence,
+                    'imageurl' => $nextCard->imageurl ?? null,
+                    'audiourl' => $nextCard->audiourl ?? null,
                 'cardtype' => $nextCard->cardtype,
                 'tags' => $nextCard->tags,
                 'cardIndex' => $cardIndex,

@@ -35,6 +35,19 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
     <div class="study-content">
         <?php $cardType = $currentCard->cardtype ?? 1; ?>
         
+</div>
+
+<!-- Completion modal -->
+<div id="completionModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); align-items:center; justify-content:center; z-index:10000;">
+    <div style="background:#fff; padding:24px 28px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.2); max-width:420px; width:90%; text-align:center;">
+        <h3 id="completionTitle" style="margin:0 0 8px;">Hoàn thành!</h3>
+        <p id="completionMessage" style="color:#4a5568; margin:0 0 18px;">Bạn đã hoàn thành tất cả thẻ trong bộ này.</p>
+        <div style="display:flex; gap:12px; justify-content:center;">
+            <button id="btnReturnPractice" style="background:#10B981; color:#fff; padding:10px 16px; border-radius:8px; border:none; cursor:pointer; font-weight:700;">Quay lại luyện tập</button>
+            <button id="btnCloseCompletion" style="background:#e5e7eb; color:#111827; padding:10px 12px; border-radius:8px; border:none; cursor:pointer;">Đóng</button>
+        </div>
+    </div>
+</div>
         <div id="flashcard-type-1" class="flashcard" style="<?= $cardType == 1 ? '' : 'display: none;' ?>" data-flipped="false" data-cardid="<?= $currentCard->cardid ?>" data-card-status="<?= $currentCard->progress ? $currentCard->progress->status : 0 ?>" data-card-interval="<?= $currentCard->progress ? $currentCard->progress->intervaldays : 0 ?>" data-card-repetitions="<?= $currentCard->progress ? $currentCard->progress->repetitions : 0 ?>" data-card-easefactor="<?= $currentCard->progress ? $currentCard->progress->easefactor : 2.5 ?>">
             <div class="card-inner">
                 <div class="card-front">
@@ -44,6 +57,24 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
                         <div class="card-pronunciation" id="cardPronunciation-1">/ <?= Html::encode($currentCard->pronunciation) ?> /</div>
                     <?php else: ?>
                         <div class="card-pronunciation" id="cardPronunciation-1" style="display: none;"></div>
+                    <?php endif; ?>
+                    <button id="cardPlay-1" data-suffix="-1" onclick="playAudio(this.dataset.suffix)" style="background:none; border:none; cursor:pointer; margin-left: 8px; font-size: 28px; padding: 0; color: #3182ce; transition: transform 0.12s;" title="Nghe phát âm" onmouseover="this.style.transform='scale(1.12)'" onmouseout="this.style.transform='scale(1)'">🔊</button>
+                    <?php if ($currentCard->imageurl): ?>
+                        <div class="card-image" id="cardImage-1">
+                            <img src="<?= Html::encode($currentCard->imageurl) ?>" alt="image" />
+                        </div>
+                    <?php else: ?>
+                        <div class="card-image" id="cardImage-1" style="display:none;"></div>
+                    <?php endif; ?>
+                    <?php if ($currentCard->audiourl): ?>
+                        <div class="card-audio" id="cardAudioWrap-1">
+                            <audio id="cardAudio-1" preload="none" style="display:none;">
+                                <source src="<?= Html::encode($currentCard->audiourl) ?>" />
+                                Trình duyệt không hỗ trợ audio.
+                            </audio>
+                        </div>
+                    <?php else: ?>
+                        <div class="card-audio" id="cardAudioWrap-1" style="display:none;"></div>
                     <?php endif; ?>
                 </div>
                 <div class="card-back">
@@ -70,6 +101,7 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
                     <?php else: ?>
                         <div class="card-pronunciation" id="cardPronunciation-2" style="display: none;"></div>
                     <?php endif; ?>
+                    <button id="cardPlay-2" data-suffix="-2" onclick="playAudio(this.dataset.suffix)" style="background:none; border:none; cursor:pointer; margin-left: 8px; font-size: 28px; padding: 0; color: #3182ce; transition: transform 0.12s;" title="Nghe phát âm" onmouseover="this.style.transform='scale(1.12)'" onmouseout="this.style.transform='scale(1)'">🔊</button>
                     <?php if ($currentCard->examplesentence): ?>
                         <div class="card-example" id="cardExample-2">
                             <strong>Ví dụ:</strong> <em><?= nl2br(Html::encode($currentCard->examplesentence)) ?></em>
@@ -81,6 +113,23 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
                 <div class="card-back">
                     <div class="card-label">Mặt sau</div>
                     <div class="card-text" id="cardBackText-2"><?= nl2br(Html::encode($currentCard->backcontent)) ?></div>
+                    <?php if ($currentCard->imageurl): ?>
+                        <div class="card-image" id="cardImage-2">
+                            <img src="<?= Html::encode($currentCard->imageurl) ?>" alt="image" />
+                        </div>
+                    <?php else: ?>
+                        <div class="card-image" id="cardImage-2" style="display:none;"></div>
+                    <?php endif; ?>
+                    <?php if ($currentCard->audiourl): ?>
+                        <div class="card-audio" id="cardAudioWrap-2">
+                            <audio id="cardAudio-2" preload="none" style="display:none;">
+                                <source src="<?= Html::encode($currentCard->audiourl) ?>" />
+                                Trình duyệt không hỗ trợ audio.
+                            </audio>
+                        </div>
+                    <?php else: ?>
+                        <div class="card-audio" id="cardAudioWrap-2" style="display:none;"></div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -114,6 +163,24 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
                                 </div>
                             <?php else: ?>
                                 <div class="card-example" id="cardExample-3" style="display: none;"></div>
+                            <?php endif; ?>
+                            <button id="cardPlay-3" data-suffix="-3" onclick="playAudio(this.dataset.suffix)" style="background:none; border:none; cursor:pointer; margin-left: 8px; font-size: 28px; padding: 0; color: #3182ce; transition: transform 0.12s;" title="Nghe phát âm" onmouseover="this.style.transform='scale(1.12)'" onmouseout="this.style.transform='scale(1)'">🔊</button>
+                            <?php if ($currentCard->imageurl): ?>
+                                <div class="card-image" id="cardImage-3">
+                                    <img src="<?= Html::encode($currentCard->imageurl) ?>" alt="image" />
+                                </div>
+                            <?php else: ?>
+                                <div class="card-image" id="cardImage-3" style="display:none;"></div>
+                            <?php endif; ?>
+                            <?php if ($currentCard->audiourl): ?>
+                                <div class="card-audio" id="cardAudioWrap-3">
+                                    <audio id="cardAudio-3" preload="none" style="display:none;">
+                                        <source src="<?= Html::encode($currentCard->audiourl) ?>" />
+                                        Trình duyệt không hỗ trợ audio.
+                                    </audio>
+                                </div>
+                            <?php else: ?>
+                                <div class="card-audio" id="cardAudioWrap-3" style="display:none;"></div>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -179,6 +246,7 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
 </div>
 
 <script>
+const baseWeb = '<?= Yii::getAlias("@web") ?>';
 const deckId = <?= $deck->deckid ?>;
 
 function flipCard() {
@@ -263,13 +331,15 @@ function gradeCard(grade, gradeName) {
     .then(res => res.json())
     .then(data => {
         if (data.finished) {
-            
-            alert(data.message);
-            window.location.href = '<?= Url::to(['site/practice']) ?>';
+            // Show completion modal with return button
+            const msg = data.message || 'Hoàn thành tất cả thẻ trong bộ này! 🎉';
+            showCompletionModal(msg);
+            document.querySelectorAll('.btn-grade').forEach(btn => btn.disabled = false);
+            gradeBtn.innerHTML = '<span class="grade-label">' + savedLabel + '</span><span class="grade-desc">' + savedDesc + '</span>';
+            return;
         } else if (data.success) {
-            
             updateCard(data.card);
-            
+
             setTimeout(() => {
                 gradeBtn.innerHTML = '<span class="grade-label">' + savedLabel + '</span><span class="grade-desc">' + savedDesc + '</span>';
             }, 0);
@@ -397,6 +467,45 @@ function updateFlashcardContent(cardType, cardData) {
     } else if (exampleEl) {
         exampleEl.style.display = 'none';
     }
+    // image handling
+    const imageEl = document.getElementById('cardImage' + suffix);
+    if (imageEl) {
+        if (cardData.imageurl) {
+            imageEl.style.display = 'block';
+            const img = imageEl.querySelector('img');
+            if (img) img.src = cardData.imageurl;
+            else imageEl.innerHTML = '<img src="' + cardData.imageurl + '" alt="image" />';
+        } else {
+            imageEl.style.display = 'none';
+        }
+    }
+    // audio handling
+    const audioWrap = document.getElementById('cardAudioWrap' + suffix);
+    const audioEl = document.getElementById('cardAudio' + suffix);
+            if (audioWrap) {
+                if (cardData.audiourl) {
+                    // resolve relative URLs
+                    let resolved = cardData.audiourl;
+                    if (!/^https?:\/\//i.test(resolved) && resolved.indexOf('/') !== 0) {
+                        resolved = baseWeb.replace(/\/$/, '') + '/' + resolved.replace(/^\//, '');
+                    }
+                    console.log('updateFlashcardContent audio url (suffix ' + suffix + '):', resolved);
+                    audioWrap.style.display = 'block';
+                    if (audioEl) {
+                        const src = audioEl.querySelector('source');
+                        if (src) src.setAttribute('src', resolved);
+                        else audioEl.innerHTML = '<source src="' + resolved + '" />';
+                        // DO NOT call audioEl.load() here — will load on user play to avoid interruptions
+                    } else {
+                        audioWrap.innerHTML = '<audio id="cardAudio' + suffix + '" preload="none" style="display:none;"><source src="' + resolved + '" />Trình duyệt không hỗ trợ audio.</audio>';
+                    }
+                } else {
+                    audioWrap.style.display = 'none';
+                }
+            }
+    // always show play button (uses audio file if present, otherwise falls back to TTS)
+    const playBtn = document.getElementById('cardPlay' + suffix);
+    if (playBtn) playBtn.style.display = 'inline-block';
 }
 
 function updateInputCardContent(cardData) {
@@ -414,6 +523,155 @@ function updateInputCardContent(cardData) {
         exampleEl.style.display = 'block';
     } else if (exampleEl) {
         exampleEl.style.display = 'none';
+    }
+    // image
+    const imageEl3 = document.getElementById('cardImage-3');
+    if (imageEl3) {
+        if (cardData.imageurl) {
+            imageEl3.style.display = 'block';
+            const img = imageEl3.querySelector('img');
+            if (img) img.src = cardData.imageurl;
+            else imageEl3.innerHTML = '<img src="' + cardData.imageurl + '" alt="image" />';
+        } else {
+            imageEl3.style.display = 'none';
+        }
+    }
+    // audio
+    const audioWrap3 = document.getElementById('cardAudioWrap-3');
+    const audioEl3 = document.getElementById('cardAudio-3');
+    if (audioWrap3) {
+        if (cardData.audiourl) {
+            let resolved3 = cardData.audiourl;
+            if (!/^https?:\/\//i.test(resolved3) && resolved3.indexOf('/') !== 0) {
+                resolved3 = baseWeb.replace(/\/$/, '') + '/' + resolved3.replace(/^\//, '');
+            }
+            console.log('updateInputCardContent audio url:', resolved3);
+            audioWrap3.style.display = 'block';
+            if (audioEl3) {
+                const src = audioEl3.querySelector('source');
+                if (src) src.setAttribute('src', resolved3);
+                else audioEl3.innerHTML = '<source src="' + resolved3 + '" />';
+                // DO NOT call audioEl3.load() here — load only when user clicks play
+            } else {
+                audioWrap3.innerHTML = '<audio id="cardAudio-3" preload="none" style="display:none;"><source src="' + resolved3 + '" />Trình duyệt không hỗ trợ audio.</audio>';
+            }
+        } else {
+            audioWrap3.style.display = 'none';
+        }
+    }
+    const playBtn3 = document.getElementById('cardPlay-3');
+    if (playBtn3) playBtn3.style.display = 'inline-block';
+}
+
+function showToast(message) {
+    // simple non-blocking toast
+    let toast = document.createElement('div');
+    toast.className = 'simple-toast';
+    toast.textContent = message;
+    toast.style.position = 'fixed';
+    toast.style.right = '20px';
+    toast.style.bottom = '20px';
+    toast.style.background = 'rgba(0,0,0,0.8)';
+    toast.style.color = '#fff';
+    toast.style.padding = '10px 14px';
+    toast.style.borderRadius = '6px';
+    toast.style.zIndex = 9999;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        try { toast.remove(); } catch(e) {}
+    }, 4000);
+}
+
+function playAudio(suffix) {
+    try {
+        const audioId = 'cardAudio' + suffix;
+        const audioWrap = document.getElementById('cardAudioWrap' + suffix);
+        let audioEl = document.getElementById(audioId);
+
+        // Determine resolved source URL
+        let src = null;
+        if (audioEl) {
+            const s = audioEl.querySelector('source');
+            src = s ? (s.getAttribute('src') || s.src) : (audioEl.getAttribute('src') || audioEl.src);
+        }
+        if (!src && audioWrap) {
+            const s2 = audioWrap.querySelector('source');
+            src = s2 ? (s2.getAttribute('src') || s2.src) : null;
+        }
+
+        if (!src) {
+            // No audio file — fallback to speechSynthesis (like vocabulary page)
+            const textEl = document.getElementById('cardFrontText' + suffix) || document.getElementById('cardQuestion' + suffix) || document.getElementById('cardBackText' + suffix);
+            const text = textEl ? textEl.textContent.trim() : '';
+            if ('speechSynthesis' in window && text) {
+                window.speechSynthesis.cancel();
+                const msg = new SpeechSynthesisUtterance();
+                msg.text = text;
+                msg.lang = 'en-US';
+                msg.rate = 0.7;
+                msg.pitch = 1.0;
+                window.speechSynthesis.speak(msg);
+                return;
+            }
+            showToast('Không có âm thanh cho thẻ này');
+            return;
+        }
+
+        // Resolve relative
+        let resolved = src;
+        if (!/^https?:\/\//i.test(resolved) && resolved.indexOf('/') !== 0) {
+            resolved = baseWeb.replace(/\/$/, '') + '/' + resolved.replace(/^\//, '');
+        }
+
+        // If we have an <audio> element, set its source then load+play safely
+        if (audioEl) {
+            try {
+                const sEl = audioEl.querySelector('source');
+                if (sEl) sEl.setAttribute('src', resolved);
+                else audioEl.setAttribute('src', resolved);
+                // load then play — use promise chain to avoid interrupted play
+                audioEl.load();
+                audioEl.pause();
+                audioEl.currentTime = 0;
+                audioEl.play().catch(err => {
+                    console.warn('play failed after load', err);
+                    // fallback to speechSynthesis if available
+                    const textEl = document.getElementById('cardFrontText' + suffix) || document.getElementById('cardQuestion' + suffix) || document.getElementById('cardBackText' + suffix);
+                    const text = textEl ? textEl.textContent.trim() : '';
+                    if ('speechSynthesis' in window && text) {
+                        window.speechSynthesis.cancel();
+                        const msg = new SpeechSynthesisUtterance();
+                        msg.text = text;
+                        msg.lang = 'en-US';
+                        msg.rate = 0.7;
+                        msg.pitch = 1.0;
+                        window.speechSynthesis.speak(msg);
+                    } else {
+                        showToast('Không thể phát âm thanh: ' + (err.message || ''));
+                    }
+                });
+                return;
+            } catch (e) {
+                console.warn('audio element play error', e);
+            }
+        }
+
+        // Fallback: use new Audio()
+        try {
+            const a = new Audio(resolved);
+            a.play().catch(err => {
+                console.warn('Audio() play failed', err);
+                showToast('Không thể phát âm thanh');
+            });
+            return;
+        } catch (e) {
+            console.error(e);
+            showToast('Lỗi khi phát âm thanh');
+            return;
+        }
+    } catch (e) {
+        console.error(e);
+        showToast('Lỗi khi phát âm thanh');
     }
 }
 
@@ -620,5 +878,49 @@ function formatTime(date) {
 
 document.addEventListener('DOMContentLoaded', function() {
     updateGradeTimings();
+    // Resolve any initial audio srcs and show play buttons when audio exists
+    document.querySelectorAll('.card-audio').forEach(wrapper => {
+        try {
+            const audio = wrapper.querySelector('audio');
+            if (audio) {
+                const srcEl = audio.querySelector('source');
+                let src = srcEl ? (srcEl.getAttribute('src') || srcEl.src) : (audio.getAttribute('src') || audio.src);
+                if (src) {
+                    if (!/^https?:\/\//i.test(src) && src.indexOf('/') !== 0) {
+                        src = baseWeb.replace(/\/$/, '') + '/' + src.replace(/^\//, '');
+                    }
+                    if (srcEl) srcEl.src = src;
+                    else audio.src = src;
+                    // do not auto-load to avoid interrupting playback — load when user clicks play
+                    // always show play button (TTS fallback will be used if no audio file)
+                    const id = wrapper.id || '';
+                    const match = id.match(/cardAudioWrap-(\d)$/);
+                    if (match) {
+                        const suffix = '-' + match[1];
+                        const playBtn = document.getElementById('cardPlay' + suffix);
+                        if (playBtn) playBtn.style.display = 'inline-block';
+                    } else {
+                        ['-1','-2','-3'].forEach(suffix => {
+                            const playBtn = document.getElementById('cardPlay' + suffix);
+                            if (playBtn) playBtn.style.display = 'inline-block';
+                        });
+                    }
+                }
+            }
+        } catch(e) { console.warn(e); }
+    });
+    // completion modal buttons
+    const btnReturn = document.getElementById('btnReturnPractice');
+    const btnClose = document.getElementById('btnCloseCompletion');
+    if (btnReturn) btnReturn.addEventListener('click', () => { window.location.href = '<?= Url::to(['site/practice']) ?>'; });
+    if (btnClose) btnClose.addEventListener('click', () => { document.getElementById('completionModal').style.display = 'none'; });
 });
+
+function showCompletionModal(message) {
+    const modal = document.getElementById('completionModal');
+    if (!modal) return alert(message || 'Hoàn thành');
+    const msgEl = document.getElementById('completionMessage');
+    if (msgEl) msgEl.textContent = message;
+    modal.style.display = 'flex';
+}
 </script>

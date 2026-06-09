@@ -30,7 +30,7 @@ $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\App
     
     <div class="srs-grid">
         <?php foreach($srsByLevel as $level => $data): ?>
-            <div class="srs-card" style="border-left: 4px solid <?= $data['color'] ?>;">
+            <div class="srs-card srs-card-clickable" data-level="<?= $level ?>" style="border-left: 4px solid <?= $data['color'] ?>; cursor:pointer;">
                 <div class="srs-name"><?= Html::encode($data['name']) ?></div>
                 <div class="srs-count" style="color: <?= $data['color'] ?>;"><?= $data['count'] ?> từ</div>
                 <div class="srs-next">
@@ -135,6 +135,31 @@ $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\App
             <?php endif; ?>
         </tbody>
     </table>
+</div>
+
+<!-- SRS modal -->
+<div id="srsModal" class="modal-overlay" style="display:none; align-items:center; justify-content:center;">
+    <div class="modal-content" style="max-width:900px; width:95%;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h3 id="srsModalTitle">Danh sách thẻ</h3>
+            <button onclick="document.getElementById('srsModal').style.display='none'" style="background:none; border:none; font-size:22px;">&times;</button>
+        </div>
+        <div style="max-height:60vh; overflow:auto;">
+            <table class="vocab-table" id="srsModalTable">
+                <thead>
+                    <tr>
+                        <th style="width:60px; text-align:center;">Ảnh</th>
+                        <th>Mặt trước</th>
+                        <th>Mặt sau</th>
+                        <th>Ví dụ</th>
+                        <th>Phiên âm</th>
+                    </tr>
+                </thead>
+                <tbody id="srsModalBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <div id="modalAddBatch" class="modal-overlay" onclick="this.style.display='none'">
@@ -276,6 +301,63 @@ $this->registerCssFile('@web/css/vocabulary.css', ['depends' => [\app\assets\App
 </div>
 
 <script>
+
+const srsFetchUrl = '<?= Url::to(['site/ajax-get-srs-cards']) ?>';
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.srs-card-clickable').forEach(el => {
+        el.addEventListener('click', () => {
+            const level = el.dataset.level;
+            const deckId = document.querySelector('.deck-filter-select') ? document.querySelector('.deck-filter-select').value : '';
+            fetchSrsCards(level, deckId);
+        });
+    });
+});
+
+function fetchSrsCards(level, deckId) {
+    fetch(srsFetchUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': '<?= Yii::$app->request->csrfToken ?>' },
+        body: new URLSearchParams({ level: level, deck_id: deckId })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.success) return alert('Lỗi khi lấy danh sách');
+        const rows = data.cards || [];
+        const tbody = document.getElementById('srsModalBody');
+        tbody.innerHTML = '';
+        rows.forEach(c => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="text-align:center; vertical-align:middle;">${c.imageurl ? '<img src="' + c.imageurl + '" style="width:45px;height:45px;object-fit:cover;border-radius:8px;">' : '<span style="color:#cbd5e0; font-size:20px;">-</span>'}</td>
+                <td style="font-weight:700;">${escapeHtml(c.frontcontent)} <button onclick="playTextFromModal(event, '${escapeJs(c.frontcontent)}')" style="background:none;border:none;cursor:pointer;margin-left:8px;font-size:16px;color:#3182ce;">🔊</button></td>
+                <td>${escapeHtml(c.backcontent)}</td>
+                <td style="font-style:italic;color:#718096;">${escapeHtml(c.examplesentence || '')}</td>
+                <td style="font-family:monospace;">${escapeHtml(c.pronunciation || '')}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+        document.getElementById('srsModalTitle').textContent = 'Thẻ trong phân vùng: ' + (['Từ mới','Sau 1 ngày','Sau 3 ngày','Sau 7 ngày','Sau 14 ngày'][level] || level);
+        document.getElementById('srsModal').style.display = 'flex';
+    })
+    .catch(err => { console.error(err); alert('Lỗi khi lấy dữ liệu'); });
+}
+
+function playTextFromModal(e, text) {
+    e.stopPropagation();
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const msg = new SpeechSynthesisUtterance();
+        msg.text = text;
+        msg.lang = 'en-US';
+        msg.rate = 0.7;
+        window.speechSynthesis.speak(msg);
+    } else alert('Trình duyệt không hỗ trợ TTS');
+}
+
+function escapeHtml(str) { return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escapeJs(str) { return (str||'').replace(/'/g, "\\'").replace(/\n/g,' '); }
+
 
 function playAudio(text) {
     if ('speechSynthesis' in window) {
