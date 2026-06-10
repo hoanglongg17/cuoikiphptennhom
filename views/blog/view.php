@@ -42,7 +42,7 @@ $this->params['breadcrumbs'][] = $post->title;
                         </div>
                     </div>
 
-                    <?php if ($post->sharedeckid): ?>
+                    <?php if ($post->sharedeckid && $post->sharedDeck): ?>
                         <div class="deck-info-box">
                             <div class="deck-info-title">🎴 Bộ Thẻ Được Chia Sẻ</div>
                             <div class="deck-info-name"><?= Html::encode($post->sharedDeck->name) ?></div>
@@ -51,10 +51,15 @@ $this->params['breadcrumbs'][] = $post->title;
                                 <button type="button" class="btn-deck-view" onclick="openDeckModal(<?= $post->sharedDeck->deckid ?>)">
                                     📚 Xem Bộ Thẻ
                                 </button>
-                                <button type="button" class="btn-deck-copy" id="copy-deck-code" data-deck-id="<?= $post->sharedDeck->deckid ?>">
-                                    📋 Sao Chép Mã
+                                <button type="button" class="btn-deck-save" id="save-deck-button" data-deck-id="<?= $post->sharedDeck->deckid ?>">
+                                    💾 Lưu Bộ Thẻ
                                 </button>
                             </div>
+                        </div>
+                    <?php elseif ($post->sharedeckid && !$post->sharedDeck): ?>
+                        <div class="deck-info-box" style="background-color: #fee; border-left: 4px solid #f44; padding: 15px;">
+                            <div class="deck-info-title" style="color: #c33;">⚠️ Bộ Thẻ Không Còn Tồn Tại</div>
+                            <p style="margin: 10px 0 0 0; color: #666; font-size: 14px;">Bộ thẻ mà bài viết này chia sẻ đã bị xóa bởi chủ sở hữu.</p>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -227,25 +232,73 @@ $this->params['breadcrumbs'][] = $post->title;
 <script>
 
 document.addEventListener('DOMContentLoaded', function() {
-    const copyButton = document.getElementById('copy-deck-code');
-    if (copyButton) {
-        copyButton.addEventListener('click', function() {
+    const saveButton = document.getElementById('save-deck-button');
+    if (saveButton) {
+        saveButton.addEventListener('click', function() {
             const deckId = this.getAttribute('data-deck-id');
+            const csrfToken = '<?= Yii::$app->request->csrfToken ?>';
             
+            // Check if user is logged in
+            if (<?= Yii::$app->user->isGuest ? 'true' : 'false' ?>) {
+                alert('Vui lòng đăng nhập để lưu bộ thẻ!');
+                return;
+            }
             
-            navigator.clipboard.writeText(deckId).then(function() {
-                
-                const originalText = copyButton.textContent;
-                copyButton.textContent = '✓ Đã Sao Chép!';
-                copyButton.style.background = '#28a745';
-                
-                
-                setTimeout(function() {
-                    copyButton.textContent = originalText;
-                    copyButton.style.background = '';
-                }, 2000);
-            }).catch(function(err) {
-                alert('Lỗi khi sao chép: ' + err);
+            // Disable button during processing
+            this.disabled = true;
+            const originalText = this.textContent;
+            this.textContent = '⏳ Đang xử lý...';
+            
+            // Make AJAX call to duplicate the deck
+            fetch('<?= Url::to(['site/ajax-import-deck'], true) ?>', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRF-Token': csrfToken
+                },
+                body: new URLSearchParams({ deckId: deckId })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    this.textContent = '✓ Đã Lưu!';
+                    this.style.background = '#28a745';
+                    alert(data.message || 'Bộ thẻ đã được lưu vào tài khoản của bạn!');
+                    
+                    // Reset button after 3 seconds
+                    setTimeout(() => {
+                        this.textContent = originalText;
+                        this.style.background = '';
+                        this.disabled = false;
+                    }, 3000);
+                } else {
+                    // Handle specific error messages from server
+                    let errorMsg = data.message || 'Không thể lưu bộ thẻ';
+                    
+                    if (errorMsg.includes('Không tìm thấy bộ bài')) {
+                        errorMsg = '❌ Bộ thẻ này đã bị xóa bởi chủ sở hữu và không thể lưu.';
+                    } else if (errorMsg) {
+                        errorMsg = '❌ Lỗi: ' + errorMsg;
+                    } else {
+                        errorMsg = '❌ Không thể lưu bộ thẻ. Vui lòng thử lại.';
+                    }
+                    
+                    alert(errorMsg);
+                    this.textContent = originalText;
+                    this.style.background = '';
+                    this.disabled = false;
+                }
+            })
+            .catch(error => {
+                alert('❌ Lỗi kết nối: ' + error.message);
+                this.textContent = originalText;
+                this.style.background = '';
+                this.disabled = false;
             });
         });
     }
