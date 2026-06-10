@@ -58,13 +58,27 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
                     <?php else: ?>
                         <div class="card-pronunciation" id="cardPronunciation-1" style="display: none;"></div>
                     <?php endif; ?>
-                    <button id="cardPlay-1" data-suffix="-1" onclick="playAudio(this.dataset.suffix)" style="background:none; border:none; cursor:pointer; margin-left: 8px; font-size: 28px; padding: 0; color: #3182ce; transition: transform 0.12s;" title="Nghe phát âm" onmouseover="this.style.transform='scale(1.12)'" onmouseout="this.style.transform='scale(1)'">🔊</button>
+                </div>
+                <div class="card-back">
+                    <div class="card-label">Mặt sau</div>
+                    <div class="card-text" id="cardBackText-1"><?= nl2br(Html::encode($currentCard->backcontent)) ?></div>
+                    <?php if ($currentCard->pronunciation): ?>
+                        <div class="card-pronunciation" id="cardPronunciation-1b">/ <?= Html::encode($currentCard->pronunciation) ?> /</div>
+                    <?php endif; ?>
+                    <button id="cardPlay-1" data-suffix="-1" onclick="playAudio(this.dataset.suffix)" style="background:none; border:none; cursor:pointer; margin-left: 0; font-size: 28px; padding: 0; color: #fff; transition: transform 0.12s;" title="Nghe phát âm" onmouseover="this.style.transform='scale(1.12)'" onmouseout="this.style.transform='scale(1)'">🔊</button>
                     <?php if ($currentCard->imageurl): ?>
                         <div class="card-image" id="cardImage-1">
                             <img src="<?= Html::encode($currentCard->imageurl) ?>" alt="image" />
                         </div>
                     <?php else: ?>
                         <div class="card-image" id="cardImage-1" style="display:none;"></div>
+                    <?php endif; ?>
+                    <?php if ($currentCard->examplesentence): ?>
+                        <div class="card-example" id="cardExample-1" style="margin-top: 12px;">
+                            <strong>Ví dụ:</strong> <em><?= nl2br(Html::encode($currentCard->examplesentence)) ?></em>
+                        </div>
+                    <?php else: ?>
+                        <div class="card-example" id="cardExample-1" style="display: none;"></div>
                     <?php endif; ?>
                     <?php if ($currentCard->audiourl): ?>
                         <div class="card-audio" id="cardAudioWrap-1">
@@ -75,17 +89,6 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
                         </div>
                     <?php else: ?>
                         <div class="card-audio" id="cardAudioWrap-1" style="display:none;"></div>
-                    <?php endif; ?>
-                </div>
-                <div class="card-back">
-                    <div class="card-label">Mặt sau</div>
-                    <div class="card-text" id="cardBackText-1"><?= nl2br(Html::encode($currentCard->backcontent)) ?></div>
-                    <?php if ($currentCard->examplesentence): ?>
-                        <div class="card-example" id="cardExample-1">
-                            <strong>Ví dụ:</strong> <em><?= nl2br(Html::encode($currentCard->examplesentence)) ?></em>
-                        </div>
-                    <?php else: ?>
-                        <div class="card-example" id="cardExample-1" style="display: none;"></div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -101,24 +104,27 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
                     <?php else: ?>
                         <div class="card-pronunciation" id="cardPronunciation-2" style="display: none;"></div>
                     <?php endif; ?>
-                    <button id="cardPlay-2" data-suffix="-2" onclick="playAudio(this.dataset.suffix)" style="background:none; border:none; cursor:pointer; margin-left: 8px; font-size: 28px; padding: 0; color: #3182ce; transition: transform 0.12s;" title="Nghe phát âm" onmouseover="this.style.transform='scale(1.12)'" onmouseout="this.style.transform='scale(1)'">🔊</button>
-                    <?php if ($currentCard->examplesentence): ?>
-                        <div class="card-example" id="cardExample-2">
-                            <strong>Ví dụ:</strong> <em><?= nl2br(Html::encode($currentCard->examplesentence)) ?></em>
-                        </div>
-                    <?php else: ?>
-                        <div class="card-example" id="cardExample-2" style="display: none;"></div>
-                    <?php endif; ?>
                 </div>
                 <div class="card-back">
                     <div class="card-label">Mặt sau</div>
                     <div class="card-text" id="cardBackText-2"><?= nl2br(Html::encode($currentCard->backcontent)) ?></div>
+                    <?php if ($currentCard->pronunciation): ?>
+                        <div class="card-pronunciation" id="cardPronunciation-2b">/ <?= Html::encode($currentCard->pronunciation) ?> /</div>
+                    <?php endif; ?>
+                    <button id="cardPlay-2" data-suffix="-2" onclick="playAudio(this.dataset.suffix)" style="background:none; border:none; cursor:pointer; margin-left: 0; font-size: 28px; padding: 0; color: #fff; transition: transform 0.12s;" title="Nghe phát âm" onmouseover="this.style.transform='scale(1.12)'" onmouseout="this.style.transform='scale(1)'">🔊</button>
                     <?php if ($currentCard->imageurl): ?>
                         <div class="card-image" id="cardImage-2">
                             <img src="<?= Html::encode($currentCard->imageurl) ?>" alt="image" />
                         </div>
                     <?php else: ?>
                         <div class="card-image" id="cardImage-2" style="display:none;"></div>
+                    <?php endif; ?>
+                    <?php if ($currentCard->examplesentence): ?>
+                        <div class="card-example" id="cardExample-2" style="margin-top: 12px;">
+                            <strong>Ví dụ:</strong> <em><?= nl2br(Html::encode($currentCard->examplesentence)) ?></em>
+                        </div>
+                    <?php else: ?>
+                        <div class="card-example" id="cardExample-2" style="display: none;"></div>
                     <?php endif; ?>
                     <?php if ($currentCard->audiourl): ?>
                         <div class="card-audio" id="cardAudioWrap-2">
@@ -157,20 +163,23 @@ $this->registerCssFile('@web/css/study-deck.css', ['depends' => [\app\assets\App
                         <div class="right-side">
                             <div class="card-label">Câu trả lời đúng</div>
                             <div class="card-text" id="cardBackText-3"><?= nl2br(Html::encode($currentCard->backcontent)) ?></div>
-                            <?php if ($currentCard->examplesentence): ?>
-                                <div class="card-example" id="cardExample-3">
-                                    <strong>Ví dụ:</strong> <em><?= nl2br(Html::encode($currentCard->examplesentence)) ?></em>
-                                </div>
-                            <?php else: ?>
-                                <div class="card-example" id="cardExample-3" style="display: none;"></div>
+                            <?php if ($currentCard->pronunciation): ?>
+                                <div class="card-pronunciation" id="cardPronunciation-3">/ <?= Html::encode($currentCard->pronunciation) ?> /</div>
                             <?php endif; ?>
-                            <button id="cardPlay-3" data-suffix="-3" onclick="playAudio(this.dataset.suffix)" style="background:none; border:none; cursor:pointer; margin-left: 8px; font-size: 28px; padding: 0; color: #3182ce; transition: transform 0.12s;" title="Nghe phát âm" onmouseover="this.style.transform='scale(1.12)'" onmouseout="this.style.transform='scale(1)'">🔊</button>
+                            <button id="cardPlay-3" data-suffix="-3" onclick="playAudio(this.dataset.suffix)" style="background:none; border:none; cursor:pointer; margin-left: 0; font-size: 28px; padding: 0; color: #3182ce; transition: transform 0.12s;" title="Nghe phát âm" onmouseover="this.style.transform='scale(1.12)'" onmouseout="this.style.transform='scale(1)'">🔊</button>
                             <?php if ($currentCard->imageurl): ?>
                                 <div class="card-image" id="cardImage-3">
                                     <img src="<?= Html::encode($currentCard->imageurl) ?>" alt="image" />
                                 </div>
                             <?php else: ?>
                                 <div class="card-image" id="cardImage-3" style="display:none;"></div>
+                            <?php endif; ?>
+                            <?php if ($currentCard->examplesentence): ?>
+                                <div class="card-example" id="cardExample-3" style="margin-top: 12px;">
+                                    <strong>Ví dụ:</strong> <em><?= nl2br(Html::encode($currentCard->examplesentence)) ?></em>
+                                </div>
+                            <?php else: ?>
+                                <div class="card-example" id="cardExample-3" style="display: none;"></div>
                             <?php endif; ?>
                             <?php if ($currentCard->audiourl): ?>
                                 <div class="card-audio" id="cardAudioWrap-3">

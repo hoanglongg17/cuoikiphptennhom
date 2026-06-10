@@ -29,6 +29,7 @@ $user = Yii::$app->user->identity;
     <button class="toggle-btn" id="toggleSidebar" onclick="toggleSidebar()" title="Ẩn/hiện sidebar">&laquo;</button>
 
     <div class="profile">
+        <?php if ($user): ?>
         <div class="avatar" onclick="toggleProfileModal()" style="cursor: pointer;">
             <img src="<?= $user->avatarurl ?: Yii::getAlias('@web/images/andi-avatar.png') ?>" alt="User Avatar">
         </div>
@@ -39,6 +40,8 @@ $user = Yii::$app->user->identity;
             $displayName = preg_replace('/[^\p{L}\p{N}\s\-]/u', '', $displayName);
             echo Html::encode(trim($displayName));
         ?></p>
+        <?php endif; ?>
+
         <div class="profile-actions">
             
             <button class="btn-profile" onclick="toggleProfileModal()">Xem hồ sơ</button>

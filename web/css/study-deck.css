@@ -8,14 +8,14 @@
 
 
 .study-header {
-    margin-bottom: 40px;
+    margin-bottom: 0;
 }
 
 .study-deck-name {
     display: flex;
     align-items: center;
     gap: 16px;
-    margin-bottom: 20px;
+    margin-bottom: 0;
 }
 
 .back-btn {
@@ -42,7 +42,7 @@
 
 
 .study-progress {
-    margin-bottom: 20px;
+    margin-bottom: 0px;
 }
 
 .progress-text {
@@ -69,9 +69,8 @@
 
 
 .study-content {
-    background: #fff;
     border-radius: 12px;
-    padding: 40px 30px;
+    padding: 10px 30px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
@@ -102,10 +101,10 @@
     backface-visibility: hidden;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    padding: 30px;
+    justify-content: flex-start;
+    align-items: flex-start;
+    text-align: left;
+    padding: 20px;
     border-radius: 12px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
@@ -113,12 +112,57 @@
 .card-front {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: #fff;
+    align-items: center;
+    justify-content: center;
+}
+
+.card-front.input-mode {
+    justify-content: flex-start;
+    align-items: flex-start;
+    text-align: left;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.card-question {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.input-answer {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 12px;
+    font-size: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.input-answer::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.btn-submit-answer {
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
 }
 
 .card-back {
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     color: #fff;
     transform: rotateY(180deg);
+    overflow-y: auto;
+    align-items: center;
 }
 
 .card-label {
@@ -127,6 +171,7 @@
     text-transform: uppercase;
     letter-spacing: 2px;
     margin-bottom: 12px;
+    text-align: left;
 }
 
 .card-text {
@@ -137,20 +182,65 @@
     word-wrap: break-word;
     max-height: 200px;
     overflow-y: auto;
+    text-align: left;
 }
 
 .card-pronunciation {
     font-size: 18px;
     font-style: italic;
     opacity: 0.9;
+    text-align: left;
+    margin-bottom: 8px;
+}
+
+.card-image {
+    /* Strictly limit image size on card back */
+    max-width: 100px !important;
+    max-height: 100px !important;
+    width: 100px !important;
+    height: 100px !important;
+    margin: 12px auto;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    flex-grow: 0 !important;
+    flex-shrink: 0 !important;
+    flex-basis: auto !important;
+}
+
+.card-image img {
+    /* Ensure image never overflows the container or card */
+    max-width: 100% !important;
+    max-height: 100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover;
+    display: block;
+}
+
+.card-audio {
+    order: 3;
 }
 
 .card-example {
     font-size: 14px;
-    margin-top: 15px;
+    margin-top: 10px;
     font-style: italic;
     opacity: 0.85;
-    max-height: 80px;
+    max-height: 60px;
+    overflow-y: auto;
+    text-align: left;
+}
+
+.right-side {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    text-align: left;
+    padding: 20px;
     overflow-y: auto;
 }
 
@@ -318,6 +408,40 @@
 .value {
     color: #333;
     flex: 1;
+}
+
+.input-phase {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
+
+.card-answer-reveal {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.question-display {
+    margin-bottom: 20px;
+}
+
+.answer-compare {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.left-side {
+    margin-bottom: 12px;
+}
+
+.left-side .card-label,
+.left-side .card-text {
+    text-align: left;
 }
 
 

@@ -1171,6 +1171,7 @@ class SiteController extends Controller
                     return $dueDateA - $dueDateB;
                 });
                 
+                $nextCard = $incompleteCards[0];
                 $priorityQueue = $incompleteCards;
             } else {
                 $currentCard = Card::findOne(['cardid' => $currentCardId, 'userid' => $userId]);
@@ -1188,7 +1189,14 @@ class SiteController extends Controller
             }
         }
 
-        
+        if (!$nextCard) {
+            return [
+                'success' => false,
+                'finished' => true,
+                'message' => 'Không tìm thấy thẻ tiếp theo'
+            ];
+        }
+
         $cardIndex = 1;
         foreach ($priorityQueue as $idx => $card) {
             if ($card->cardid == $nextCard->cardid) {
