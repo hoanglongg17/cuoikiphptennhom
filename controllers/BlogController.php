@@ -14,6 +14,8 @@ use app\models\BlogTag;
 use app\models\BlogRating;
 use app\models\BlogNestedComment;
 use app\models\EmailNotification;
+use app\models\Notification;
+use app\models\User;
 use app\components\EmailNotificationService;
 use yii\data\Pagination;
 
@@ -185,6 +187,13 @@ class BlogController extends Controller
             }
 
             if ($model->save()) {
+                if ($model->status === BlogPost::STATUS_PENDING) {
+                    $admins = User::find()->where(['role' => 'admin'])->all();
+                    foreach ($admins as $admin) {
+                        Notification::createPendingNotification($admin->userid, $model->postid, $model->title, $user->displayname);
+                    }
+                }
+
                 $message = $isAdmin 
                     ? ($model->status === BlogPost::STATUS_PUBLISHED 
                         ? 'Bài viết được xuất bản thành công!' 
@@ -244,6 +253,13 @@ class BlogController extends Controller
             }
             
             if ($model->save()) {
+                if (!$isAdmin && $originalStatus === BlogPost::STATUS_DENIED && $model->status === BlogPost::STATUS_PENDING) {
+                    $admins = User::find()->where(['role' => 'admin'])->all();
+                    foreach ($admins as $admin) {
+                        Notification::createPendingNotification($admin->userid, $model->postid, $model->title, $user->displayname);
+                    }
+                }
+
                 Yii::$app->session->setFlash('success', 'Bài viết được cập nhật thành công!');
                 return $this->redirect(['my-posts']);
             }

@@ -13,6 +13,7 @@ use app\models\BlogComment;
 use app\models\BlogNestedComment;
 use app\models\User;
 use app\models\AdminForm;
+use app\models\Notification;
 use yii\data\Pagination;
 
 
@@ -199,6 +200,7 @@ class AdminController extends Controller
             }
             $model->rejectionreason = null;
             if ($model->save()) {
+                Notification::createApprovedNotification($model->userid, $model->postid, $model->title);
                 Yii::$app->session->setFlash('success', 'Bài viết đã được duyệt và xuất bản.');
             }
         }
@@ -219,6 +221,7 @@ class AdminController extends Controller
             $model->rejectionreason = trim($reason);
 
             if ($model->save()) {
+                Notification::createRejectedNotification($model->userid, $model->postid, $model->title, $reason);
                 Yii::$app->session->setFlash('success', 'Bài viết đã bị từ chối.');
                 if ($isAjax) {
                     Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;

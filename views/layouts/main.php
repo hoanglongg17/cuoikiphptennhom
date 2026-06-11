@@ -5,6 +5,7 @@
 
 use app\assets\AppAsset;
 use app\widgets\Alert;
+use app\widgets\NotificationWidget;
 use yii\bootstrap5\Breadcrumbs;
 use yii\bootstrap5\Html;
 use yii\bootstrap5\Nav;
@@ -158,6 +159,8 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
             <a href="<?= Url::to(['site/signup']) ?>" class="btn-signup">Đăng ký</a>
         <?php else: ?>
             <div class="user-nav-info">
+                <?= NotificationWidget::widget() ?>
+                
                 <img src="<?= Yii::$app->user->identity->avatarurl ? Yii::$app->user->identity->avatarurl : Yii::getAlias('@web/images/andi-avatar.png') ?>" 
                      alt="Avatar" class="nav-avatar" onerror="this.src='https://via.placeholder.com/35'">
                 

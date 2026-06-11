@@ -276,6 +276,30 @@ create index idx_blogcomments_postid on blogcomments(postid);
 create index idx_blogcomments_status on blogcomments(status);
 
 -- ==========================================
+-- bảng 15: notifications (thông báo cho người dùng)
+-- ==========================================
+create table notifications (
+    notificationid int auto_increment primary key,
+    userid int not null,
+    postid int null,
+    type varchar(50) not null comment 'approved: bài được duyệt, rejected: bài bị từ chối, pending: bài chờ duyệt',
+    title varchar(255) not null,
+    content text not null,
+    actionurl varchar(255) null,
+    isread tinyint(1) default 0,
+    createdat datetime default current_timestamp,
+    readedat datetime null,
+    constraint fk_notifications_users foreign key (userid) 
+        references users(userid) on delete cascade,
+    constraint fk_notifications_posts foreign key (postid) 
+        references blogposts(postid) on delete set null
+) engine=innodb;
+
+create index idx_notifications_userid on notifications(userid);
+create index idx_notifications_isread on notifications(isread);
+create index idx_notifications_createdat on notifications(createdat);
+
+-- ==========================================
 -- DỮ LIỆU MẪU
 -- ==========================================
 
